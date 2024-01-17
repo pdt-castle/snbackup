@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_test_suite_test">
+    <sys_atf_test_suite_test action="INSERT_OR_UPDATE">
+        <abort_on_failure>false</abort_on_failure>
+        <order/>
+        <sys_class_name>sys_atf_test_suite_test</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-27 16:33:43</sys_created_on>
+        <sys_id>a9c3e5154784ad109cd45088c26d4302</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>f82ad9d94744ad109cd45088c26d437f</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_test_suite_test_a9c3e5154784ad109cd45088c26d4302</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-27 16:33:43</sys_updated_on>
+        <test display_value="PD: Settings page (Use PagerDuty teams checkbox test 1 - wrong api_key format) copy">f82ad9d94744ad109cd45088c26d437f</test>
+        <test_suite display_value="PD: Settings page - checkbox 2">b33229914784ad109cd45088c26d43b4</test_suite>
+    </sys_atf_test_suite_test>
+</record_update>

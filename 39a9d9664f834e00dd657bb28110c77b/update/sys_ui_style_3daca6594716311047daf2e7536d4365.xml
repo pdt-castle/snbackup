@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_style">
+    <sys_translated_text action="delete_multiple" query="documentkey=3daca6594716311047daf2e7536d4365"/>
+    <sys_ui_style action="INSERT_OR_UPDATE">
+        <alt/>
+        <element>active</element>
+        <name>x_pd_integration_custom_field_mapping</name>
+        <style>background-image: url('x_pd_integration.circle-inactive.svg');&#13;
+background-repeat: no-repeat;</style>
+        <sys_class_name>sys_ui_style</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-03 14:24:55</sys_created_on>
+        <sys_id>3daca6594716311047daf2e7536d4365</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>x_pd_integration_custom_field_mapping</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_style_3daca6594716311047daf2e7536d4365</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-21 16:06:05</sys_updated_on>
+        <themed_style/>
+        <value>0</value>
+    </sys_ui_style>
+</record_update>

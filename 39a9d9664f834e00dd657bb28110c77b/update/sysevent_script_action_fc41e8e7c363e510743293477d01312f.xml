@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sysevent_script_action">
+    <sysevent_script_action action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition_script/>
+        <description/>
+        <event_name>x_pd_integration.update_v2_wh_extension</event_name>
+        <name>PD Update v2 WH (extension)</name>
+        <order>100</order>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+(function () {
+  gs.debug('PagerDuty \'x_pd_integration.update_v2_wh_extension\' Webhook event fired from {0}', current.getDisplayValue());
+
+  var webhookId = current.getValue('webhook_id');
+  var extensionSchemaId = current.getValue('extension_schema_id');
+  var taskType = current.getValue('task_type');
+
+  if (gs.nil(extensionSchemaId)) {
+    gs.error('The v2 webhook (extension) with the id [' + webhookId + '] ' +
+      'was not updated in PagerDuty, because the extension schema id for this webhook ' +
+      'is not populated in a table [' + current.getTableName() + ']. ' +
+      'You can find the extension schema id via this API: ' +
+      'https://developer.pagerduty.com/api-reference/93f606460579c-get-an-extension ' +
+      'by appending ?include[]=extension_schemas to the request.');
+    return;
+  }
+
+  // Naming decision explained here:
+  // https://github.com/PagerDuty/integration-servicenow-app/pull/407#discussion_r1250857902
+  var syncOption = current.getValue('sync_option') === 'manual' ? 'manual_sync' : 'sync_all';
+
+  var requestBody = {
+    extension: {
+      extension_schema: {
+        id: extensionSchemaId,
+        type: 'extension_schema_reference'
+      },
+      config: {}
+    }
+  };
+
+  if (taskType) {
+    requestBody.extension.config.task_type = taskType;
+  }
+  if (syncOption) {
+    requestBody.extension.config.sync_options = syncOption;
+  }
+
+  var pd = new x_pd_integration.PagerDuty();
+  pd.updatePdExtension(webhookId, requestBody);
+
+})();
+</script>
+        <synchronous>false</synchronous>
+        <sys_class_name>sysevent_script_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-06-26 11:15:29</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>fc41e8e7c363e510743293477d01312f</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PD Update v2 WH (extension)</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysevent_script_action_fc41e8e7c363e510743293477d01312f</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-06-26 11:17:54</sys_updated_on>
+    </sysevent_script_action>
+</record_update>

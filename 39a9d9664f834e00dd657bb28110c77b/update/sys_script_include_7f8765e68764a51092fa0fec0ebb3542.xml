@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.TrackingService</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Implement methods HTTP Tracking API calls to Segment Source</description>
+        <name>TrackingService</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+/**
+ * Segment: HTTP tracking API
+ */
+var TrackingService = Class.create();
+TrackingService.prototype = {
+  initialize: function () {
+    this.JSON = new global.JSON();
+    this.pdAccountUrl = gs.getProperty('x_pd_integration.instance_url');
+    this.segmentHttpApi = 'https://api.segment.io/v1';
+  },
+
+  /**
+   * Tracks user actions. Every action triggers an "event", which can also have associated properties.
+   * @param {String} event - Name of the action user performs
+   * @param {Object} properties - Free-form dictionary of properties of the event
+   */
+  track: function (event, properties) {
+    try {
+      var baseProperties = {
+        pd_subdomain: this.getPdSubdomain(),
+        snow_instance_name: gs.getProperty('instance_name'),
+        app_version: this.getAppVersion()
+      };
+      var gdt = new GlideDateTime();
+      var timestamp = gdt.getValue();
+
+      var body = {
+        event: 'snow_' + event,
+        anonymousId: gs.getUserID(),
+        timestamp: timestamp,
+        properties: this.mergeObjects(baseProperties, properties)
+      };
+      var bodyJSON = this.JSON.encode(body);
+      var authToken = gs.base64Encode(this.getClientKey() + ':');
+
+      var restMessage = new sn_ws.RESTMessageV2();
+      restMessage.setHttpMethod('post');
+      restMessage.setRequestHeader('Authorization', 'Basic ' + authToken);
+      restMessage.setRequestHeader('Content-Type', 'application/json');
+
+      restMessage.setEndpoint(this.segmentHttpApi + '/track');
+      restMessage.setRequestBody(bodyJSON);
+
+      restMessage.executeAsync();
+    } catch (e) {
+      gs.error('TrackingService | Track REST Endpoint | error: {0}', e);
+    }
+  },
+
+  /**
+   * Extracts PagerDuty subdomain from URL
+   * @returns {String} PagerDuty subdomain
+   */
+  getPdSubdomain: function () {
+    var pdAccountUrl = gs.getProperty('x_pd_integration.instance_url');
+    var regexp = /^https:\/\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9]))?(?:\.eu)?\.pagerduty\.com$/i;
+    var match = regexp.exec(pdAccountUrl);
+
+    return match[1];
+  },
+
+  /**
+   * Retrieves current PagerDuty application version
+   * @returns {String} Current application version
+   */
+  getAppVersion: function () {
+    var grApp = new GlideRecordSecure('sys_scope');
+    if (!grApp.get('scope', 'x_pd_integration')) {
+      gs.error('Tracking Service | There is no app with the scope "x_pd_integration"');
+    }
+
+    return grApp.getValue('version');
+  },
+
+  /**
+   * Copies key-value pairs from source to the target object
+   * @param {Object} target
+   * @param {Object} sourceObj
+   * @returns {Object} Modified target object
+   */
+  mergeObjects: function (target, sourceObj) {
+    Object.keys(sourceObj).forEach(function(key) {
+      target[key] = sourceObj[key];
+    });
+
+    return target;
+  },
+
+  /**
+   * Retrieves Segment write key based on region PagerDuty account registered in
+   * @returns {String} Segment write key
+   */
+  getClientKey: function () {
+    // eslint-disable-next-line es5/no-es6-methods
+    if (this.getPdSubdomain().startsWith('pdt-')) {
+      return gs.getProperty('x_pd_integration.tracking_write_key_development');
+    }
+
+    return this.pdAccountUrl.indexOf('.eu.pagerduty.com') &gt; 0
+      ? gs.getProperty('x_pd_integration.tracking_write_key_eu')
+      : gs.getProperty('x_pd_integration.tracking_write_key_us');
+  },
+
+  type: 'TrackingService',
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-01-25 14:11:44</sys_created_on>
+        <sys_id>7f8765e68764a51092fa0fec0ebb3542</sys_id>
+        <sys_mod_count>37</sys_mod_count>
+        <sys_name>TrackingService</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_7f8765e68764a51092fa0fec0ebb3542</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-06 12:23:56</sys_updated_on>
+    </sys_script_include>
+</record_update>

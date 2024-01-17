@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_test_suite_test">
+    <sys_atf_test_suite_test action="INSERT_OR_UPDATE">
+        <abort_on_failure>false</abort_on_failure>
+        <order/>
+        <sys_class_name>sys_atf_test_suite_test</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-27 17:06:05</sys_created_on>
+        <sys_id>be1ba51d4784ad109cd45088c26d436a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>f8fa911d4744ad109cd45088c26d433d</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_test_suite_test_be1ba51d4784ad109cd45088c26d436a</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-27 17:06:05</sys_updated_on>
+        <test display_value="PD: Settings page (checkbox  test 7 - empty api_key and rest_api endpoint) copy copy copy copy">f8fa911d4744ad109cd45088c26d433d</test>
+        <test_suite display_value="PD: Settings page - checkbox 5">63b265154784ad109cd45088c26d437e</test_suite>
+    </sys_atf_test_suite_test>
+</record_update>

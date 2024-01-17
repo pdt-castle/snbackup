@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description>Display list of application configuration files</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_app_config_files.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:g2="null" xmlns:g="glide" xmlns:j2="null" xmlns:j="jelly:core"&gt;
+
+  &lt;!-- get the scope of the current record and list of tables to display--&gt;
+  &lt;g:evaluate var="jvar_my_scope"&gt;
+    var scope = new GlideRecordSecure("sys_scope");
+    if (scope.get("scope", gs.getCurrentScopeName())) scope;
+  &lt;/g:evaluate&gt;
+  &lt;g:evaluate expression="scope.getDisplayValue()" var="jvar_my_scope_name"/&gt;
+  &lt;g:evaluate expression="scope.getUniqueValue()" var="jvar_my_scope_id"/&gt;
+  &lt;g:evaluate expression="gs.getProperty(scope.scope + '.config_file_tables','')" var="jvar_config_tables"/&gt;
+
+  &lt;!-- notify user if we don't have tables property --&gt;
+  &lt;j:if test="${HTML:jvar_config_tables == ''}"&gt;
+    The required property 'config_file_tables' in scope ''${HTML:scope.scope}'' is missing
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_config_tables != ''}"&gt;
+    &lt;nav class="navbar navbar-default" role="navigation" style="min-width:935px;"&gt;
+      &lt;div class="container-fluid"&gt;
+        &lt;div class="navbar-header"&gt;
+          &lt;h1 class="navbar-title" style="display:inline-block;"&gt;Configuration files for ${HTML:jvar_my_scope_name}&lt;/h1&gt;
+        &lt;/div&gt;
+        &lt;div class="nav navbar-right"&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/nav&gt;
+    &lt;g:inline template="tabs2.xml"/&gt;
+
+    &lt;TABLE border="0" cellPadding="0" cellSpacing="0" id="testtable" width="100%"&gt;
+      &lt;TR&gt;
+        &lt;TD valign="top"&gt;
+          &lt;j:set value="cardboard" var="jvar_list_type"/&gt;
+          &lt;br/&gt;
+          &lt;!-- tabstrip for related lists --&gt;
+          &lt;div class="tabs2_strip" id="tabs2_list"&gt;
+            &lt;!-- hack for IE bug when tab strip causes a horizontal scroll bar to appear --&gt;
+            &lt;img alt="" height="1px" src="images/s.gifx" style="margin-right: 0px;" width="1px"/&gt;
+          &lt;/div&gt;
+          &lt;!--
+                  Start with the lists not displayed so that we do not impact the page scroll position - gets shown in
+                  the onLoad event below
+               --&gt;
+          &lt;span id="list_span" style="display:none;border-top: 1px solid black; padding-top: 5px; margin-top: -7px;"&gt;
+            &lt;j:set value="true" var="jvar_use_name_for_list_id"/&gt;
+
+            &lt;j:forEach items="${HTML:jvar_config_tables.split(',')}" var="jvar_config_table"&gt;
+              &lt;!-- make sure we have a valid table --&gt;
+              &lt;g:evaluate jelly="true" var="jvar_valid_table"&gt;
+                var isValid = false; var tableName = jelly.jvar_config_table.trim(); var configTable = new GlideRecordSecure(tableName); if (configTable.isValid()) isValid = true; isValid;
+              &lt;/g:evaluate&gt;
+              &lt;j:if test="${HTML:jvar_valid_table == true}"&gt;
+                &lt;!-- display the table list of filtered records --&gt;
+                &lt;g:inline source="${HTML:jvar_my_scope_id}" table="${HTML:jvar_config_table.trim()}" table_field="sys_scope" template="personalize_all_list.xml"/&gt;
+              &lt;/j:if&gt;
+            &lt;/j:forEach&gt;
+          &lt;/span&gt;
+
+        &lt;/TD&gt;
+      &lt;/TR&gt;
+    &lt;/TABLE&gt;
+    &lt;script&gt;
+      addLoadEvent(function () {
+        var tabs = new GlideTabs2("tabs2_list", gel("list_span"), 0, '');
+        tabs.activate();
+        show("list_span");
+      });
+    &lt;/script&gt;
+  &lt;/j:if&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>app_config_files</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-15 19:29:32</sys_created_on>
+        <sys_id>2eb6c67e4f474e00dd657bb28110c7de</sys_id>
+        <sys_mod_count>32</sys_mod_count>
+        <sys_name>app_config_files</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_2eb6c67e4f474e00dd657bb28110c7de</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:41:18</sys_updated_on>
+    </sys_ui_page>
+</record_update>

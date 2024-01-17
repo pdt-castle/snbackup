@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_macro">
+    <sys_ui_macro action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category>general</category>
+        <description>Add field decoration to open PagerDuty record</description>
+        <media_type/>
+        <name>pagerduty_link</name>
+        <scoped_name>x_pd_integration_pagerduty_link</scoped_name>
+        <sys_class_name>sys_ui_macro</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-26 17:55:57</sys_created_on>
+        <sys_id>b82a9a964f5fce00dd657bb28110c784</sys_id>
+        <sys_mod_count>86</sys_mod_count>
+        <sys_name>pagerduty_link</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_macro_b82a9a964f5fce00dd657bb28110c784</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-19 13:53:10</sys_updated_on>
+        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+  &lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" /&gt;
+  &lt;j:set var="jvar_n" value="show_pagerduty_${HTML:jvar_guid}:${HTML:ref}"/&gt;
+  &lt;g:evaluate var="jvar_pd_base_url" expression="gs.getProperty('x_pd_integration.instance_url')"/&gt;
+
+  &lt;j:if test="${HTML:jvar_ref_table == 'sys_user'}"&gt;
+    &lt;j:set var="jvar_feature" value="users"/&gt;
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_ref_table == 'incident'}"&gt;
+    &lt;j:set var="jvar_feature" value="incidents"/&gt;
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_ref_table == 'sn_si_incident'}"&gt;
+    &lt;j:set var="jvar_feature" value="incidents"/&gt;
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_ref_table == 'change_request'}"&gt;
+    &lt;j:set var="jvar_feature" value="incidents"/&gt;
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_ref_table == 'sys_user_group'}"&gt;
+    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}"&gt;
+      &lt;j:set var="jvar_feature" value="service-directory"/&gt;
+    &lt;/j:if&gt;
+    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_escalation'}"&gt;
+      &lt;j:set var="jvar_feature" value="escalation_policies"/&gt;
+    &lt;/j:if&gt;
+    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_schedule'}"&gt;
+      &lt;j:set var="jvar_feature" value="schedules"/&gt;
+      &lt;j:set var='jvar_extension' value=""/&gt;
+    &lt;/j:if&gt;
+    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_team'}"&gt;
+      &lt;j:set var="jvar_feature" value="teams"/&gt;
+      &lt;j:set var='jvar_extension' value=""/&gt;
+    &lt;/j:if&gt;
+  &lt;/j:if&gt;
+  &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}"&gt;
+    &lt;j:set var="jvar_feature" value='service-directory'/&gt;
+  &lt;/j:if&gt;
+  &lt;g:reference_decoration image="images/icons/tasks.gifx" id="${HTML:jvar_n}" field="${HTML:ref}"
+    onclick="openPagerDuty_${HTML:jvar_element}();"
+    title="${HTML:gs.getMessage('Open in PagerDuty')}"
+    icon="icon-link"/&gt;
+  &lt;script&gt;
+    function openPagerDuty_${HTML:jvar_element}() {
+      var go = confirm("${HTML:gs.getMessage('PagerDuty will open in a new window')}");
+      if (!go) {
+        return;
+      }
+      var element = '${HTML:jvar_element}';
+      openPagerDuty(element, function (pdUrl) {
+        g_navigation.open(pdUrl, '_blank');
+      });
+
+      function openPagerDuty(element, callback) {
+        var pdUrl = '${HTML:jvar_pd_base_url}';
+        var id = g_form.getValue(element);
+        if (element === 'x_pd_integration_pagerduty_webhook') {
+          var serviceId = g_form.getValue('x_pd_integration_pagerduty_service');
+          var ga = new GlideAjax('UiMacrosController');
+          ga.addParam('sysparm_name', 'getWebhookVersion');
+          ga.addParam('sysparm_webhook_id', id);
+          ga.getXMLAnswer(function (answer) {
+            pdUrl += answer === '3'
+              ? '/integrations/webhooks/' + id
+              : '/services/' + serviceId + '/integrations?service_profile=1';
+            callback(pdUrl);
+          });
+        } else {
+          pdUrl += '/${HTML:jvar_feature}/' + id;
+          if ('${HTML:jvar_extension}') {
+            pdUrl += '/${HTML:jvar_extension}';
+          }
+          callback(pdUrl);
+        }
+      }
+    }
+  &lt;/script&gt;
+&lt;/j:jelly&gt;
+</xml>
+    </sys_ui_macro>
+</record_update>

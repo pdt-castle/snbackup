@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_pd_integration.AjaxHelper</name>
+        <script>var x_pd_integration = x_pd_integration || {};
+
+x_pd_integration.AjaxHelper = (function () {
+  "use strict";
+
+  function ajaxClientFor(controllerName) {
+    return new Proxy({}, {
+      get: function (target, name) {
+        return function () {
+          var args = [].slice.call(arguments);
+          var callback = args.splice(-1)[0];
+
+          var strArgs = JSON.stringify(args);
+          var ga = new GlideAjax(controllerName);
+          ga.addParam('sysparm_name', 'dispatch');
+          ga.addParam('sysparm_json_name', name);
+          ga.addParam('sysparm_json_argument', strArgs);
+          ga.getXML(function (response) {
+            var answer = JSON.parse(response.responseXML.documentElement.getAttribute("answer")) || {error: 'Failed to get response from Server'}
+            callback(answer.error, answer.result);
+          });
+        };
+      }
+    });
+  }
+
+  return {
+    ajaxClientFor: ajaxClientFor,
+    type: "AjaxHelper"
+  };
+})();
+</script>
+        <script_name>AjaxHelper</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2019-03-28 13:29:55</sys_created_on>
+        <sys_id>9737e9dcdb203300eb140181ca961907</sys_id>
+        <sys_mod_count>18</sys_mod_count>
+        <sys_name>x_pd_integration.AjaxHelper</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_script_9737e9dcdb203300eb140181ca961907</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-10-12 13:50:33</sys_updated_on>
+        <ui_type/>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

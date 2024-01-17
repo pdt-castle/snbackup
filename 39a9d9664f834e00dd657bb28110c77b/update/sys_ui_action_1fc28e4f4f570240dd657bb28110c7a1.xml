@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action">
+    <sys_ui_action action="INSERT_OR_UPDATE">
+        <action_name/>
+        <active>true</active>
+        <client>true</client>
+        <client_script_v2>function onClick(g_form) {
+
+}</client_script_v2>
+        <comments>If Assignment Group Mapping only is enabled, provision a group service, escalation policy, and extension in PagerDuty and populate group fields using an import table.&#13;
+If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</comments>
+        <condition>x_pd_integration.ConditionsHelper.provisionGroupUiAction(current)</condition>
+        <form_action>true</form_action>
+        <form_button>false</form_button>
+        <form_button_v2>false</form_button_v2>
+        <form_context_menu>false</form_context_menu>
+        <form_link>true</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
+        <form_style/>
+        <hint>Create a service and escalation policy in PagerDuty</hint>
+        <isolate_script>false</isolate_script>
+        <list_action>false</list_action>
+        <list_banner_button>false</list_banner_button>
+        <list_button>false</list_button>
+        <list_choice>false</list_choice>
+        <list_context_menu>false</list_context_menu>
+        <list_link>false</list_link>
+        <list_save_with_form_button>false</list_save_with_form_button>
+        <list_style/>
+        <messages/>
+        <name>Provision Group into PagerDuty</name>
+        <onclick>provisionGroup()</onclick>
+        <order>900</order>
+        <script>function provisionGroup() {
+  var groupSysId = g_form.getUniqueValue();
+  var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
+  ga.addParam('sysparm_name', 'getGroupsData');
+  ga.addParam('sysparm_group_ids', groupSysId);
+  ga.getXML(function(response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    var manager = answer.groups[0].manager;
+    var decision;
+    if (!manager &amp;&amp; answer.auto_provision_grmembers &amp;&amp; answer.groups_with_more_than_49_members.length) {
+      decision = showDialog('set current user as a manager and reduce targets', answer.current_user);
+      if (decision) provisionGroupService(groupSysId, manager);
+      return;
+    }
+    if (!manager) {
+      decision = showDialog('set current user as a manager', answer.current_user);
+      if (decision) provisionGroupService(groupSysId, manager);
+      return;
+    }
+    if (answer.auto_provision_grmembers &amp;&amp; answer.groups_with_more_than_49_members.length) {
+      decision = showDialog('reduce targets to 49 group members');
+      if (decision) provisionGroupService(groupSysId, manager);
+      return;
+    }
+    provisionGroupService(groupSysId, manager);
+  });
+}
+
+function showDialog(action, currentUser) {
+  var message;
+  switch (action) {
+    case 'set current user as a manager and reduce targets':
+      message = 'The assignment group does not contain a manager. The current user [' + currentUser + '] will be set as a manager.\n' +
+        'Also, the escalation policy may have at most 50 targets, while there are more than 49 members in the group.\n' +
+        'Do you want to provision the group and create escalation policy with the first 49 group members?';
+      break;
+    case 'set current user as a manager':
+      message = 'The assignment group does not contain a manager. The current user [' + currentUser + '] will be set as a manager.\n' +
+        'Do you want to provision the group?';
+      break;
+    case 'reduce targets to 49 group members':
+      message = 'The group members are about to be provisioned into PagerDuty.\n' +
+        'However, the escalation policy may have at most 50 targets, while there are more than 49 members in the group.\n' +
+        'Do you agree to create escalation policy with the first 49 group members?';
+      break;
+  }
+
+  return confirm(message);
+}
+
+function provisionGroupService(groupSysId, managerSysId) {
+  var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
+  ga.addParam('sysparm_name', 'provisionGroupService');
+  ga.addParam('sysparm_group_id', groupSysId);
+  ga.addParam('sysparm_manager_sys_id', managerSysId);
+  ga.addParam('sysparm_reduce_targets', 'true');
+  ga.getXML(function(response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    jslog(answer);
+  });
+}
+</script>
+        <show_insert>false</show_insert>
+        <show_multiple_update>false</show_multiple_update>
+        <show_query>false</show_query>
+        <show_update>true</show_update>
+        <sys_class_name>sys_ui_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-29 00:06:33</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>1fc28e4f4f570240dd657bb28110c7a1</sys_id>
+        <sys_mod_count>108</sys_mod_count>
+        <sys_name>Provision Group into PagerDuty</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_action_1fc28e4f4f570240dd657bb28110c7a1</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2021-05-24 15:47:33</sys_updated_on>
+        <table>sys_user_group</table>
+        <ui11_compatible>true</ui11_compatible>
+        <ui16_compatible>false</ui16_compatible>
+    </sys_ui_action>
+</record_update>

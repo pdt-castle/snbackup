@@ -1,0 +1,1280 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+var loading = false;
+var colors = {
+  validated: '#2e2e2e',
+  not_validated: '#c83c36',
+  regular_border: '#e2e2e2',
+};
+
+var validation = {
+  cmdb_rel: {
+    ci_classes: {
+      value: false,
+      id: 'ci-classes-to-service-types-mapping',
+      message: 'choose CI classes to be provisioned',
+    },
+    configuration_items: {
+      value: false,
+      id: 'cmdb-rel-provisioning',
+      message: 'choose table with CIs or a single CI to be provisioned',
+    },
+  },
+  custom_rel: {
+    first_table: {
+      value: false,
+      id: 'sys_display\\.first-table',
+      message: 'select CI table containing services',
+    },
+    first_service_type: {
+      value: false,
+      id: 'first-service-type',
+      message: 'select the type of service to be provisioned',
+    },
+    first_table_column: {
+      value: false,
+      id: 'sys_display\\.first-table-column',
+      message: 'select column for service name',
+    },
+  },
+};
+
+$J(function () {
+  var input = {
+    use_cmdb_relationships: $J('select[name="use_cmdb_relationships"]'),
+    enable_ci_provisioning: $J('input[name="enable_ci_provisioning"]'),
+    first_table: $J('input[name="sys_display.first-table"]'),
+    first_table_column: $J('input[name="sys_display.first-table-column"]'),
+    first_service_type: $J('select[name="first_service_type"]'),
+    relationship: $J('select[name="relationship"]'),
+    second_table: $J('input[name="sys_display.second-table"]'),
+    second_table_column: $J('input[name="sys_display.second-table-column"]'),
+    second_service_type: $J('select[name="second_service_type"]'),
+    single_ci: $J('input[name="sys_display.ci"]'),
+  };
+  var marker = {
+    ci_classes_mapping: $J('#ci-classes-mapping-section-marker'),
+    cmdb_rel_provisioning: $J('#cmdb-rel-provisioning-section-marker'),
+    first_table: $J('#first-table-marker'),
+    first_service_type: $J('#first-service-type-marker'),
+    first_table_column: $J('#first-table-column-marker'),
+  };
+
+  var pairs = [
+    {column: 'bs_ci_classes', buckets: ci_classes_bs},
+    {column: 'ts_ci_classes', buckets: ci_classes_ts},
+  ];
+  pairs.forEach(function (pair) {
+    pair.buckets.clear();
+    var ga = new GlideAjax('ServiceProvisioningController');
+    ga.addParam('sysparm_name', 'prepareBuckets');
+    ga.addParam('sysparm_column', pair.column);
+    ga.getXML(function (response) {
+      var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+      if (answer.result) {
+        var classesLeft = answer.left_bucket;
+        var classesRight = answer.right_bucket;
+        classesLeft.forEach(function (ciClass) {
+          pair.buckets.addLeftChoice(ciClass.value, ciClass.label);
+        });
+        classesRight.forEach(function (ciClass) {
+          pair.buckets.addRightChoice(ciClass.value, ciClass.label);
+        });
+      }
+    });
+  });
+
+  var observer = new MutationObserver(function (mutations) {
+    this.first_table_old_value = this.first_table_new_value;
+    this.second_table_old_value = this.second_table_new_value;
+    if (!this.first_table) {
+      this.first_table = {};
+    }
+    this.vars = {};
+
+    mutations.forEach(function (mutation) {
+      var record = {
+        type: mutation.type,
+        attribute_name: mutation.attributeName,
+        new_value: mutation.target.getAttribute(mutation.attributeName),
+        old_value: mutation.oldValue,
+        input_value: mutation.target.value,
+        element_id: mutation.target.id,
+        child_element_count: mutation.target.childElementCount,
+      };
+      if (record.attribute_name === 'title') {
+        if (record.new_value === 'Invalid reference') {
+          this.vars.containerId = '#' + record.element_id.split('.')[1] + '-filtering-container';
+          $J(this.vars.containerId).hide(800);
+        }
+      }
+      if (record.attribute_name === 'aria-activedescendant' &amp;&amp;
+        (record.element_id === 'sys_display.first-table' || record.element_id === 'sys_display.second-table')) {
+        this.vars.table = record.element_id === 'sys_display.first-table' ? 'first_table' : 'second_table';
+        this.vars.containerId = '#' + record.element_id.split('.')[1] + '-filtering-container';
+        if (!record.new_value &amp;&amp; record.old_value &amp;&amp; record.old_value.slice(10) === this[this.vars.table + '_new_value'] &amp;&amp;
+          this[this.vars.table + '_old_value'] &amp;&amp;
+          this[this.vars.table + '_new_value'] === this[this.vars.table + '_old_value']) {
+          this.first_table.table = true;
+          $J(this.vars.containerId).show(800);
+          setDefaultColumn({
+            sys_id: record.old_value.slice(10),
+            table: record.element_id.split('.')[1],
+          });
+        }
+      }
+      if (record.attribute_name === 'value' &amp;&amp;
+        (record.element_id === 'first-table' || record.element_id === 'second-table')) {
+        if (record.new_value &amp;&amp; record.new_value === record.input_value) {
+          this.vars.table = record.element_id === 'first-table' ? 'first_table' : 'second_table';
+          this.vars.containerId = '#' + record.element_id + '-filtering-container';
+          this[this.vars.table + '_new_value'] = record.new_value;
+          $J(this.vars.containerId).show(800);
+          setDefaultColumn({
+            sys_id: record.new_value,
+            table: record.element_id,
+          });
+          if (record.element_id === 'first-table') {
+            this.first_table.table = true;
+            validation.cmdb_rel.configuration_items.value = this.first_table.table &amp;&amp; this.first_table.column || this.single_ci;
+            if (input.use_cmdb_relationships.val() === 'false') {
+              this.vars.color = this.first_table.table ? colors.validated : colors.not_validated;
+              marker.first_table.css({color: this.vars.color});
+              validation.custom_rel.first_table.value = this.first_table.table;
+            }
+          }
+        } else if (record.element_id === 'first-table') {
+          $J('#first-table-column').val('');
+          input.first_table_column.prop('disabled', true);
+          marker.cmdb_rel_provisioning.css({color: colors.not_validated});
+          validation.cmdb_rel.configuration_items.value = false;
+          marker.first_table.css({color: colors.not_validated});
+          validation.custom_rel.first_table.value = false;
+        }
+      }
+      if (record.type === 'childList') {
+        if (!this.ci_classes) {
+          this.ci_classes = {};
+        }
+        this.ci_classes[record.element_id] = record.child_element_count;
+        var isValidated = this.ci_classes.ci_classes_bs_right || this.ci_classes.ci_classes_ts_right;
+        var color = isValidated ? colors.validated : colors.not_validated;
+        marker.ci_classes_mapping.css({color: color});
+        validation.cmdb_rel.ci_classes.value = isValidated;
+      }
+      if (record.element_id === 'first-table-column') {
+        this.first_table.column = record.new_value;
+        this.vars.isValidated = this.first_table.table &amp;&amp; this.first_table.column || this.single_ci;
+        this.vars.color = this.vars.isValidated ? colors.validated : colors.not_validated;
+        marker.cmdb_rel_provisioning.css({color: this.vars.color});
+        validation.cmdb_rel.configuration_items.value = this.vars.isValidated;
+        if (input.use_cmdb_relationships.val() === 'false') {
+          this.vars.color = this.first_table.column ? colors.validated : colors.not_validated;
+          marker.first_table_column.css({color: this.vars.color});
+          validation.custom_rel.first_table_column.value = this.first_table.column;
+        }
+      }
+      if (record.element_id === 'ci') {
+        this.single_ci = record.new_value;
+        this.vars.isValidated = this.single_ci || this.first_table.table &amp;&amp; this.first_table.column;
+        this.vars.color = this.vars.isValidated ? colors.validated : colors.not_validated;
+        marker.cmdb_rel_provisioning.css({color: this.vars.color});
+        validation.cmdb_rel.configuration_items.value = this.vars.isValidated;
+      }
+    }, this);
+  });
+  observer.observe(document.getElementById('sys_display.first-table'), {
+    attribute: true,
+    attributeFilter: ['title', 'aria-activedescendant'],
+    attributeOldValue: true,
+  });
+  observer.observe(document.getElementById('first-table'), {
+    attribute: true,
+    attributeFilter: ['value'],
+    attributeOldValue: true,
+  });
+  observer.observe(document.getElementById('sys_display.second-table'), {
+    attribute: true,
+    attributeFilter: ['title', 'aria-activedescendant'],
+    attributeOldValue: true,
+  });
+  observer.observe(document.getElementById('second-table'), {
+    attribute: true,
+    attributeFilter: ['value'],
+    attributeOldValue: true,
+  });
+  observer.observe(document.getElementById('ci_classes_bs_right'), {
+    childList: true,
+  });
+  observer.observe(document.getElementById('ci_classes_ts_right'), {
+    childList: true,
+  });
+  observer.observe(document.getElementById('first-table-column'), {
+    attribute: true,
+    attributeFilter: ['value'],
+    attributeOldValue: true,
+  });
+  observer.observe(document.getElementById('ci'), {
+    attribute: true,
+    attributeFilter: ['value'],
+    attributeOldValue: true,
+  });
+
+  $J(document).on('ready', function () {
+    if (input.use_cmdb_relationships.val() === 'false') {
+      showCustomRelationshipsForm();
+    } else {
+      showCmdbRelationshipsBasedForm();
+    }
+    if (input.first_table.val() === '') {
+      input.first_table_column.prop('disabled', true);
+    }
+    if (input.second_table.val() === '') {
+      input.second_table_column.prop('disabled', true);
+    }
+  });
+
+  var tables = ['first-table', 'second-table'];
+  tables.forEach(function (table) {
+    $J('input[name="sys_display.' + table + '"]').on('input keydown', function (event) {
+      if (!event.target.value || event.key === 'Escape') {
+        $J('#' + table + '-column').val('');
+        $J('#display_hidden\\.' + table + '-column').val('');
+        $J('#sys_display\\.' + table + '-column').val('');
+        $J('input[name="sys_display.' + table + '-column"]').prop('disabled', true);
+        $J('#' + table + '-filtering-container').hide(800);
+      } else {
+        $J('input[name="sys_display.' + table + '-column"]').prop('disabled', false);
+      }
+    });
+  });
+
+  input.first_table.on('input keydown', function (event) {
+    if (input.use_cmdb_relationships.val() === 'false') {
+      var color = !event.target.value || event.key === 'Escape'
+        ? colors.not_validated : colors.validated;
+      marker.first_table.css({color: color});
+    }
+  });
+
+  input.first_table_column.on('input keydown', function (event) {
+    var color = !event.target.value || event.key === 'Escape'
+      ? colors.not_validated : colors.validated;
+    marker.cmdb_rel_provisioning.css({color: color});
+    marker.first_table_column.css({color: color});
+  });
+
+  input.single_ci.on('input keydown', function (event) {
+    var color = (!event.target.value || event.key === 'Escape') &amp;&amp;
+      !input.first_table_column.val() ? colors.not_validated : colors.validated;
+    marker.cmdb_rel_provisioning.css({color: color});
+  });
+
+  input.first_service_type.on('change', function (event) {
+    if (event.target.value) {
+      marker.first_service_type.css({color: colors.validated});
+      validation.custom_rel.first_service_type.value = true;
+    }
+  });
+
+  $J('#change-app').on('click', changeAppClick);
+  $J('#save-config').on('click', function () {
+    closeStickyBanner();
+    $J('#notification-error .outputmsg_text ul').empty();
+
+    var allIds = getRequiredFieldIds();
+    $J('#' + allIds.join(', #')).css({'border-color': colors.regular_border});
+
+    var mode = input.use_cmdb_relationships.val() === 'true' ? 'cmdb_rel' : 'custom_rel';
+    var validationErrors = validateFields(mode);
+    var ids = [];
+
+    if (validationErrors.length) {
+      var list = '';
+      validationErrors.forEach(function (obj) {
+        list += '&lt;li&gt;' + obj.error + '&lt;/li&gt;';
+        ids.push(obj.id);
+      });
+      $J('#notification-error .outputmsg_text ul').append(list);
+      $J('#notification-error').removeClass('closed');
+      $J('#' + ids.join(', #')).css({'border-color': colors.not_validated});
+
+      return;
+    }
+
+    $J('#notification-error').addClass('closed');
+    $J(this).prop('disabled', true);
+
+    var values = {
+      first_table_sys_id: gel('first-table').value,
+      first_table_column_label: input.first_table_column.val(),
+      second_table_sys_id: gel('second-table').value,
+      second_table_column_label: input.second_table_column.val(),
+    };
+
+    executeWithConfig(values, function (config) {
+      var data = {
+        config: {
+          use_cmdb_relationships: input.use_cmdb_relationships.val() === 'true',
+          use_service_classification: $J('input[name="use_service_classification"]').prop('checked'),
+          bs_ci_classes: ci_classes_bs.getValues(gel('ci_classes_bs_right')).join(),
+          ts_ci_classes: ci_classes_ts.getValues(gel('ci_classes_ts_right')).join(),
+          enable_ci_provisioning: input.enable_ci_provisioning.prop('checked'),
+        },
+        ci: gel('ci').value,
+        first_table: config.first_table_name,
+        first_table_filter_sys_id: gel('first-table-filtering').value,
+        first_service_type: input.first_service_type.children('option:selected').val(),
+        first_table_column: config.first_table_column_name,
+        relationship: input.relationship.children('option:selected').val(),
+        second_table: config.second_table_name,
+        second_table_filter_sys_id: gel('second-table-filtering').value,
+        second_service_type: input.second_service_type.children('option:selected').val(),
+        second_table_column: config.second_table_column_name,
+      };
+
+      var json = JSON.stringify(data);
+      var ga = new GlideAjax('ServiceProvisioningController');
+      ga.addParam('sysparm_name', 'saveProvisioningConfiguration');
+      ga.addParam('sysparm_json', json);
+      ga.getXML(callback);
+
+      function callback (response) {
+        var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+        if (answer) {
+          if (answer.result) {
+            $J('#notification-info').removeClass('closed');
+          }
+          if (answer.hadValidationWarnings) {
+            showNoteStep2();
+          }
+        }
+        $J('#save-config').prop('disabled', false);
+      }
+    });
+  });
+
+  var bucketIds = [
+    '#ci_classes_bs_left', '#ci_classes_bs_right',
+    '#ci_classes_ts_left', '#ci_classes_ts_right',
+  ].join();
+
+  $J(bucketIds).on('dblclick', sortCIs);
+
+  $J('#ci_classes_bs_left, #ci_classes_ts_left').on('keydown', function (event) {
+    if (event.key === 'ArrowRight') {
+      sortCIs.call(this);
+    }
+  });
+
+  $J('#ci_classes_bs_right, #ci_classes_ts_right').on('keydown', function (event) {
+    if (event.key === 'ArrowLeft') {
+      sortCIs.call(this);
+    }
+  });
+
+  var controls = [
+    '#ci-subset-configuration #addRemoveButtons',
+    '#ci-classes-business-services-mapping #addRemoveButtons',
+    '#ci-classes-technical-services-mapping #addRemoveButtons',
+  ].join();
+
+  $J(controls).on('click', sortCIs);
+
+  $J('a[href="#ci-business-services"]').on('click', function () {
+    $J('#ci-classes-business-services-mapping').collapse('toggle');
+  });
+
+  $J('a[href="#ci-technical-services"]').on('click', function () {
+    $J('#ci-classes-technical-services-mapping').collapse('toggle');
+  });
+
+  if (input.enable_ci_provisioning.is(':checked')) {
+    $J('#ci-provisioning').show();
+  }
+
+  input.enable_ci_provisioning.on('change', function () {
+    $J('#ci-provisioning').toggle(400);
+  });
+
+  input.first_table.on('input paste', function () {
+    input.first_table_column.val('');
+  });
+
+  $J('#lookup\\.first-table').on('click', function () {
+    input.first_table_column.val('');
+  });
+
+  input.second_table.on('input paste', function () {
+    input.second_table_column.val('');
+  });
+
+  $J('#lookup\\.second-table').on('click', function () {
+    input.second_table_column.val('');
+  });
+
+  $J('#revalidate-services').on('click', function () {
+    showLoadingButton();
+    hideNoteStep2();
+    var ga = new GlideAjax('ServiceProvisioningController');
+    ga.addParam('sysparm_name', 'revalidateServices');
+    ga.getXML(callback);
+    function callback (response) {
+      var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+      if (answer &amp;&amp; answer.hadValidationWarnings) {
+        showNoteStep2();
+      }
+      restoreButton();
+    }
+    function showLoadingButton () {
+      $J('#revalidate-services').attr('disabled', 'disabled');
+      // eslint-disable-next-line es5/no-es6-methods
+      $J('#revalidate-services').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt;' + '$[SP]'.repeat(2) + 'Revalidating...');
+    }
+    function restoreButton () {
+      $J('#revalidate-services').removeAttr('disabled');
+      $J('#revalidate-services').html('Revalidate Services');
+    }
+  });
+
+  $J('#view-services').on('click', function () {
+    closeStickyBanner();
+    hideNoteStep2();
+    popupSavedConfigurations();
+    $J('#provision-services').removeAttr('disabled');
+  });
+
+  $J('a.view-services-link').on('click', function () {
+    hideNoteStep2();
+    popupSavedConfigurations();
+    closeStickyBanner();
+  });
+
+  $J('#open-first-table-in-modal').on('click', function () {
+    executeWithTable(gel('first-table').value, function (tableName) {
+      openTableInModal(tableName);
+    });
+  });
+
+  $J('#open-second-table-in-modal').on('click', function () {
+    executeWithTable(gel('second-table').value, function (tableName) {
+      openTableInModal(tableName);
+    });
+  });
+
+  $J('#provision-services').on('click', function () {
+    closeStickyBanner();
+    var gm = new GlideModal('x_pd_integration_services_provisioning_confirmation', true);
+    gm.setTitle('Confirm provisioning');
+    gm.render();
+  });
+
+  input.use_cmdb_relationships.on('change', function () {
+    var ids = getRequiredFieldIds();
+    $J('#' + ids.join(', #')).css({'border-color': colors.regular_border});
+    $J('#notification-info').addClass('closed');
+    $J('#notification-error').addClass('closed');
+    $J('#notification-error .outputmsg_text ul').empty();
+
+    if (input.use_cmdb_relationships.val() === 'true') {
+      showCmdbRelationshipsBasedForm();
+    } else {
+      showCustomRelationshipsForm();
+    }
+  });
+
+  disableFormIfWrongScope();
+});
+
+function getRequiredFieldIds () {
+  var ids = [];
+
+  Object.keys(validation).forEach(function (mode) {
+    Object.keys(validation[mode]).forEach(function (section) {
+      ids.push(validation[mode][section].id);
+    });
+  });
+
+  return ids;
+}
+
+function validateFields (mode) {
+  var validationErrors = [];
+
+  Object.keys(validation[mode]).forEach(function (section) {
+    if (!validation[mode][section].value) {
+      validationErrors.push({
+        id: validation[mode][section].id,
+        error: validation[mode][section].message,
+      });
+    }
+  });
+
+  return validationErrors;
+}
+
+function setDefaultColumn (args) {
+  var sysId = args.sys_id;
+  var table = args.table;
+
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'isTableHasNameColumn');
+  ga.addParam('sysparm_table_sys_id', sysId);
+  ga.getXML(function (response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    if (answer.result) {
+      $J('#' + table + '-column').val(answer.sys_id);
+      $J('#display_hidden\\.' + table + '-column').val('Name');
+      $J('#sys_display\\.' + table + '-column').val('Name');
+    }
+  });
+}
+
+function closeStickyBanner () {
+  $J('#sticky-banner').removeClass('opened');
+  $J('#sticky-banner').addClass('closed');
+}
+
+function closeInfoNotification () {
+  $J('#notification-info').addClass('closed');
+}
+
+function closeErrorNotification () {
+  $J('#notification-error').addClass('closed');
+}
+
+function hideNoteStep2 () {
+  $J('#note-step-2').addClass('closed');
+}
+
+function showNoteStep2 () {
+  $J('#note-step-2').removeClass('closed');
+}
+
+function showCustomRelationshipsForm () {
+  $J('#ci-classes-to-service-types-mapping-container').hide();
+  $J('#cmdb-rel-provisioning-section-label').hide();
+  $J('#cmdb-rel-provisioning').css({border: 'none', padding: '0px'});
+  $J('#first-table-marker').show();
+  $J('#first-table-column-marker').show();
+  $J('#enable-ci-provisioning').hide();
+  $J('#enable-bulk-provisioning').hide();
+  $J('#ci-provisioning').hide();
+  $J('#first-service-type-container').show();
+  $J('#first-service-column').addClass('col-xs-6 right-input-field');
+  $J('#additional-fields-to-set-custom-relationships').show();
+  if ($J('#first-table').val()) {
+    $J('#first-table-marker').css({color: colors.validated});
+    validation.custom_rel.first_table.value = true;
+  } else {
+    $J('#first-table-marker').css({color: colors.not_validated});
+    validation.custom_rel.first_table.value = false;
+  }
+  if ($J('#first-table-column').val()) {
+    $J('#first-table-column-marker').css({color: colors.validated});
+    validation.custom_rel.first_table_column.value = true;
+  }
+}
+
+function showCmdbRelationshipsBasedForm () {
+  $J('#ci-classes-to-service-types-mapping-container').show();
+  $J('#cmdb-rel-provisioning-section-label').show();
+  $J('#cmdb-rel-provisioning').css({border: '1px #e6e9eb solid', padding: '20px'});
+  $J('#first-table-marker').hide();
+  $J('#first-table-column-marker').hide();
+  $J('#enable-ci-provisioning').show();
+  if ($J('input[name="enable_ci_provisioning"]').is(':checked')) {
+    $J('#ci-provisioning').show();
+  } else {
+    $J('#ci-provisioning').hide();
+  }
+  $J('#first-service-type-container').hide();
+  $J('#first-service-column').removeClass('col-xs-6 right-input-field');
+  $J('#additional-fields-to-set-custom-relationships').hide();
+}
+
+function getTableColumns (table, column) {
+  if ($J('input[name="sys_display.' + table + '"]').val() !== '') {
+    $J('input[name="sys_display.' + column + '"]').prop('disabled', false);
+    executeWithTable(gel(table).value, function (tableName) {
+      var ColumnLookup = gel('lookup.' + column);
+      var qualificator = 'name=' + tableName + '^internal_type=string^ORinternal_type=string_full_utf8^ORinternal_type=reference';
+      var tc = gel('sys_display.' + column);
+      tc.onfocus();
+      tc.ac.setRefQual(qualificator);
+      tc.ac.cacheClear();
+      ColumnLookup.setAttribute('onclick', 'mousePositionSave(event); reflistOpen(\'first-table-column\', \'not\', \'sys_dictionary\', \'\', \'false\', \'\', \'' + qualificator + '\')');
+    });
+  }
+}
+
+function changeAppClick () {
+  var xhr = new XMLHttpRequest();
+  xhr.open('PUT', '/api/now/ui/concoursepicker/application', true);
+  xhr.setRequestHeader('Content-type', 'application/json');
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE &amp;&amp; xhr.status === 200) {
+      location.reload();
+    }
+  };
+  xhr.send(JSON.stringify({
+    // eslint-disable-next-line servicenow/no-hardcoded-sysids
+    app_id: '39a9d9664f834e00dd657bb28110c77b',
+  }));
+}
+
+function sortCIs () {
+  // eslint-disable-next-line es5/no-es6-methods
+  var selectId = $J(this).parent().find('select').attr('id');
+  var idComponents = selectId.split('_');
+  idComponents.pop();
+  var bucketsSectionId = '#' + idComponents.join('_');
+
+  var leftBucket = [];
+  var rightBucket = [];
+  $J(bucketsSectionId + '_left option').each(function () {
+    leftBucket.push({value: $J(this).val(), text: $J(this).text()});
+  });
+  $J(bucketsSectionId + '_right option').each(function () {
+    rightBucket.push({value: $J(this).val(), text: $J(this).text()});
+  });
+  $J(bucketsSectionId + '_left option').remove();
+  $J(bucketsSectionId + '_right option').remove();
+
+  // eslint-disable-next-line array-callback-return, consistent-return
+  leftBucket.sort(function (a, b) {
+    if (a.text &lt; b.text) {
+      return -1;
+    }
+  }).forEach(function (ciClass) {
+    $J(bucketsSectionId + '_left').append(new Option(ciClass.text, ciClass.value));
+  });
+  // eslint-disable-next-line array-callback-return, consistent-return
+  rightBucket.sort(function (a, b) {
+    if (a.text &lt; b.text) {
+      return -1;
+    }
+  }).forEach(function (ciClass) {
+    $J(bucketsSectionId + '_right').append(new Option(ciClass.text, ciClass.value));
+  });
+}
+
+function popupSavedConfigurations () {
+  var tableName = 'x_pd_integration_pagerduty_service_provisioning';
+  var url = tableName + '_list.do?sysparm_view=sys_popup&amp;sysparm_query=GROUPBYparent_ci_name^provisioned=false';
+  window.g_navigation.openPopup(url, '', '');
+}
+
+function openTableInModal (tableName) {
+  window.g_navigation.openPopup(tableName + '_list.do', 'target-ci-table', 'width=800,height=500');
+}
+
+function disableFormIfWrongScope () {
+  if ($J('#wrong_scope_msg').length !== 0) {
+    $J('input').prop('disabled', true);
+    $J('select').prop('disabled', true);
+    $J('button').prop('disabled', true);
+  }
+}
+
+function goToTop () {
+  if (window !== window.top) {
+    parent.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  } else {
+    document.body.scrollTop = 0; // For Chrome, Safari and Opera
+    document.documentElement.scrollTop = 0; // For IE and Firefox
+  }
+}
+
+function executeWithTable (tableSysId, callback) {
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'getTableName');
+  ga.addParam('sysparm_table_sys_id', tableSysId);
+  ga.getXMLAnswer(function (answer) {
+    answer = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+    if (answer.result) {
+      callback(answer.result);
+    } else {
+      jslog(answer.error);
+    }
+  });
+}
+
+function executeWithConfig (config, callback) {
+  var jsonString = JSON.stringify(config);
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'getData');
+  ga.addParam('sysparm_config', jsonString);
+  ga.getXML(function (response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    if (answer.errors.length) {
+      jslog('Error(s) occurred on config save:');
+      jslog(answer.errors);
+    } else {
+      callback(answer.results);
+    }
+  });
+}
+</client_script>
+        <description>Services Provisioning</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_services_provisioning.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+
+  &lt;g:evaluate&gt;
+    var columns = [
+      'use_cmdb_relationships',
+      'use_service_classification',
+      'bs_ci_classes',
+      'ts_ci_classes',
+      'enable_ci_provisioning',
+      'enable_bulk_provisioning'
+    ];
+
+    var props = {};
+    var grConfig = new GlideRecordSecure('x_pd_integration_pagerduty_service_provisioning_configuration');
+    grConfig.query();
+    if (grConfig.next()) {
+      columns.forEach(function(column) {
+        props[column] = '' + grConfig[column];
+      });
+    }
+
+    var session = gs.getSession();
+    var isWrongScope = session.getCurrentApplicationId() != '39a9d9664f834e00dd657bb28110c77b';
+  &lt;/g:evaluate&gt;
+
+  &lt;style&gt;
+    #use-cmdb-relationships {
+      margin-bottom: 15px;
+    }
+    #revalidate-services {
+      margin-right: 2rem;
+    }
+    #ci-classes-to-service-types-mapping,
+    #cmdb-rel-provisioning {
+      margin-bottom: 15px;
+      padding: 20px;
+      border: 1px #e6e9eb solid;
+      border-radius: 3px;
+    }
+    #use-bs-service-classification,
+    #use-ts-service-classification {
+      padding-left: 15px;
+    }
+    #ci-provisioning {
+      margin-bottom: 10px;
+    }
+    .section-label {
+      font-size: 1.05em;
+      margin-bottom: 5px;
+    }
+    .asterisk {
+      color: #c83c36;
+      margin-right: 2px;
+    }
+    .custom-provisioning-configuration {
+      padding: 10px;
+      margin: 15px 0 5px 0;
+    }
+    .btn-custom {
+      margin-top: 20px;
+      float: right;
+    }
+    .note {
+      padding: 10px;
+      margin-bottom: 18px;
+      border: 1px solid #68abda;
+      background-color: #c3ddf0;
+      color: #161b1c;
+      border-radius: 3px;
+    }
+    #sticky-banner,
+    #notification-info,
+    #notification-error {
+      margin-left: 0px;
+      margin-right: 0px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    #sticky-banner .notification-icon,
+    #notification-info .notification-icon,
+    #notification-error .notification-icon {
+      float:left;
+    }
+    #sticky-banner .outputmsg_text,
+    #notification-info .outputmsg_text,
+    #notification-error .outputmsg_text {
+      display: block;
+      padding-left: 22px;
+      padding-right: 22px;
+    }
+    #sticky-banner .notification,
+    #notification-info .notification,
+    #notification-error .notification {
+      padding: var(--now-global-space--md, 10px);
+    }
+    #sticky-banner .outputmsg_container,
+    #notification-info .outputmsg_container,
+    #notification-error .outputmsg_container {
+      padding: 0px;
+    }
+    #sticky-banner .notification-info,
+    #notification-info .notification-info {
+      background-color: #dcdcdc;
+      border-color: #acacac;
+    }
+    .slider {
+      overflow-y: hidden;
+      max-height: 110px;
+      transition-property: all;
+      transition-duration: 1s;
+      transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+    }
+    .slider.closed {
+      max-height: 0;
+    }
+    .outputmsg {
+      margin: 0;
+    }
+    .provisioning-info {
+      clear: both;
+      padding: 10px;
+    }
+    .step-container {
+      overflow: hidden;
+    }
+    .step-header {
+      font-size: 1.5rem;
+      margin-top: 5px;
+      color: #161b1c;
+      text-transform: uppercase;
+    }
+    .checkbox {
+      margin: 0;
+    }
+    .panel {
+      margin-bottom: 10px;
+      border-color: #ddd;
+    }
+    .panel-heading {
+      height: 32px;
+    }
+    .panel-title {
+      font-size: 13px;
+    }
+    .vertical-indent {
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+    .left-input-field {
+      padding-left: 0;
+    }
+    .right-input-field {
+      padding-right: 0;
+    }
+    @media (min-width: 1200px) {
+      html[data-doctype="true"] .slushbucket .glide-list select {
+        max-width: 100%;
+      }
+    }
+    .form-control[disabled] {
+      border: 1px solid rgb(var(--now-form-field--border-color, 203, 203, 203));
+    }
+  &lt;/style&gt;
+
+  &lt;style&gt;
+    .error { color: #c83c36; }
+    .sticky-banner { position: absolute; left: 0px; top: -5px; z-index: 25; width: 100%; }
+    .sticky-banner .border { border: 1px solid; }
+    .sticky-banner .left { float: left; }
+    .sticky-banner .right { float: right; }
+    .sticky-banner .icon-loading { width: 13px; height: 13px; font-size: 13px; margin-top: 2px; margin-left: 4px; }
+    .sticky-banner .width100 { width: 100%; }
+    .sticky-banner.slider.opened { max-height: 280px; }
+  &lt;/style&gt;
+
+  &lt;div class="col-sm-8"&gt;
+    &lt;div id="sticky-banner" class="sticky-banner slider closed"&gt;
+      &lt;div class="outputmsg_div "&gt;
+        &lt;div id="output_messages" class="outputmsg_container"&gt;
+          &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
+          &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeStickyBanner()"&gt;
+          &lt;/button&gt;
+          &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
+            &lt;div role="alert" class="outputmsg outputmsg_info notification notification-info border"&gt;
+              &lt;span class="notification-icon icon-info"&gt;&lt;span class="sr-only"&gt;Info Message&lt;/span&gt;&lt;/span&gt;
+              &lt;div class="outputmsg_text"&gt;
+                &lt;j2:whitespace trim="false"&gt;
+                  &lt;p&gt;&lt;span id="provisioned"&gt;Some of the services have&lt;/span&gt; been provisioned.&lt;/p&gt;
+                  &lt;p&gt;&lt;span id="skipped"&gt;Some of the services have&lt;/span&gt; been skipped due to provisioning errors.&lt;/p&gt;
+                  &lt;p&gt;Click the &lt;a class="view-services-link" href="#"&gt;&lt;strong&gt;[View Services]&lt;/strong&gt;&lt;/a&gt; link to view the services.&lt;/p&gt;
+                  &lt;p&gt;
+                    Note:
+                    The Provisioned flag will take time to be turned to [true] based on the number of services being provisioned.
+                    Please wait a few minutes and refresh.
+                  &lt;/p&gt;
+                  &lt;p id="sticky-banner-progress"&gt;
+                    &lt;label for="progress-bar"&gt;Associating services... &lt;/label&gt;
+                    &lt;span class="services-text"&gt;&lt;/span&gt;
+                    &lt;span class="icon icon-loading color-black right"&gt;&lt;/span&gt;
+                    &lt;span class="relation right"&gt;&lt;/span&gt;
+                    &lt;span class="timeleft right"&gt;&lt;/span&gt;
+                  &lt;/p&gt;
+                  &lt;p&gt;
+                    &lt;progress id="progress-bar" class="width100" value="0" max="100"&gt;&lt;/progress&gt;
+                  &lt;/p&gt;
+                  &lt;p id="sticky-banner-error" class="error"&gt;&lt;/p&gt;
+                &lt;/j2:whitespace&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class="col-sm-8"&gt;
+    &lt;j:if test="${HTML:isWrongScope}"&gt;
+      &lt;div id="wrong_scope_msg" class="outputmsg_nav"&gt;
+        &lt;img src="images/icon_nav_info.png"/&gt;
+        &lt;span class="outputmsg_nav_inner"&gt;$[SP]This settings available only in the
+        &lt;a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b"&gt;
+        &lt;strong&gt;PagerDuty Incident Resolution Platform&lt;/strong&gt;$[SP]application&lt;/a&gt;,$[SP]to change the application click$[SP]
+        &lt;a id="change-app"&gt;here&lt;/a&gt;.&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/j:if&gt;
+
+    &lt;div class="panel panel-body"&gt;
+      &lt;div class="provisioning-info"&gt;
+        &lt;p&gt;
+          This section is intended for Configuration Items (CI) provisioning based on relationships set in the
+          &lt;a href="/x_pd_integration_pagerduty_service_provisioning_list.do" target="_blank"&gt;
+            $[SP]PagerDuty Service Provisioning$[SP]
+          &lt;/a&gt;
+          table.
+        &lt;/p&gt;
+        &lt;p&gt;
+          Actions below allow to overview dependency map and trigger CIs provisioning into PagerDuty.
+        &lt;/p&gt;
+        &lt;p class="note"&gt;
+          Note: The relationship would only provision services matching the criteria at present.
+          It will not provision any future services matching this criteria.
+        &lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div class="provisioning-info step-container"&gt;
+        &lt;p class="step-header"&gt;
+          Step 1
+        &lt;/p&gt;
+        &lt;p&gt;
+          You can add multiple set of services relationships to be provisioned in PagerDuty.
+          Select a relationship information and Save relationship before adding a new relationship.
+          This will continuously add the new relationships to be taken for services provisioning.
+        &lt;/p&gt;
+        &lt;p class="note"&gt;
+          Note: PagerDuty does not handle the circular dependencies available in ServiceNow.
+        &lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div id="notification"&gt;
+        &lt;div id="notification-info" class="slider closed"&gt;
+          &lt;div class="outputmsg_div"&gt;
+            &lt;div id="output_messages" class="outputmsg_container"&gt;
+              &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
+              &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeInfoNotification()"&gt;
+              &lt;/button&gt;
+              &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
+                &lt;div role="alert" class="outputmsg outputmsg_info notification notification-info"&gt;
+                  &lt;span class="notification-icon icon-info"&gt;
+                    &lt;span class="sr-only"&gt;Info Message&lt;/span&gt;
+                  &lt;/span&gt;
+                  &lt;span class="outputmsg_text"&gt;Configuration saved and CIs that met the criteria have been added into the table&lt;/span&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id="notification-error" class="slider closed"&gt;
+          &lt;div class="outputmsg_div"&gt;
+            &lt;div id="output_messages" class="outputmsg_container"&gt;
+              &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
+              &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeErrorNotification()"&gt;
+              &lt;/button&gt;
+              &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
+                &lt;div role="alert" class="outputmsg outputmsg_error notification notification-error"&gt;
+                  &lt;span class="notification-icon icon-cross-circle"&gt;
+                    &lt;span class="sr-only"&gt;Error Message&lt;/span&gt;
+                  &lt;/span&gt;
+                  &lt;span class="outputmsg_text"&gt;
+                    Required fields are not filled in. Please complete the configuration:
+                    &lt;ul&gt;&lt;/ul&gt;
+                  &lt;/span&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      
+      &lt;div class="custom-provisioning-configuration"&gt;
+        &lt;g:ui_form&gt;
+          &lt;div id="use-cmdb-relationships"&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              label="Provision using CMDB relationship table"
+              name="use_cmdb_relationships"
+              value="${HTML:props.use_cmdb_relationships}"
+              values="${HTML:['true', 'false']}"
+              options="${HTML:['Yes (Default)', 'No (Custom Relationships)']}"
+            /&gt;
+          &lt;/div&gt;
+
+          &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+          &lt;div id="ci-classes-to-service-types-mapping-container"&gt;
+            &lt;p class="section-label"&gt;&lt;span id="ci-classes-mapping-section-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+              Choose CI classes to be provisioned
+            &lt;/p&gt;
+            &lt;div id="ci-classes-to-service-types-mapping"&gt;
+            &lt;div id="use-service-classification"&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Use service classification where applicable"
+                  type="checkbox"
+                  name="use_service_classification"
+                  value="${HTML:props.use_service_classification}"
+                /&gt;
+            &lt;/div&gt;
+
+            &lt;div class="panel panel-default"&gt;
+              &lt;div class="panel-heading" role="tab"&gt;
+                &lt;h4 class="panel-title"&gt;
+                  &lt;a role="button" href="#ci-business-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-business-services"&gt;
+                    Select CI Classes which will be provisioned as Business Service
+                  &lt;/a&gt;
+                &lt;/h4&gt;
+              &lt;/div&gt;
+
+              &lt;div id="ci-classes-business-services-mapping" class="panel-collapse collapse" role="tabpanel"&gt;
+                &lt;div class="panel-body"&gt;
+                  &lt;g:ui_slushbucket name="ci_classes_bs" left_header="CI Classes" right_header="Business Services" up_down="false"/&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class="panel panel-default"&gt;
+              &lt;div class="panel-heading" role="tab"&gt;
+                &lt;h5 class="panel-title"&gt;
+                  &lt;a role="button" href="#ci-technical-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-technical-services"&gt;
+                    Select CI Classes which will be provisioned as Technical Service
+                  &lt;/a&gt;
+                &lt;/h5&gt;
+              &lt;/div&gt;
+
+              &lt;div id="ci-classes-technical-services-mapping" class="panel-collapse collapse" role="tabpanel"&gt;
+                &lt;div class="panel-body"&gt;
+                  &lt;g:ui_slushbucket name="ci_classes_ts" left_header="CI Classes" right_header="Technical Services" up_down="false"/&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+          &lt;div id="cmdb-rel-provisioning-section-label"&gt;
+            &lt;p class="section-label"&gt;&lt;span id="cmdb-rel-provisioning-section-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+              Choose Table with CIs or a single CI to be provisioned along with dependencies
+            &lt;/p&gt;
+          &lt;/div&gt;
+          &lt;div id="cmdb-rel-provisioning"&gt;
+            &lt;div id="bulk-provisioning"&gt;
+              &lt;div id="first-ci-table"&gt;
+                &lt;label for="first-table"&gt;
+                  &lt;div&gt;&lt;span id="first-table-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+                    Select CI Table containing services
+                  &lt;/div&gt;
+                &lt;/label&gt;
+                &lt;g:ui_reference name="first-table" id="first-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('first-table', 'first-table-column')" label="" /&gt;
+
+                &lt;div id="first-table-filtering-container" style="display: none"&gt;
+                  &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                  &lt;a href="#" id="open-first-table-in-modal"&gt;Open selected table to set and save filter&lt;/a&gt;
+                  &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                  &lt;label for="first-table-filtering"&gt;
+                    Select filter
+                  &lt;/label&gt;
+                  &lt;g:ui_reference name="first-table-filtering" id="first-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" /&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+
+              &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+              &lt;div id="first-service-type-and-column"&gt;
+                &lt;div id="first-service-type-container" class="col-xs-6 left-input-field" style="display: none"&gt;
+                  &lt;div class="form-group"&gt;
+                    &lt;label class="control-label" for="first_service_type"&gt;
+                      &lt;div&gt;
+                        &lt;span id="first-service-type-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+                        Select the type of service to be provisioned
+                      &lt;/div&gt;
+                    &lt;/label&gt;
+                    &lt;select id="first-service-type" class="form-control" name="first_service_type"&gt;
+                      &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
+                      &lt;option value="business_service"&gt;Business Service&lt;/option&gt;
+                      &lt;option value="technical_service"&gt;Technical Service&lt;/option&gt;
+                    &lt;/select&gt;
+                    &lt;span id="first_service_type_help" class="help-block"&gt;&lt;/span&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div id="first-service-column"&gt;
+                  &lt;label for="first-table-column"&gt;
+                    &lt;div&gt;
+                      &lt;span id="first-table-column-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+                      Select column for service name
+                    &lt;/div&gt;
+                  &lt;/label&gt;
+                  &lt;g:ui_reference name="first-table-column" id="first-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" /&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+
+              &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+              &lt;div id="additional-fields-to-set-custom-relationships" style="display: none; clear: both"&gt;
+                &lt;div id="relationship"&gt;
+                  &lt;div class="form-group"&gt;
+                    &lt;label class="control-label" for="relationship"&gt;
+                      Select relationship between services to be provisioned
+                    &lt;/label&gt;
+                    &lt;select class="form-control" name="relationship"&gt;
+                      &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
+                      &lt;option value="consumes"&gt;consumes&lt;/option&gt;
+                      &lt;option value="consumed_by"&gt;consumed by&lt;/option&gt;
+                    &lt;/select&gt;
+                    &lt;span id="relationship_help" class="help-block"&gt;&lt;/span&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                &lt;div id="second-ci-table"&gt;
+                  &lt;label for="second-table"&gt;
+                    Select CI Table containing services
+                  &lt;/label&gt;
+                  &lt;g:ui_reference name="second-table" id="second-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('second-table', 'second-table-column')" label="" /&gt;
+
+                  &lt;div id="second-table-filtering-container" style="display: none"&gt;
+                    &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                    &lt;a href="#" id="open-second-table-in-modal"&gt;Open selected table to set and save filter&lt;/a&gt;
+                    &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                    &lt;label for="second-table-filtering"&gt;
+                      Select filter
+                    &lt;/label&gt;
+                    &lt;g:ui_reference name="second-table-filtering" id="second-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" /&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+
+                &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+                &lt;div id="second-service-type-and-column"&gt;
+                  &lt;div id="second-service-type" class="col-xs-6 left-input-field"&gt;
+                    &lt;div class="form-group"&gt;
+                      &lt;label class="control-label" for="second_service_type"&gt;
+                        Select the type of service to be provisioned
+                      &lt;/label&gt;
+                      &lt;select class="form-control" name="second_service_type"&gt;
+                        &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
+                        &lt;option value="business_service"&gt;Business Service&lt;/option&gt;
+                        &lt;option value="technical_service"&gt;Technical Service&lt;/option&gt;
+                      &lt;/select&gt;
+                      &lt;span id="second_service_type_help" class="help-block"&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div id="second-service-column" class="col-xs-6 right-input-field"&gt;
+                    &lt;label for="second-table-column"&gt;
+                      Select column for service name
+                    &lt;/label&gt;
+                    &lt;g:ui_reference name="second-table-column" id="second-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" /&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+            &lt;div id="enable-ci-provisioning"&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                label="Provisioning single CI along with its dependencies"
+                type="checkbox"
+                name="enable_ci_provisioning"
+                value="${HTML:props.enable_ci_provisioning}"
+              /&gt;
+            &lt;/div&gt;
+
+            &lt;div class="vertical-indent"&gt;&lt;/div&gt;
+            &lt;div id="ci-provisioning" style="display: none"&gt;
+              &lt;label for="ci"&gt;Select CI&lt;/label&gt;
+              &lt;g:ui_reference name="ci" id="ci" table="cmdb_ci" completer="AJAXTableCompleter" columns="sys_class_name;x_pd_integration_pagerduty_service" show_popup="false" label="" /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/g:ui_form&gt;
+        &lt;button id="save-config" class="btn btn-primary btn-custom"&gt;
+          Save Configuration
+          &lt;span class="sr-only"&gt;Save Configuration&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="provisioning-info step-container"&gt;
+        &lt;p class="step-header"&gt;
+          Step 2
+        &lt;/p&gt;
+        &lt;p&gt;
+          The list of services based on all the relationship configurations you selected above
+          will be displayed by clicking View Services. Please review the services and relationships
+          that will be provisioned and accept it before proceeding to Provisioning.
+        &lt;/p&gt;
+        &lt;div id="note-step-2" class="closed slider"&gt;
+          &lt;p class="note"&gt;
+            Note: Please click the "View Services" button to check for validation warnings before provisioning.
+          &lt;/p&gt;
+        &lt;/div&gt;
+        &lt;button id="view-services" class="btn btn-primary btn-custom"&gt;
+          View Services
+        &lt;/button&gt;
+        &lt;button id="revalidate-services" class="btn btn-custom"&gt;
+          Revalidate Services
+        &lt;/button&gt;
+      &lt;/div&gt;
+      &lt;div class="provisioning-info step-container"&gt;
+        &lt;p class="step-header"&gt;
+          Step 3
+        &lt;/p&gt;
+        &lt;p&gt;
+          The list of services that you have reviewed will be now provisioned in this step.
+          Click on Provision Services to provision the services in PagerDuty account.
+        &lt;/p&gt;
+        &lt;p class="note"&gt;
+          Note: Once these services are provisioned you would be able to deprovision
+          only on the CI details page per service.
+        &lt;/p&gt;
+        &lt;button id="provision-services" class="btn btn-primary btn-custom" disabled="disabled"&gt;
+          Provision Services
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/j:jelly&gt;
+</html>
+        <name>services_provisioning</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-07-15 22:15:50</sys_created_on>
+        <sys_id>66eaed55dbc210108e65e1bb4b961920</sys_id>
+        <sys_mod_count>384</sys_mod_count>
+        <sys_name>services_provisioning</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_66eaed55dbc210108e65e1bb4b961920</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-17 20:14:14</sys_updated_on>
+    </sys_ui_page>
+</record_update>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyTest</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>/*** Changes made to this script are not supported by PagerDuty ***/&#13;
+PagerDuty Test methods</description>
+        <name>PagerDutyTest</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+/*
+ * Class for testing PagerDuty components
+ *
+ * Usage: run scripts from background scripts to test a specific function
+ *
+ * var pdtest = new x_pd_integration.PagerDutyTest();
+ * pdtest.testGetREST();
+ *
+ */
+
+var PagerDutyTest = Class.create();
+PagerDutyTest.prototype = {
+  initialize: function () {
+    this.JSON = new global.JSON();
+  },
+
+  /**
+    * Test API connection settings by making a REST get call for incident count
+    * @return {Boolean} true if successful
+    */
+  testConnection: function () {
+    try {
+      gs.info('Testing PagerDuty API connection');
+      var testFeature = 'incidents/count';
+      var token = gs.getProperty('x_pd_integration.api_key');
+      var baseEndpoint = gs.getProperty('x_pd_integration.rest_api_endpoint');
+
+      if (gs.nil(token) || gs.nil(baseEndpoint)) {
+        gs.warn('You must set the base endpoint and access key properties first');
+        return false;
+      }
+
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var response = rest.getREST(testFeature, {});
+      var status = response.getStatusCode();
+      if (status === 200) {
+        gs.info('Connection test successful (200)');
+        return true;
+      }
+      gs.info('Connection test failed (' + status + ')');
+      return false;
+    } catch (ex) {
+      gs.error('PagerDuty API test script failed: ${0}', ex);
+      return false;
+    }
+  },
+
+
+  /**
+   * Test PagerDuty_REST put wrapper
+   * @param {String} feature path
+   * @param {Object} request body
+   * @return void - see debug output
+   */
+  testPutREST: function (feature, body) {
+    try {
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var feature = feature;
+      var response = rest.putREST(feature, body);
+
+      gs.debug(
+        'testPutREST status:{0}, body:{1}, haveError:{2}, errorMessage:{3}',
+        response.getStatusCode(),
+        response.getBody(),
+        response.haveError(),
+        response.getErrorMessage()
+      );
+    } catch (ex) {
+      gs.error('testPutREST error: {0}', ex);
+    }
+  },
+
+
+  /**
+   * Test PagerDuty_REST get wrapper
+   * @return void - see debug output
+   */
+  testGetREST: function (feature) {
+    try {
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var response = rest.getREST(feature);
+
+      gs.debug(
+        'testGetREST status:{0}, body:{1}, haveError:{2}, errorMessage:{3}',
+        response.getStatusCode(),
+        response.getBody(),
+        response.haveError(),
+        response.getErrorMessage()
+      );
+    } catch (ex) {
+      gs.error('testGetREST error: {0}', ex);
+    }
+  },
+
+
+  /**
+   * Test REST post wrapper
+   * @param {String} feature path
+   * @param {Object} request body
+   * @return void - see debug output
+   */
+  testPostREST: function (feature, body) {
+    try {
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var feature = feature;
+      var response = rest.putREST(feature, body);
+
+      gs.debug(
+        'testPostREST status:{0}, body:{1}, haveError:{2}, errorMessage:{3}',
+        response.getStatusCode(),
+        response.getBody(),
+        response.haveError(),
+        response.getErrorMessage()
+      );
+    } catch (ex) {
+      gs.error('testPostREST error: {0}', ex);
+    }
+  },
+
+
+  /**
+   * Test REST post event wrapper
+   * @return void - see debug output
+   */
+  testPostEvent: function (body) {
+    try {
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var response = rest.postEvent(body);
+      gs.debug(
+        'testPostREST status:{0}, body:{1}, haveError:{2}, errorMessage:{3}',
+        response.getStatusCode(),
+        response.getBody(),
+        response.haveError(),
+        response.getErrorMessage()
+      );
+    } catch (ex) {
+      gs.error('testPostEvent error: {0}', ex);
+    }
+  },
+
+
+  /**
+   * Validate user basic authentication
+   * @return {Boolean} true if successful
+   */
+  testUserAuth: function () {
+    try {
+      gs.info('Testing ServiceNow user authentication');
+      var baseURL = gs.getProperty('glide.servlet.uri');
+      var pdRestApi = gs.getProperty('x_pd_integration.webhook_restapi');
+      var url = baseURL + pdRestApi + '/userauth';
+
+      var restMessage = new sn_ws.RESTMessageV2();
+      // restMessage.setHttpMethod("get");
+      restMessage.setHttpMethod('post');
+      restMessage.setRequestHeader('Content-Type', 'application/json');
+      restMessage.setBasicAuth(
+        gs.getProperty('x_pd_integration.sn_auth_user'),
+        gs.getProperty('x_pd_integration.sn_auth_userpwd')
+      );
+      restMessage.setEndpoint(url);
+
+      // Execute
+      var response = restMessage.execute();
+      var status = response.getStatusCode();
+      if (status === 200) {
+        gs.info('ServiceNow user authentication test successful (200)');
+        return true;
+      }
+      gs.info('ServiceNow user authentication test failed (' + status + ')');
+      return false;
+    } catch (ex) {
+      gs.error('ServiceNow user authentication test script failed: ${0}', ex);
+      return false;
+    }
+  },
+
+  /**
+   * Validate that the "Default User ID" was setup correctly
+   * @return {Boolean} true if successful
+   */
+  testDefaultUserConfig: function () {
+
+    var pdServiceAccountEmail;
+
+    try {
+
+      gs.info('Validating that the default user ID has been setup correctly on the ServiceNow side...');
+      var defaultUserConfigured = gs.getProperty('x_pd_integration.default_user');
+      var pdServiceAccount = gs.getProperty('x_pd_integration.sn_auth_user');
+
+      // Check if a default user is present
+      if (!gs.nil(defaultUserConfigured)) {
+        gs.info('[' + '\u2714' + '] A default user ID is configured on the PagerDuty Settings page: ' + defaultUserConfigured);
+      } else {
+        gs.info('[' + '\u2717' + '] A default user ID is not configured on the PagerDuty Settings page.');
+        return false;
+      }
+
+
+      // Check if the ServiceNow user account configured on the PagerDuty Settings
+      // page has the PagerDuty User ID associated with it (in ServiceNow)
+      if (!gs.nil(pdServiceAccount)) {
+        gs.info('[' + '\u2714' + '] A ServiceNow account is configured on the PagerDuty Settings page: ' + pdServiceAccount);
+
+        var gr = new GlideRecordSecure('sys_user');
+        gr.addQuery('user_name', pdServiceAccount);
+        gr.query();
+        if (gr.next()) {
+          gs.info('[' + '\u2714' + '] A record matching the ServiceNow ' +
+          'user configured on the PagerDuty Settings page was found in your sys_user table.');
+
+
+          // Here we want to check if the IDs match
+          // The PagerDuty Default User ID needs to be the same
+          // PagerDuty User ID on the user record for the service account that we use
+          // The service account is a ServiceNow user
+          if (gr.x_pd_integration_pagerduty_id == defaultUserConfigured) {
+            // Success -- the IDs match
+            gs.info('[' + '\u2714' + '] The Pagerduty Default User ID matches the PagerDuty ' +
+            'User ID on the ServiceNow user account that the integration uses.');
+          } else {
+            // PagerDuty User IDs do not match
+            gs.info('[' + '\u2717' + '] User IDs do not match: the PagerDuty Default User ' +
+            'ID (on the PagerDuty Settings page) does not match the PagerDuty User ID for ' +
+            'the ServiceNow user: ' + pdServiceAccount);
+            return false;
+          }
+
+          // Make sure there is an email address
+          if (!gs.nil(gr.email)) {
+            gs.info('[' + '\u2714' + '] The ServiceNow user ' + pdServiceAccount +
+            ' has an email address provided.');
+            pdServiceAccountEmail = gr.email;
+          } else {
+            gs.info('[' + '\u2717' + '] The ServiceNow user account ' + pdServiceAccount +
+            ' does not have an email address provided.');
+            return false;
+          }
+
+
+        } else {
+          // ServiceNow user record was not found
+          gs.info('[' + '\u2717' + '] Could not find the ServiceNow user account ' +
+          'that was configured on the PagerDuty Settings page in your sys_user table.');
+          gs.info('The ServiceNow user you configured on the PagerDuty Settings page is: ' + pdServiceAccount);
+          return false;
+        }
+      } else {
+        // ServiceNow account is not configured on the PD Settings page
+        gs.info('[' + '\u2717' + '] A ServiceNow user account is not configured on the PagerDuty Settings page.');
+        return false;
+      }
+
+
+      // Now check user config on the PD side
+      var checkPdConfig = this.checkPDUserConfig(defaultUserConfigured, pdServiceAccount, pdServiceAccountEmail);
+      if (checkPdConfig) {
+        gs.info('[' + '\u2714' + '] Your settings appear to be correct and validation tests have passed.');
+        gs.info('This validation script is now done.');
+        return true;
+      }
+      gs.info('[' + '\u2717' + '] Your settings were not successfully validated. Please check the above errors.');
+      return false;
+    } catch (ex) {
+      gs.error('ServiceNow default user test script failed: ${0}', ex);
+      return false;
+    }
+  },
+
+  checkPDUserConfig: function (pduser, sn_user, sn_email) {
+
+    // Settings page is setup correctly
+    // Now we will check some settings on the PagerDuty side
+    try {
+      gs.info('Validating the user account on the PagerDuty side...');
+      var userEndpoint = 'users/' + pduser;
+      var token = gs.getProperty('x_pd_integration.api_key');
+      var baseEndpoint = gs.getProperty('x_pd_integration.rest_api_endpoint');
+
+      if (gs.nil(token) || gs.nil(baseEndpoint)) {
+        gs.warn('You must set the base endpoint in the PagerDuty Settings page first.');
+        return;
+      }
+
+      var rest = new x_pd_integration.PagerDuty_REST();
+      var response = rest.getREST(userEndpoint, {});
+      var responseBody = response.getBody();
+      var status = response.getStatusCode();
+      if (status === 200) {
+        gs.info('[' + '\u2714' + '] Found the PagerDuty user with ID: ' + pduser);
+
+        var body = this.JSON.decode(responseBody);
+        if (body.user.email.toLowerCase() == sn_email.toLowerCase()) {
+          gs.info('[' + '\u2714' + '] The email address on the ServiceNow user record ' + sn_user +
+               ' matches the email address on the PagerDuty user ' + pduser);
+        } else {
+          gs.info('[' + '\u2717' + '] The email address on the ServiceNow user record ' + sn_user +
+               ' does not match the email address on the PagerDuty user ' + pduser);
+          return;
+        }
+
+        /*
+        // Check the email address of the PagerDuty user
+        // and make sure it matches to email address for the ServiceNow user
+        if (gs.nil(body.user)) {
+          this._setError(me, "Could not find user " + pduser);
+          return;
+        }
+        userEmail = body.user.email;
+
+        var userEmail = body.user.email;
+        gs.info("email is " + userEmail);
+        */
+
+      } else {
+        gs.info('Connection test failed (' + status + ')');
+        gs.info('[' + '\u2717' + '] Could not find a PagerDuty User with ID: ' + pduser);
+        return;
+      }
+
+    } catch (ex) {
+      gs.error('PagerDuty API test script failed: ${0}', ex);
+    }
+    return true;
+  },
+
+  type: 'PagerDutyTest'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-15 19:02:47</sys_created_on>
+        <sys_id>c700823e4f474e00dd657bb28110c7ca</sys_id>
+        <sys_mod_count>64</sys_mod_count>
+        <sys_name>PagerDutyTest</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_c700823e4f474e00dd657bb28110c7ca</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-19 13:29:24</sys_updated_on>
+    </sys_script_include>
+</record_update>

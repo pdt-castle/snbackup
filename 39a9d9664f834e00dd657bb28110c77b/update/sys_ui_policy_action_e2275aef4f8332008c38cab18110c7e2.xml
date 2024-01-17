@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_policy_action">
+    <sys_ui_policy_action action="INSERT_OR_UPDATE">
+        <disabled>ignore</disabled>
+        <field>run_lookup_script</field>
+        <mandatory>true</mandatory>
+        <sys_class_name>sys_ui_policy_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-06-05 17:10:25</sys_created_on>
+        <sys_id>e2275aef4f8332008c38cab18110c7e2</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>run_lookup_script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_policy_action_e2275aef4f8332008c38cab18110c7e2</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-06-05 17:10:25</sys_updated_on>
+        <table>x_pd_integration_pagerduty_inbound_field_rule</table>
+        <ui_policy display_value="PD IFR hide or show set from payload fields">cee442374f3ef60016183ce18110c778</ui_policy>
+        <visible>true</visible>
+    </sys_ui_policy_action>
+</record_update>

@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyCustomFieldsOutboundSync</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script for custom fields outbound syncronization</description>
+        <name>PagerDutyCustomFieldsOutboundSync</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyCustomFieldsOutboundSync = Class.create();
+PagerDutyCustomFieldsOutboundSync.prototype = {
+  initialize: function () {
+    this.baseUrl = gs.getProperty('glide.servlet.uri');
+    this.support = new x_pd_integration.PagerDutyCustomFieldsSupport();
+    this.enableCustomFieldMapping = gs.getProperty('x_pd_integration.enable_custom_field_mapping');
+    this.showNotesOnUpdate = x_pd_integration.WorkNotesHelper.isEnabled('show_notes_on_custom_fields_updates');
+    this.showNotesOnError = x_pd_integration.WorkNotesHelper.isEnabled('show_notes_on_custom_fields_errors');
+  },
+
+  /**
+   * Publishes a 'x_pd_integration.update_custom_fields' event for the given ServiceNow incident.
+   * @param {GlideRecord} incident - The ServiceNow incident to publish the event for.
+   * @public
+   */
+  publishUpdateCustomFieldsEvent: function (incident) {
+    // filter changed fields
+    var changedFields = incident.getElements()
+      .filter(function (element) {
+        return element.changes();
+      })
+      .map(function (element) {
+        return {
+          snFieldName: element.getName(),
+          value: incident.getValue(element.getName()),
+          displayValue: element.getDisplayValue()
+        };
+      });
+    // publish event
+    if (changedFields.length &gt; 0) {
+      gs.debug(
+        'Queueing x_pd_integration.update_custom_fields event for SN incident "{0}": {1}',
+        incident.getDisplayValue(), global.JSON.stringify(changedFields)
+      );
+      gs.eventQueue('x_pd_integration.update_custom_fields', null, JSON.stringify({
+        sysId: incident.getValue('sys_id'),
+        incidentId: incident.getValue('x_pd_integration_incident'),
+        changedFields: changedFields
+      }));
+    }
+  },
+
+  /**
+   * Processes a 'x_pd_integration.update_custom_fields' event by converting the changed ServiceNow field values to
+   * PagerDuty custom field values and updating the PagerDuty incident with the new custom field values.
+   * @param {Object} event - The 'x_pd_integration.update_custom_fields' event object.
+   * @param {String} event.sysId - The ID of the ServiceNow incident that triggered the event.
+   * @param {String} event.incidentId - The ID of the PagerDuty incident to update.
+   * @param {Array}  event.changedFields - An array of objects representing the changed ServiceNow fields.
+   * @param {String} event.changedFields.snFieldName - The ServiceNow field name.
+   * @param {String} event.changedFields.value - The new value of the changed ServiceNow field.
+   * @param {String} event.changedFields.displayValue - The new display value of the ServiceNow field.
+   * @public
+   */
+  processUpdateCustomFieldsEvent: function (event) {
+    gs.debug('Processing x_pd_integration.update_custom_fields event');
+    if (this.enableCustomFieldMapping !== 'true') {
+      gs.debug('PagerDuty process update custom fields is disabled, no ability present in the PD account');
+      return;
+    }
+    var updates = [];
+    var errors = [];
+    var customFieldsToUpdate = [];
+    var mappings = this.support.getMappings();
+    if (mappings.length &gt; 0) {
+      event.changedFields.forEach(function (changedField) {
+        var mapping = this._getMappingBySnFieldName(mappings, changedField.snFieldName);
+        if (mapping) {
+          try {
+            var result = this.convertValue(mapping, changedField.value, changedField.displayValue);
+            if (result.apply) {
+              customFieldsToUpdate.push({
+                mapping: mapping,
+                requestPayload: {
+                  name: mapping.pdFieldName,
+                  value: result.convertedValue,
+                },
+              });
+            } else if (result.error) {
+              errors.push(result.message);
+            }
+          } catch (e) {
+            errors.push('PagerDuty custom field "' + mapping.pdFieldDisplayName + '" was not updated due to a conversion error: ' + e);
+          }
+        }
+      }, this);
+
+      if (customFieldsToUpdate.length &gt; 0) {
+        this._updatePdCustomFields(event.incidentId, customFieldsToUpdate, updates, errors);
+      }
+
+      // log final result
+      this.support.logProcessingResult('outbound', updates, errors, []);
+      // show note in activity stream (if enabled)
+      // NOTE: Commented out for now because it generates too much noise in the activity stream.
+      // if ((this.showNotesOnUpdate &amp;&amp; updates.length &gt; 0) || (this.showNotesOnError &amp;&amp; errors.length &gt; 0)) {
+      //   var gr = new GlideRecordSecure('incident');
+      //   if (gr.get(event.sysId)) {
+      //     gr.work_notes = this.support.buildNoteWithUpdatesAndErrors('outbound', this.showNotesOnUpdate, this.showNotesOnError, updates, errors);
+      //     gr.update();
+      //   }
+      // }
+    }
+  },
+
+  /**
+   * Creates a record in the control table to indicate that the next 'incident.custom_field_values.updated' event must be ignored.
+   * This method must be called when a PagerDuty incident is triggered from a ServiceNow incident. If there are default values defined
+   * at PagerDuty, the next event will be triggered by PagerDuty immediately after the incident is created and will contain only the
+   * default values; if there are no default values defined at PagerDuty, the next event will be triggered as result
+   * of the call to 'updateAllPdCustomFieldsOnIncidentTrigger', in either case it is safe to ignore the next event.
+   */
+  registerIgnoreOfNextCustomFieldValuesUpdatedEvent: function (pdIncidentId) {
+    var mappings = this.support.getMappings();
+    if (mappings.length &gt; 0) {
+      // create new record in the control table to indicate that the next 'incident.custom_field_values.updated' event should be ignored
+      var gr = new GlideRecordSecure('x_pd_integration_custom_field_mapping_control');
+      gr.initialize();
+      gr.setValue('pd_incident_id', pdIncidentId);
+      gr.insert();
+    }
+  },
+
+  /**
+   * Updates the custom fields of the PagerDuty incident that was triggered from the specified ServiceNow incident.
+   * @param {GlideRecord} incident - The ServiceNow incident record
+   * @param {string} pdIncidentId - The ID of the corresponding PagerDuty incident.
+   */
+  updateAllPdCustomFieldsOnIncidentTrigger: function (incident, pdIncidentId) {
+    if (this.enableCustomFieldMapping !== 'true') {
+      gs.debug('PagerDuty update all PD custom fields is disabled, no ability present in the PD account');
+      return;
+    }
+    var updates = [];
+    var errors = [];
+    var mappings = this.support.getMappings();
+    if (mappings.length &gt; 0) {
+      gs.debug('Update PagerDuty custom fields (SN incident "{0}"; PD incident "{1}")', incident.getDisplayValue(), pdIncidentId);
+
+      // update the custom fields at PagerDuty
+      var customFieldsToUpdate = [];
+      mappings.forEach(function (mapping) {
+        try {
+          var result = this.convertValue(mapping, incident.getValue(mapping.snFieldName), incident.getDisplayValue(mapping.snFieldName));
+          if (result.apply) {
+            customFieldsToUpdate.push({
+              mapping: mapping,
+              requestPayload: {
+                name: mapping.pdFieldName,
+                value: result.convertedValue
+              },
+            });
+          } else if (result.error) {
+            errors.push(result.message);
+          }
+        } catch (e) {
+          errors.push('PagerDuty Custom Field "' + mapping.pdFieldDisplayName + '" was not updated due to a conversion error: ' + e);
+        }
+      }, this);
+
+      this._updatePdCustomFields(pdIncidentId, customFieldsToUpdate, updates, errors);
+
+      // log final result
+      this.support.logProcessingResult('outbound', updates, errors, []);
+      // show note in activity stream (if enabled)
+      // NOTE: Commented out for now because it generates too much noise in the activity stream.
+      // if ((this.showNotesOnUpdate &amp;&amp; updates.length &gt; 0) || (this.showNotesOnError &amp;&amp; errors.length &gt; 0)) {
+      //   incident.work_notes = this.support.buildNoteWithUpdatesAndErrors('outbound', this.showNotesOnUpdate, this.showNotesOnError, updates, errors);
+      //   incident.update();
+      // }
+    }
+  },
+
+  /**
+   * Converts the given value to the format expected by PagerDuty based on the provided mapping.
+   * @param {Object} mapping - The mapping object.
+   * @param {String} value - The value to convert.
+   * @param {String} displayValue - The display value of the value to convert.
+   * @returns {Object} A result object with the following properties:
+   *  - apply: A boolean indicating whether the value should be applied or not.
+   *  - convertedValue: The converted value.
+   */
+  convertValue: function (mapping, value, displayValue) {
+    if (global.JSUtil.nil(value)) {
+      return {apply: true, convertedValue: null};
+    } else if (value.indexOf('javascript:') !== -1) {
+      return {apply: false};
+    } else if (mapping.pdFieldType === 'single_value_fixed') {
+      return {apply: true, convertedValue: displayValue};
+    } else if (mapping.pdFieldDataType === 'integer') {
+      return {apply: true, convertedValue: parseInt(value, 10)};
+    } else if (mapping.pdFieldDataType === 'float') {
+      return {apply: true, convertedValue: parseFloat(value)};
+    } else if (mapping.pdFieldDataType === 'string') {
+      return this._convertToString(mapping, value);
+    } else if (mapping.pdFieldDataType === 'url') {
+      return this._convertToUrl(mapping, value);
+    } else if (mapping.pdFieldDataType === 'datetime') {
+      return this._convertToDatetime(mapping, value);
+    } else if (mapping.pdFieldDataType === 'boolean') {
+      return this._convertToBoolean(mapping, value);
+    }
+    return {apply: true, convertedValue: value};
+  },
+
+  _convertToString: function (mapping, value) {
+    var convertedValue = value;
+    var maxPdLength = this.support.getPdLimits().maxValueLength;
+    if (value.length &gt; maxPdLength) {
+      convertedValue = value.substring(0, maxPdLength - 1) + '…';
+      gs.warn('Value for custom field "{0}" was truncated because it exceeds maximum length of {1}', mapping.pdFieldDisplayName, maxPdLength);
+    }
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  _convertToUrl: function (mapping, value) {
+    var convertedValue = value;
+    // URL schema is required for PagerDuty, but it is not required for ServiceNow, so
+    // relative URLs are converted to absolute URLs using the base URL of the instance
+    if (value.match('://') === null) {
+      if (value.charAt(0) === '/') {
+        value = value.substring(1);
+      }
+      convertedValue = this.baseUrl + value;
+    }
+    var maxPdLength = this.support.getPdLimits().maxValueLength;
+    if (convertedValue.length &gt; maxPdLength) {
+      return {apply: false, error: true,
+        message: 'PagerDuty Custom Field "' + mapping.snFieldDisplayName + '" was not updated because the value exceeds the custom field\'s maximum length of ' + maxPdLength};
+    }
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  _convertToDatetime: function (mapping, value) {
+    return {apply: true, convertedValue: this.support.convertDateToISO8601(value)};
+  },
+
+  _convertToBoolean: function (mapping, value) {
+    convertedValue = (value === 'true' || value === '1' || value === 'yes' || value === 'on');
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  /**
+   * Updates the PagerDuty custom fields for the specified incident with the provided custom field values.
+   * @param {String} incidentId - The ID of the PagerDuty incident to update.
+   * @param {Array} customFields - An array of objects representing the custom fields to update.
+   * @param {Object} customFields.mapping - The mapping object.
+   * @param {Object} customFields.requestPayload - The request payload to send to PagerDuty.
+   * @param {Array} updates - An array of strings to which the update messages will be added.
+   * @param {Array} errors - An array of strings to which the error messages will be added.
+   * @private
+   */
+  _updatePdCustomFields: function (incidentId, customFields, updates, errors) {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var userEmail = new x_pd_integration.PagerDuty().getValidEmail(gs.getUserID());
+
+    var customFieldsToUpdate = customFields;
+    var numberOfAttemptsLeft = customFields.length;
+    while (customFieldsToUpdate.length &gt; 0 &amp;&amp; numberOfAttemptsLeft &gt; 0) {
+      var customFieldsWithError = this._tryToUpdatePdCustomFields(rest, incidentId, customFieldsToUpdate, userEmail);
+      if (customFieldsWithError.length &gt; 0) {
+        customFieldsWithError.forEach(function (field) {
+          if (field.error.indexOf(' does not exist') !== -1) {
+            errors.push('PagerDuty Custom Field "' + field.mapping.pdFieldDisplayName + '" was not updated. The PagerDuty field used for this mapping was deleted in PagerDuty.');
+            this.support.setMappingInError(field.mapping.sysId, 'Sync Failed: The PagerDuty field used for this mapping was deleted in PagerDuty. ' +
+              '\nNext step: Delete this mapping. Create a new mapping to restore syncing data with PagerDuty.');
+          } else {
+            errors.push('PagerDuty Custom Field "' + field.mapping.pdFieldDisplayName + '" was not updated due to an unexpected error: "' + field.error + '"');
+          }
+        }, this);
+        // remove custom fields with error from the list of fields to update in order to retry without them
+        customFieldsToUpdate = customFieldsToUpdate.filter(function (cf) {
+          var cfError = customFieldsWithError.filter(function (cfError) { return cf.mapping.pdFieldName === cfError.mapping.pdFieldName; }); // eslint-disable-line
+          return (cfError.length === 0);
+        });
+        numberOfAttemptsLeft--;
+      } else {
+        // all custom fields were updated successfully
+        customFieldsToUpdate.forEach(function (field) {
+          updates.push('PagerDuty Custom Field "' + field.mapping.pdFieldDisplayName + '" was updated to "' + field.requestPayload.value + '"');
+        });
+        // clear array to exit loop
+        customFieldsToUpdate = [];
+      }
+    }
+  },
+
+  /**
+   * Tries to update the PagerDuty custom fields of the specified incident with the provided values.
+   * If any of the custom field values is invalid the entire update fails; in this case, the function returns the
+   * list of fields that caused the update to fail so that the caller can retry again without those fields.
+   * If the update fails for any other reason, the function returns the complete list of fields that were provided
+   * to signal that none of them should be retried.
+   * @param {Object} rest - The PagerDuty_REST object to use for the REST API call.
+   * @param {String} incidentId - The ID of the PagerDuty incident to update.
+   * @param {Array} customFieldsToUpdate - An array of objects representing the custom fields to update.
+   * @param {Object} customFieldsToUpdate.mapping - The mapping object.
+   * @param {Object} customFieldsToUpdate.requestPayload - The request payload to send to PagerDuty.
+   * @param {String} userEmail - The email address of the user making the request.
+   * @returns {Array} An array of objects representing the custom fields that (potentially) have errors.
+   * @private
+   */
+  _tryToUpdatePdCustomFields: function (rest, incidentId, customFieldsToUpdate, userEmail) {
+    var feature = 'incidents/' + incidentId + '/custom_fields/values';
+    var body = {custom_fields: customFieldsToUpdate.map(function (cf) { return cf.requestPayload; })}; // eslint-disable-line
+    var response = rest.putREST(feature, body, userEmail, this.baseUrl);
+    gs.debug('Response: {0} {1} \n Request: {2} {3}', response.getStatusCode(), JSON.stringify(response.getBody()), feature, JSON.stringify(body));
+    if (response.getStatusCode() === 200) {
+      return [];
+    }
+    if (response.getStatusCode() === 400) {
+      var responseBody = JSON.parse(response.getBody());
+      if (responseBody.error &amp;&amp; responseBody.error.errors) {
+        var customFieldsWithError = [];
+        // find the custom fields that are mentioned in the errors
+        responseBody.error.errors.forEach(function (error) {
+          var customFieldWithError = this._getCustomFieldFromError(customFieldsToUpdate, error);
+          customFieldsWithError.push({
+            mapping: customFieldWithError.mapping,
+            requestPayload: customFieldWithError.requestPayload,
+            error: error
+          });
+        }, this);
+        // only return custom fields with error if there are any; if there are none, then we assume
+        // that it is a global error not related to any specific field
+        if (customFieldsWithError.length &gt; 0) {
+          return customFieldsWithError;
+        }
+      }
+    }
+
+    // if we get here, everything failed!
+    return customFieldsToUpdate;
+  },
+
+  _getMappingBySnFieldName: function (mappings, snFieldName) {
+    var result = mappings.filter(function (m) { return m.snFieldName === snFieldName; }); // eslint-disable-line
+    return (result.length === 1 ? result[0] : null);
+  },
+
+  _getCustomFieldFromError: function (customFields, error) {
+    var result = customFields.filter(function (cf) { return (error.indexOf('\'' + cf.mapping.pdFieldName + '\'') !== -1) }); // eslint-disable-line
+    return (result.length === 1 ? result[0] : null);
+  },
+
+  type: 'PagerDutyCustomFieldsOutboundSync'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-12 22:16:25</sys_created_on>
+        <sys_id>4fe568b44759311047daf2e7536d43ca</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PagerDutyCustomFieldsOutboundSync</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_4fe568b44759311047daf2e7536d43ca</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-07 19:44:15</sys_updated_on>
+    </sys_script_include>
+</record_update>

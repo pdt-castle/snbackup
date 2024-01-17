@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.EscalationPolicyHelper</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>EscalationPolicyHelper</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var EscalationPolicyHelper = Class.create();
+EscalationPolicyHelper.prototype = {
+  initialize: function () {
+    this.agTable = 'sys_user_group';
+    this.epTable = 'x_pd_integration_escalation_policies';
+    this.mappingTableImport = 'x_pd_integration_map_priority_to_ep_import';
+    this.mappingTable = 'x_pd_integration_map_priority_to_ep';
+    this.priorityTable = 'x_pd_integration_join_priority';
+    this.snPriorityTable = 'dl_u_priority';
+    this.incidentHelper = null;
+    this.incidentId = null;
+  },
+
+  getPDEscalationPolicyIdWithPriority: function (assignmentGroupId, snPriorityId) {
+    if (!assignmentGroupId) {
+      return null;
+    }
+
+    var priorityValue = this.getPriorityValue(snPriorityId);
+    var snPriorityIds = this.getSnPriorityIds();
+
+    // priority row
+    if (snPriorityId &amp;&amp; snPriorityIds[priorityValue]) {
+      var gr = new GlideRecordSecure(this.mappingTable);
+      gr.addQuery('assignment_group', assignmentGroupId);
+      gr.addActiveQuery();
+      gr.addQuery('priority', 'IN', snPriorityIds[priorityValue].join(','));
+      gr.query();
+      if (gr.next()) {
+        return this.convertEpToPd('' + gr.escalation_policy);
+      }
+    }
+    // fallback to default row
+    var id = this.getPDEscalationPolicyIdDefault(assignmentGroupId);
+    if (id) {
+      return id;
+    }
+    // fallback to Assignment Group table
+    id = this.getPDEscalationPolicyIdFromAG(assignmentGroupId);
+    if (id) {
+      return id;
+    }
+    return null;
+  },
+
+  getPDEscalationPolicyId: function (assignmentGroupId) {
+    if (gs.nil(assignmentGroupId)) {
+      return null;
+    }
+    // default row
+    var id = this.getPDEscalationPolicyIdDefault(assignmentGroupId);
+    if (id) {
+      return id;
+    }
+    // fallback to any row
+    var gr = new GlideRecordSecure(this.mappingTable);
+    gr.addQuery('assignment_group', assignmentGroupId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return this.convertEpToPd('' + gr.escalation_policy);
+    }
+    // fallback to Assignment Group table
+    id = this.getPDEscalationPolicyIdFromAG(assignmentGroupId);
+    if (id) {
+      return id;
+    }
+    return null;
+  },
+
+  getPDEscalationPolicyIdDefault: function (assignmentGroupId) {
+    if (gs.nil(assignmentGroupId)) {
+      return null;
+    }
+    // default row
+    var gr = new GlideRecordSecure(this.mappingTable);
+    gr.addQuery('assignment_group', assignmentGroupId);
+    gr.addActiveQuery();
+    gr.addNullQuery('priority');
+    gr.query();
+    if (gr.next()) {
+      return this.convertEpToPd('' + gr.escalation_policy);
+    }
+    return null;
+  },
+
+  getPDEscalationPolicyIdFromAG: function (assignmentGroupId) {
+    if (gs.nil(assignmentGroupId)) {
+      return null;
+    }
+    // fallback to Assignment Group table
+    var gr = new GlideRecordSecure(this.agTable);
+    gr.addQuery('sys_id', assignmentGroupId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.x_pd_integration_pagerduty_escalation;
+    }
+    return null;
+  },
+
+  getAssignmentGroupIdWithPriority: function (pdEscalationPolicyId, pdPriorityId) {
+    if (!pdEscalationPolicyId) {
+      return null;
+    }
+
+    var snPriorityId = this.convertPriToSn(pdPriorityId);
+    var priorityValue = this.getPriorityValue(snPriorityId);
+
+    return this.getAssignmentGroupIdWithPriorityValue(pdEscalationPolicyId, priorityValue);
+  },
+
+  getAssignmentGroupIdWithPriorityValue: function (pdEscalationPolicyId, snPriorityValue) {
+    if (!pdEscalationPolicyId) {
+      return null;
+    }
+    var escalationPolicyId = this.convertEpToSn(pdEscalationPolicyId, {all: true});
+    // priority row
+    if (snPriorityValue &amp;&amp; escalationPolicyId) {
+      var snPriorityIds = this.getSnPriorityIds();
+      gr = new GlideRecordSecure(this.mappingTable);
+      gr.addQuery('escalation_policy', escalationPolicyId);
+      gr.addActiveQuery();
+      gr.addQuery('priority', 'IN', snPriorityIds[snPriorityValue].join(','));
+      gr.query();
+      if (gr.next()) {
+        return '' + gr.assignment_group;
+      }
+    }
+    // fallback to default row
+    if (escalationPolicyId) {
+      gr = new GlideRecordSecure(this.mappingTable);
+      gr.addQuery('escalation_policy', escalationPolicyId);
+      gr.addActiveQuery();
+      gr.addNullQuery('priority');
+      gr.query();
+      if (gr.next()) {
+        return '' + gr.assignment_group;
+      }
+    }
+    // fallback to Assignment Group table
+    var id = this.getAssignmentGroupIdFromAG(pdEscalationPolicyId);
+    if (id) {
+      return id;
+    }
+    return null;
+  },
+
+  getAssignmentGroupId: function (pdEscalationPolicyId) {
+    // any row
+    var epId = this.convertEpToSn(pdEscalationPolicyId);
+    var gr = new GlideRecordSecure(this.mappingTable);
+    gr.addQuery('escalation_policy', epId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.assignment_group;
+    }
+    // fallback to Assignment Group table
+    var id = this.getAssignmentGroupIdFromAG(pdEscalationPolicyId);
+    if (id) {
+      return id;
+    }
+    return null;
+  },
+
+  getAssignmentGroupIdFromAG: function (pdEscalationPolicyId) {
+    if (!pdEscalationPolicyId) {
+      return null;
+    }
+    // fallback to Assignment Group table
+    var gr = new GlideRecordSecure(this.agTable);
+    gr.addQuery('x_pd_integration_pagerduty_escalation', pdEscalationPolicyId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.sys_id;
+    }
+    return null;
+  },
+
+  convertPriToSn: function (pdPriorityId) {
+    if (!pdPriorityId) {
+      return null;
+    }
+    var gr = new GlideRecord(this.priorityTable);
+    gr.addQuery('pd_pagerduty_priority_id', pdPriorityId);
+    gr.addQuery('sn_active', true);
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.sn_sys_id;
+    }
+    return null;
+  },
+
+  convertEpToPd: function (escalationPolicyId) {
+    var gr = new GlideRecordSecure(this.epTable);
+    gr.addQuery('sys_id', escalationPolicyId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.escalation_policy_id;
+    }
+    return null;
+  },
+
+  // use opts { all: true } to get both active and inactive rows
+  convertEpToSn: function (pdEscalationPolicyId, opts) {
+    var gr = new GlideRecordSecure(this.epTable);
+    gr.addQuery('escalation_policy_id', pdEscalationPolicyId);
+    if (!opts || !opts.all) {
+      gr.addActiveQuery();
+    }
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.sys_id;
+    }
+    return null;
+  },
+
+  getEpNameById: function (pdEscalationPolicyId) {
+    var gr = new GlideRecordSecure(this.epTable);
+    gr.addQuery('escalation_policy_id', pdEscalationPolicyId);
+    gr.addActiveQuery();
+    gr.query();
+    if (gr.next()) {
+      return '' + gr.escalation_policy_name;
+    }
+    return null;
+  },
+
+  getIncidentHelper: function () {
+    if (!this.incidentHelper || this.incidentId !== this.incidentHelper.getIncidentId()) {
+      this.incidentHelper = new x_pd_integration.IncidentHelper(this.incidentId);
+    }
+    return this.incidentHelper;
+  },
+
+  getIncidentSnPriorityId: function () {
+    this.incidentHelper = this.getIncidentHelper();
+    return this.incidentHelper.getSnPriorityId();
+  },
+
+  getPriorityValue: function (snPriorityId) {
+    var gr = new GlideRecord(this.snPriorityTable);
+    if (gr.get(snPriorityId)) {
+      return '' + gr.priority;
+    }
+    return null;
+  },
+
+  // {
+  //   "1":["51deebd84a362312001caa28f987c5f5"],
+  //   "2":["51e4eb5d4a362312004641fa47c0223d","51e58d424a362312005a1343b0ff7bc8"],
+  //   "3":["51e520d74a362312011b1bcd41c04c67","51e5f5a44a3623120133430f794c6cc3","51e6c1d04a362312011fedf4724e789b"],
+  //   "4":["51e66dd14a3623120054c188329d445c","51e710dc4a36231201dbcd3bf744f7a3"],
+  //   "5":["51e741a54a3623120151e22cceaca873"]
+  // }
+  getSnPriorityIds: function () {
+    var snPriorityIds = {};
+    var gr = new GlideRecord(this.snPriorityTable);
+    gr.addActiveQuery();
+    gr.query();
+    while (gr.next()) {
+      var priorityValue = '' + gr.priority;
+      var sysId = '' + gr.sys_id;
+      if (snPriorityIds[priorityValue] === undefined) {
+        snPriorityIds[priorityValue] = [sysId];
+      } else {
+        snPriorityIds[priorityValue].push(sysId);
+      }
+    }
+    return snPriorityIds;
+  },
+
+  removeObsoleteDefaultRows: function (mappingSysId, agSysId) {
+    if (!mappingSysId || !agSysId) {
+      return;
+    }
+    var gr = new GlideRecordSecure(this.mappingTable);
+    gr.addQuery('assignment_group', agSysId);
+    gr.addQuery('sys_id', '!=', mappingSysId);
+    gr.addNullQuery('priority');
+    gr.deleteMultiple();
+  },
+
+  setIncidentId: function (incidentId) {
+    this.incidentId = incidentId;
+  },
+
+  upsertMapping: function (agId, pdEpId) {
+    if (!agId || !pdEpId) {
+      return null;
+    }
+    var epId = this.convertEpToSn(pdEpId);
+    if (!epId) {
+      return null;
+    }
+    var gr = new GlideRecordSecure(this.mappingTableImport);
+    gr.initialize();
+    gr.active = true;
+    gr.assignment_group = agId;
+    gr.escalation_policy = epId;
+    gr.priority = null;
+    gr.insert();
+  },
+
+  type: 'EscalationPolicyHelper'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-05-26 09:40:05</sys_created_on>
+        <sys_id>09fcd905078594109f3bff1d7c1ed0bb</sys_id>
+        <sys_mod_count>113</sys_mod_count>
+        <sys_name>EscalationPolicyHelper</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_09fcd905078594109f3bff1d7c1ed0bb</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-13 18:58:35</sys_updated_on>
+    </sys_script_include>
+</record_update>

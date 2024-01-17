@@ -1,0 +1,1488 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+$J.prototype.reduce = Array.prototype.reduce;
+var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+
+var input = {
+  sn2pd_mapping: $J('select[name="sn2pd_mapping"]'),
+  resolved_state_value: $J('select[name="resolved_state_value"]'),
+  default_user_role: $J('select[name="default_user_role"]'),
+  enable_response_mobilizer: $J('input[name="enable_response_mobilizer"]'),
+  enable_conference_bridge: $J('input[name="enable_conference_bridge"]'),
+  enable_incident_workflows: $J('input[name="enable_incident_workflows"]'),
+  enable_status_update: $J('input[name="enable_status_update"]'),
+  webhook_restapi: $J('input[name="webhook_restapi"]'),
+  show_notes_on_incident_workflow: $J('input[name="show_notes_on_incident_workflow"]'),
+  enable_mid_server: $J('input[name="enable_mid_server"]'),
+  show_notes_on_custom_fields_updates: $J('input[name="show_notes_on_custom_fields_updates"]'),
+  show_notes_on_custom_fields_errors: $J('input[name="show_notes_on_custom_fields_errors"]')
+};
+
+var loadingService = false;
+var defaultServiceDiv = $J('#default-service-div');
+var defaultServiceHelp = $J('#default_service_help');
+var defaultServiceInput = $J('input[name="default_service"]');
+var provisionServiceBtn = $J('#provision-service-btn');
+
+var loadingUser = false;
+var defaultUserDiv = $J('#default-user-div');
+var defaultUserHelp = $J('#default_user_help');
+var defaultUserInput = $J('input[name="default_user"]');
+var provisionUserBtn = $J('#provision-user-btn');
+
+var unknownError = 'An unknown error has occurred';
+var noErrorNoIdService = unknownError + ', neither error nor service id was returned from backend';
+var noErrorNoIdUser = unknownError + ', neither error nor user id was returned from backend';
+var noAnswer = unknownError + ', there is no answer from backend';
+
+executeWithProps(function (props) {
+  deMask('api_key', props.api_key);
+  checkPricePlan(props);
+  main();
+});
+
+function main () {
+  $J(function () {
+    // init state
+    disableFormIfWrongScope();
+    sn2pdMappingChange();
+    autoCreationPdTeamsStateRefresh();
+    loadcollapsibleState();
+
+    // __add event listeners__
+    $J('#changeApp').on('click', changeAppClick);
+
+    $J('#saveBtn').on('click', saveBtnClick);
+
+    input.sn2pd_mapping.on('change', sn2pdMappingChange);
+
+    $J('input[name="use_pd_teams"]').on('click', usePdTeamsClick);
+
+    input.enable_response_mobilizer.on('click', enableFeatureClick.bind(
+      null,
+      'enable_response_mobilizer',
+      'PagerDuty Response Mobilizer',
+      'coordinated_responding'
+    ));
+
+    input.enable_conference_bridge.on('click', enableFeatureClick.bind(
+      null,
+      'enable_conference_bridge',
+      'PagerDuty Response Mobilizer',
+      'coordinated_responding'
+    ));
+
+    input.enable_status_update.on('click', enableFeatureClick.bind(
+      null,
+      'enable_status_update',
+      'PagerDuty Status Update',
+      'status_update_integration'
+    ));
+
+    $J('.panel-title a').on('click', function (e) {
+      $J('#' + e.target.href.split('#')[1]).collapse('toggle');
+    });
+
+    $J('.collapse').on('hide.bs.collapse', function (e) {
+      localStorage.setItem(e.target.id + '_hidden', true);
+    });
+
+    $J('.collapse').on('show.bs.collapse', function (e) {
+      localStorage.setItem(e.target.id + '_hidden', false);
+    });
+
+    if (input.enable_mid_server.is(':checked')) {
+      $J('#mid-server-config').show();
+    }
+
+    input.enable_mid_server.on('change', function () {
+      $J('#mid-server-config').toggle(400);
+    });
+
+    defaultServiceInput.on('input', provisionServiceInput);
+    provisionServiceBtn.on('click', provisionServiceClick);
+    setVisibility({type: 'service', val: defaultServiceInput.val()});
+
+    defaultUserInput.on('input', provisionUserInput);
+    provisionUserBtn.on('click', provisionUserClick);
+    setVisibility({type: 'user', val: defaultUserInput.val()});
+  });
+}
+
+// __handlers and behaviours__
+function disableFormIfWrongScope () {
+  if ($J('#wrong_scope_msg').length !== 0) {
+    formDisable(true);
+  }
+}
+
+function changeAppClick () {
+  var xhr = new XMLHttpRequest();
+  xhr.open('PUT', '/api/now/ui/concoursepicker/application', true);
+
+  xhr.setRequestHeader('Content-type', 'application/json');
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE &amp;&amp; xhr.status === 200) {
+      location.reload();
+    }
+  };
+  xhr.send(JSON.stringify({
+    // eslint-disable-next-line servicenow/no-hardcoded-sysids
+    app_id: '39a9d9664f834e00dd657bb28110c77b'
+  }));
+}
+
+function deMask (field, value) {
+  var input = $J('input[name="' + field + '"]').get(0);
+  // eslint-disable-next-line es5/no-es6-methods
+  if (input.value.includes('\u2022')) {
+    input.value = value;
+  }
+}
+
+function removeTrailingSlash (field) {
+  var input = $J('input[name="' + field + '"]').get(0);
+  input.value = input.value.replace(/\/+$/, '');
+}
+
+function saveBtnClick () {
+  removeTrailingSlash('instance_url');
+
+  var formValid = $J('input.form-control').reduce(function (prev, input) {
+    return !input.disabled &amp;&amp; !validate(input) ? false : prev;
+  }, true);
+
+  if (formValid &amp;&amp; apiKeyValid()) {
+    trackEvent('pd_settings_clicked_save_button');
+    $J('form')[0].submit();
+  } else {
+    UnCollapseIfHasError();
+    scrollToTopError();
+  }
+}
+
+function trackEvent (event) {
+  var settings = [
+    'sn2pd_mapping',
+    'resolved_state_value',
+    'default_user_role',
+    'enable_response_mobilizer',
+    'enable_conference_bridge',
+    'enable_incident_workflows',
+    'enable_status_update',
+    'webhook_restapi',
+    'show_notes_on_incident_workflow',
+    'enable_mid_server',
+    'show_notes_on_custom_fields_updates',
+    'show_notes_on_custom_fields_errors'
+  ];
+
+  var properties = Object.entries(input)
+    .filter(function (obj) {
+      // eslint-disable-next-line es5/no-es6-methods
+      return settings.includes(obj[0]);
+    })
+    .reduce(function (acc, arr) {
+      acc[arr[0]] = arr[1].prop('type') === 'checkbox'
+        ? arr[1].prop('checked')
+        : arr[1].val();
+      return acc;
+    }, {});
+
+  trackingApi.track(event, properties, function (error, _result) {
+    if (error) {
+      jslog('Tracking error: ' + error);
+    }
+  });
+}
+
+function apiKeyValid () {
+  var endpoint = $J('input[name="rest_api_endpoint"]');
+  var key = $J('input[name="api_key"]');
+  var instanceUrl = $J('input[name="instance_url"]');
+
+  var xhr = new XMLHttpRequest();
+  // request users - account always has at least one user
+  xhr.open('GET', endpoint.get(0).value + '/users?limit=1', false); // synchronous request
+  xhr.setRequestHeader('Authorization', 'Token token=' + key.get(0).value);
+  xhr.setRequestHeader('X-PagerDuty-Client', g_clientHeader);
+  xhr.send();
+
+  var helpBlock = $J('#api_key_help');
+  var formGroup = $J(key).parent().parent();
+  if (xhr.status !== 200) {
+    setError(formGroup, helpBlock, 'PagerDuty API access key is invalid');
+    return false;
+  }
+
+  var response = JSON.parse(xhr.response);
+
+  var htmlUrl = response.users[0] &amp;&amp; response.users[0].html_url;
+  var userHostname = htmlUrl &amp;&amp; new URL(htmlUrl).hostname; // 'html_url' is the url of the PD account
+  var inputHostname = new URL(instanceUrl.get(0).value).hostname;
+
+  if (userHostname !== inputHostname) {
+    setError(formGroup, helpBlock, 'PagerDuty API access key is not affiliated with the account');
+    return false;
+  }
+
+  return true;
+}
+
+function setError (formGroup, helpBlock, errorMessage) {
+  formGroup.addClass('has-error');
+  helpBlock.html(errorMessage);
+}
+
+function sn2pdMappingChange () {
+  if (input.sn2pd_mapping.val() === 'Configuration Items and Assignment Groups map to PagerDuty') {
+    defaultServiceDiv.removeClass('hidden');
+  } else {
+    defaultServiceDiv.addClass('hidden');
+  }
+
+  defaultServiceDiv.parent().removeClass('has-error');
+  defaultServiceHelp.html('');
+  defaultUserDiv.parent().removeClass('has-error');
+  defaultUserHelp.html('');
+}
+
+function autoCreationPdTeamsStateRefresh () {
+  var usePdTeamsChecked = $J('input[name="use_pd_teams"]').prop('checked');
+  var autoProvisionPdTeamsCheckbox = $J('input[name="auto_creation_pd_teams"]');
+  var formGroup = autoProvisionPdTeamsCheckbox.parents('.form-group');
+
+  if (usePdTeamsChecked) {
+    formGroup.removeClass('hidden');
+  } else {
+    autoProvisionPdTeamsCheckbox.prop('checked', false);
+    formGroup.addClass('hidden');
+  }
+}
+
+function usePdTeamsClick () {
+  var usePdTeamsCheckbox = $J('input[name="use_pd_teams"]');
+  var usePdTeamsHelpBlock = $J('#use_pd_teams_help');
+  usePdTeamsHelpBlock.html('');
+  usePdTeamsCheckbox.parents('.form-group').removeClass('has-error');
+
+  if (usePdTeamsCheckbox.prop('checked')) {
+    // check related props
+    var v = ['api_key', 'rest_api_endpoint'].reduce(function (prev, key, i) {
+      var input = $J('input[name="' + key + '"]').get(0);
+      prev.values[key] = input.value;
+      return !validate(input) ? {
+        isValid: false,
+        values: {},
+        invalidFields: i !== 0 ? prev.invalidFields + ', ' + key : key
+      }
+        : prev;
+    }, {isValid: true, invalidFields: '', values: {}});
+
+    if (!v.isValid) {
+      usePdTeamsCheckbox.prop('checked', false);
+      usePdTeamsHelpBlock.html('Related fields are not valid: ' + v.invalidFields);
+      UnCollapseIfHasError();
+      scrollToTopError();
+
+      return autoCreationPdTeamsStateRefresh();
+    }
+
+    var saveBtn = $J('#saveBtn');
+
+    usePdTeamsCheckbox.prop('checked', true);
+    usePdTeamsHelpBlock.html('Checking for the ability to use the "PagerDuty teams" feature');
+
+    saveBtn.prop('disabled', true);
+    usePdTeamsCheckbox.prop('disabled', true);
+
+    checkTeamsFeature(v.values.api_key, v.values.rest_api_endpoint, function (teamsEnabled) {
+      if (teamsEnabled) {
+        usePdTeamsHelpBlock.html('');
+      } else {
+        usePdTeamsHelpBlock.html('Verification failed, make sure the ' +
+          'PagerDuty API access key is correct');
+        usePdTeamsCheckbox.prop('checked', false);
+      }
+      usePdTeamsCheckbox.prop('disabled', false);
+      saveBtn.prop('disabled', false);
+      autoCreationPdTeamsStateRefresh();
+    });
+  } else {
+    autoCreationPdTeamsStateRefresh();
+  }
+}
+
+function enableFeatureClick (featureName, abilityLabel, ability) {
+  var enableFeatureCheckbox = $J('input[name="' + featureName + '"]');
+  var enableFeatureHelpBlock = $J('#' + featureName + '_help');
+  enableFeatureHelpBlock.html('');
+  enableFeatureCheckbox.parents('.form-group').removeClass('has-error');
+
+  if (!enableFeatureCheckbox.prop('checked')) {
+    return;
+  }
+
+  var v = checkFields(['api_key', 'rest_api_endpoint']);
+  if (!v.isValid) {
+    enableFeatureCheckbox.prop('checked', false);
+    enableFeatureHelpBlock.html('Related fields are not valid: ' + v.invalidFields);
+    scrollToTopError();
+    return;
+  }
+
+  var saveBtn = $J('#saveBtn');
+  enableFeatureCheckbox.prop('checked', true);
+  enableFeatureHelpBlock.html('Checking for the ability to use the "' + abilityLabel + '" feature');
+  saveBtn.prop('disabled', true);
+  enableFeatureCheckbox.prop('disabled', true);
+
+  checkFeature(v.values.api_key, v.values.rest_api_endpoint, ability, function (responseStatus) {
+    if (responseStatus === 204) {
+      enableFeatureHelpBlock.html('');
+    } else {
+      enableFeatureHelpBlock.html('Verification failed, make sure the ' +
+         'PagerDuty API access key is correct');
+      enableFeatureCheckbox.prop('checked', false);
+    }
+    enableFeatureCheckbox.prop('disabled', false);
+    saveBtn.prop('disabled', false);
+  });
+}
+
+/**
+ * Checks whether an array of fields is correctly filled according to the requirements in PdPropValidator.
+ * @param {Array} fields - an array with the list of fields we want to check
+ * @returns whether all the fields are valid, an array of the invalid fields and an array of their corresponding values.
+ * -------- format: {isValid: {boolean}, invalidFields: {Array}, values: {Array}} --------
+ */
+function checkFields (fields) {
+  var validity = fields.reduce(function (prev, key, i) {
+    var input = $J('input[name="' + key + '"]').get(0);
+    prev.values[key] = input.value;
+    var invalidFields = prev.invalidFields.length ? [prev.invalidFields, key] : [key];
+    return !validate(input) ? {
+      isValid: false,
+      values: {},
+      invalidFields: i &gt; 0 ? invalidFields : [key]
+    } : prev;
+  }, {isValid: true, invalidFields: [], values: {}});
+  validity.invalidFields = validity.invalidFields.join(', ');
+  return validity;
+}
+
+/**
+ * Makes an API call to the response plays API - GET /response_plays
+ * @param {String} apiKey
+ * @param {String} restApiEndpoint
+ * @returns the status of the API call
+ */
+function testResponsePlays (apiKey, restApiEndpoint) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', restApiEndpoint + '/response_plays');
+  xhr.setRequestHeader('Authorization', 'Token token=' + apiKey);
+  xhr.setRequestHeader('X-PagerDuty-Client', g_clientHeader);
+  xhr.send();
+  return xhr.status;
+}
+
+/**
+ * Test whether the account has a given ability
+ * @param {String} apiKey - API key used for the authorization header
+ * @param {String} restApiEndpoint - endpoint we want to reach
+ * @param {String} ability - the ability to be tested
+ * @param {function(number)} callback - callback to handle the response status of the API call.
+ */
+function checkFeature (apiKey, restApiEndpoint, ability, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', restApiEndpoint + '/abilities/' + ability);
+  xhr.setRequestHeader('Authorization', 'Token token=' + apiKey);
+  xhr.setRequestHeader('X-PagerDuty-Client', g_clientHeader);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      callback(xhr.status);
+    }
+  };
+  xhr.send();
+}
+
+function formDisable (value) {
+  $J('input').prop('disabled', value);
+  $J('select').prop('disabled', value);
+  $J('button').prop('disabled', value);
+}
+
+function validate (input) {
+  var helpBlock = $J('#' + input.name + '_help');
+  var formGroup = $J(input).parent();
+  if (input.name === 'default_service' || input.name === 'default_user') {
+    formGroup = formGroup.parent().parent();
+    if ($J(input).attr('mandatory') !== 'mandatory') {
+      return;
+    }
+  }
+  var validationResult = PdPropValidator.validate(input.name, input.value);
+  if (!validationResult.isValid) {
+    formGroup.addClass('has-error');
+    helpBlock.html(validationResult.message);
+  } else {
+    formGroup.removeClass('has-error');
+    helpBlock.html('');
+  }
+
+  return validationResult.isValid;
+}
+
+function checkPricePlan (props) {
+  var apiKey = props.api_key;
+  var endpoint = props.rest_api_endpoint;
+
+  if (apiKey === '' || endpoint === '') {
+    showMainArea();
+    return;
+  }
+
+  var msg = 'Your PagerDuty account is not on the correct price plan to use' +
+    ' this integration. Please contact PagerDuty for further assistance.';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', endpoint + '/abilities/advanced_ticketing_integrations');
+  xhr.setRequestHeader('Authorization', 'Token token=' + apiKey);
+  xhr.setRequestHeader('X-PagerDuty-Client', g_clientHeader);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      if (xhr.status === 204) {
+        showMainArea();
+      } else if (xhr.status === 401) {
+        invalidateField('api_key', 'invalid PagerDuty api key');
+        showError();
+      } else if (xhr.status === 402 || xhr.status === 404) {
+        $J('#status_bar').html(msg);
+      } else {
+        showMainArea();
+      }
+    }
+  };
+  xhr.send();
+}
+
+function checkTeamsFeature (apiKey, restApiEndpoint, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', restApiEndpoint + '/abilities/teams');
+  xhr.setRequestHeader('Authorization', 'Token token=' + apiKey);
+  xhr.setRequestHeader('X-PagerDuty-Client', g_clientHeader);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      if (xhr.status === 204) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  };
+  xhr.send();
+}
+
+function UnCollapseIfHasError () {
+  $J('.collapse:not(".in"):has(".has-error")').collapse('show');
+}
+
+function scrollToTopError () {
+  $J('html, body').animate({
+    scrollTop: $J('.has-error').offset().top
+  }, 500);
+}
+
+function invalidateField (field, message) {
+  var input = $J('input[name="' + field + '"]');
+  var helpBlock = $J('#' + field + '_help');
+  var formGroup = $J(input).parent();
+  formGroup.addClass('has-error');
+  helpBlock.html(message);
+}
+
+function loadcollapsibleState () {
+  $J('.collapse').each(function (i, el) {
+    if (localStorage.getItem(el.id + '_hidden') === 'true') {
+      $J(el).collapse('hide');
+    }
+  });
+}
+
+function provisionServiceInput (e) {
+  setVisibility({type: 'service', val: e.target.value});
+}
+
+function provisionUserInput (e) {
+  setVisibility({type: 'user', val: e.target.value});
+}
+
+function setVisibility (args) {
+  var input, button;
+  if (args.type === 'service') {
+    input = defaultServiceInput;
+    button = provisionServiceBtn;
+  } else if (args.type === 'user') {
+    input = defaultUserInput;
+    button = provisionUserBtn;
+  }
+
+  if (args.val === '') {
+    input.parent().addClass('input-group');
+    button.removeClass('btn-light');
+    button.addClass('btn-info');
+    button.html('Provision default ' + args.type);
+
+    if (!input.attr('disabled')) {
+      button.attr('disabled', false);
+    }
+    button.show();
+  } else {
+    input.parent().removeClass('input-group');
+    button.hide();
+  }
+
+  if (args.type === 'service') {
+    if (args.val.trim() === '') {
+      $J('#default_service-linky-btn').hide();
+    } else {
+      $J('#default_service-linky-btn').show();
+    }
+  } else if (args.type === 'user') {
+    if (args.val.trim() === '') {
+      $J('#default_user-linky-btn').hide();
+    } else {
+      $J('#default_user-linky-btn').show();
+    }
+  }
+}
+
+function provisionServiceClick (event) {
+  clearError({type: 'service'});
+  stopSubmit(event);
+  if (loadingService) {
+    return;
+  }
+
+  if (defaultUserInput.val() === '') {
+    alert('Please provision the default user first. The default user will be used as the primary' +
+      ' target for the default escalation policy linked to the default service.');
+    return;
+  }
+  loadingService = true;
+
+  var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
+  ga.addParam('sysparm_name', 'provisionDefaultService');
+  ga.addParam('sysparm_default_user_pd_id', defaultUserInput.val());
+  ga.getXMLAnswer(function (answer) {
+    var serviceId = '';
+    answer = JSON.parse(answer);
+    if (answer) {
+      if (answer.error) {
+        showNotProvisioned({type: 'service', error: answer.error});
+      } else if (answer.service_id) {
+        serviceId = answer.service_id;
+        showProvisioned({type: 'service', id: serviceId});
+      } else {
+        showNotProvisioned({type: 'service', error: noErrorNoIdService});
+      }
+    } else {
+      showNotProvisioned({type: 'service', error: noAnswer});
+    }
+    timeout('service', serviceId);
+  });
+  showLoadingState('service');
+  return false;
+}
+
+function provisionUserClick (event) {
+  clearError({type: 'user'});
+  stopSubmit(event);
+  if (loadingUser) {
+    return;
+  }
+  loadingUser = true;
+
+  var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
+  ga.addParam('sysparm_name', 'provisionDefaultUser');
+  ga.getXMLAnswer(function (answer) {
+    var userId = '';
+    answer = JSON.parse(answer);
+    if (answer) {
+      if (answer.error) {
+        showNotProvisioned({type: 'user', error: answer.error});
+      } else if (answer.user_id) {
+        userId = answer.user_id;
+        showProvisioned({type: 'user', id: userId});
+      } else {
+        showNotProvisioned({type: 'user', error: noErrorNoIdUser});
+      }
+    } else {
+      showNotProvisioned({type: 'user', error: noAnswer});
+    }
+    timeout('user', userId);
+  });
+  showLoadingState('user');
+  return false;
+}
+
+function buttonInfoToLight (elem) {
+  elem.removeClass('btn-info');
+  elem.addClass('btn-light');
+  elem.attr('disabled', false);
+}
+
+function showNotProvisioned (args) {
+  var button, div, help, message;
+  var notProvisioned = 'Not provisioned';
+  if (args.type === 'service') {
+    button = provisionServiceBtn;
+    div = defaultServiceDiv;
+    help = defaultServiceHelp;
+    message = notProvisioned;
+  } else if (args.type === 'user') {
+    button = provisionUserBtn;
+    div = defaultUserDiv;
+    help = defaultUserHelp;
+    message = notProvisioned;
+  }
+  buttonInfoToLight(button);
+  button.html(message);
+  div.parent().addClass('has-error');
+  help.html(args.error);
+}
+
+function showProvisioned (args) {
+  var button;
+  var input;
+  var message;
+  var provisioned = 'Provisioned';
+  if (args.type === 'service') {
+    button = provisionServiceBtn;
+    input = defaultServiceInput;
+    message = provisioned;
+  } else if (args.type === 'user') {
+    button = provisionUserBtn;
+    input = defaultUserInput;
+    message = provisioned;
+  }
+  buttonInfoToLight(button);
+  button.html(message);
+  input.val(args.id);
+}
+
+function stopSubmit (event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function clearError (args) {
+  var div, help;
+  if (args.type === 'service') {
+    div = defaultServiceDiv;
+    help = defaultServiceHelp;
+  } else if (args.type === 'user') {
+    div = defaultUserDiv;
+    help = defaultUserHelp;
+  }
+  div.parent().removeClass('has-error');
+  help.html('');
+}
+
+function timeout (type, id) {
+  setTimeout(function () {
+    setVisibility({type: type, val: id});
+    if (type === 'service') {
+      loadingService = false;
+    } else if (type === 'user') {
+      loadingUser = false;
+    }
+  }, 2000);
+}
+
+function showError () {
+  showMainArea();
+  scrollToTopError();
+}
+
+function showLoadingState (type) {
+  var button;
+  if (type === 'service') {
+    button = provisionServiceBtn;
+  } else if (type === 'user') {
+    button = provisionUserBtn;
+  }
+  button.attr('disabled', true);
+  // eslint-disable-next-line es5/no-es6-methods
+  button.html(loader() + '$[SP]'.repeat(2) + 'Provisioning ' + type);
+}
+
+function showMainArea () {
+  $J('#status_bar').hide();
+  $J('#main_area').css({visibility: 'visible'});
+}
+
+function loader () {
+  return '&lt;span class="icon icon-loading"&gt;&lt;/span&gt;';
+}
+
+function executeWithProps (callback) {
+  var ga = new GlideAjax('x_pd_integration.PagerDutySettingsController');
+  ga.addParam('sysparm_name', 'getSystemProperties');
+  ga.addParam('sysparm_prop_names', ['api_key', 'rest_api_endpoint'].join(','));
+  ga.getXMLAnswer(function (answer) {
+    answer = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+    if (answer.error) {
+      jslog('Error: did not get system properties from backend: ' + answer.error);
+    } else {
+      callback(answer.props);
+    }
+  });
+}
+</client_script>
+        <description>PagerDuty Settings Page</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_pd_settings_page.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.PdPropValidator.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+
+  &lt;g:evaluate&gt;
+    var isWrongScope = gs.getSession().getCurrentApplicationId() != '39a9d9664f834e00dd657bb28110c77b';
+
+    // Check if the client has the the ability to handle custom field mappings.
+    // The check will update the property 'x_pd_integration.enable_custom_field_mapping', 
+    // which will be used when rendering this page to decide the state of the Custom Field checkboxes
+    if (!isWrongScope) {
+      var cfSupport = new x_pd_integration.PagerDutyCustomFieldsSupport();
+      var cfCheckResult = cfSupport.checkCustomFieldMappingAbility();
+    }
+
+    var checkPricePlan = true;
+
+    var propsKeys = [
+      'api_key',
+      'assign_on_ack_only',
+      'auto_creation_pd_teams',
+      'auto_provision_grmembers',
+      'auto_provision_group_schedules',
+      'auto_provision_users',
+      'changerequest_resolved_state_value',
+      'close_incident_on_unknown',
+      'connection_id',
+      'default_service',
+      'default_user',
+      'default_user_role',
+      'ecc_params',
+      'enable_conference_bridge',
+      'enable_incident_workflows',
+      'enable_mid_server',
+      'enable_response_mobilizer',
+      'enable_status_update',
+      'enable_custom_field_mapping',
+      'http_headers',
+      'incident_body_template',
+      'instance_url',
+      'logging.verbosity',
+      'mid_server',
+      'resolved_state_value',
+      'rest_api_endpoint',
+      'show_incident_assignment_note',
+      'show_incident_reassignment_note',
+      'show_incident_triggering_note',
+      'show_note_on_conference_bridge_addition',
+      'show_notes_on_custom_fields_updates',
+      'show_notes_on_custom_fields_errors',
+      'show_note_with_responder_response',
+      'show_notes_on_incident_workflow',
+      'show_responder_request_related_notes',
+      'show_status_update_note',
+      'sn2pd_mapping',
+      'sn_auth_user',
+      'sn_auth_userpwd',
+      'sn_si_resolved_state_value',
+      'use_pd_teams',
+      'webhook_config_sync_option',
+      'webhook_config_task_type',
+      'webhook_restapi'
+    ];
+
+    var props = {};
+    propsKeys.forEach(function(key) {
+      props[key] = gs.getProperty('x_pd_integration.' + key);
+    });
+
+    var connectionName = '';
+    var connectionId = props['connection_id'];
+    if(connectionId) {
+      connectionName = 'ServiceNow instance ' + gs.getProperty('instance_name');
+    }
+    function maskApiKey(key) {
+      if (key.length) {
+        var last4 = key.slice(-4, key.length);
+        return '\u2022'.repeat(key.length - 4) + last4;
+      }
+    };
+
+    var default_service_user_enable = props.api_key &amp;amp;&amp;amp; props.sn_auth_user &amp;amp;&amp;amp; props.sn_auth_userpwd;
+    if (default_service_user_enable)
+      default_service_user_enable = 'yes';
+
+    var incident_states_values = [];
+    var incident_states_options = [];
+    var choice = new GlideRecordSecure('sys_choice');
+    choice.addQuery('element', 'state');
+    choice.addQuery('name', 'incident');
+    choice.query();
+    while (choice.next()) {
+      incident_states_values.push(choice.getValue('value'));
+      incident_states_options.push(choice.label + ' (' + choice.value + ')');
+    }
+
+    var changerequest_states_values = [];
+    var changerequest_states_options = [];
+    choice = new GlideRecordSecure('sys_choice');
+    choice.addQuery('name', 'change_request');
+    choice.addQuery('element', 'state');
+    choice.query();
+    while (choice.next()) {
+      changerequest_states_values.push(choice.getValue('value'));
+      changerequest_states_options.push(choice.label + ' (' + choice.value + ')');
+    }
+
+    var sn_si_incident_states_values = [];
+    var sn_si_incident_states_options = [];
+    choice = new GlideRecordSecure('sys_choice');
+    choice.addQuery('name', 'sn_si_incident');
+    choice.addQuery('element', 'state');
+    choice.query();
+    while (choice.next()) {
+      sn_si_incident_states_values.push(choice.getValue('value'));
+      sn_si_incident_states_options.push(choice.label + ' (' + choice.value + ')');
+    }
+
+    var secureIncidentsEnabled = x_pd_integration.AppManager.isPdSiIncidentsInstalled;
+    var changeRequestsInstalled = x_pd_integration.AppManager.isPdChangeRequestsInstalled;
+
+    var incident_fields = ['workNote'];
+    var fields = new GlideRecordSecure('sys_dictionary');
+    fields.addQuery('name','incident');
+    fields.query();
+    while (fields.next()) {
+      if (String(fields.element)) {
+        incident_fields.push(String(fields.element));
+      }
+    }
+
+    fields = new GlideRecordSecure('sys_dictionary');
+    fields.addQuery('name','task');
+    fields.query();
+    while (fields.next()) {
+      if (String(fields.element)) {
+        incident_fields.push(String(fields.element));
+      }
+    }
+
+    var clientHeader = new x_pd_integration.PagerDuty_REST().getDefaultClientHeader();
+    var contactSalesUrl = 'https://www.pagerduty.com/contact-us?utm_source=servicenow_itsm&amp;amp;utm_content=pd_settings_no_cf_ability_click_contact_sales_button';
+  &lt;/g:evaluate&gt;
+
+  &lt;script&gt;
+    var g_clientHeader = "${JS:clientHeader}";
+  &lt;/script&gt;
+
+  &lt;style&gt;
+    .status-bar {
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    .btn-container {
+      padding: 6px 0 24px 14px;
+    }
+    .pd-webhook-config-section {
+      margin-bottom: 15px;
+    }
+    .pd-webhook-config-header {
+      font-weight: 600;
+    }
+  &lt;/style&gt;
+
+  &lt;j:if test="${HTML:checkPricePlan}"&gt;
+    &lt;div class="col-sm-8 status-bar"&gt;
+      &lt;p id="status_bar"&gt;
+        &lt;span class="icon-loading"&gt;&lt;/span&gt;
+      &lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/j:if&gt;
+
+  &lt;div class="col-sm-8" id="main_area" style="visibility: hidden;"&gt;
+    &lt;j:if test="${HTML:isWrongScope}"&gt;
+      &lt;div id="wrong_scope_msg" class="outputmsg_nav"&gt;
+        &lt;img src="images/icon_nav_info.png"/&gt;
+        &lt;span class="outputmsg_nav_inner"&gt;$[SP]This settings available only in the
+        &lt;a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b"&gt;
+        &lt;strong&gt;PagerDuty Incident Resolution Platform&lt;/strong&gt;$[SP]application&lt;/a&gt;,$[SP]to change the application click$[SP]
+        &lt;a id="changeApp"&gt;here&lt;/a&gt;.&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/j:if&gt;
+    &lt;p&gt;
+      Once you set the API endpoint and access key you should test the connection. See$[SP]&lt;a title="implementation guide" href="https://support.pagerduty.com/v1/docs/servicenow-integration-guide" target="_blank" rel="nofollow"&gt;implementation guide&lt;/a&gt;$[SP]for more information.
+    &lt;/p&gt;
+    &lt;g:ui_form&gt;
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab" id="integrationHeading"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#integration-settings" data-toggle="collapse"&gt;
+              Integration Behavior
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="integration-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              label="Choose ServiceNow to PagerDuty mapping"
+              name="sn2pd_mapping"
+              value="${HTML:props.sn2pd_mapping}"
+              options="${HTML:['Assignment Groups map to PagerDuty', 'Configuration Items and Assignment Groups map to PagerDuty']}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              label="Incident state value to use when PagerDuty resolves an incident"
+              name="resolved_state_value"
+              value="${HTML:props.resolved_state_value}"
+              values="${HTML:incident_states_values}"
+              options="${HTML:incident_states_options}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              label="Default role that should be used when provisioning users from ServiceNow into PagerDuty"
+              name="default_user_role"
+              value="${HTML:props.default_user_role}"
+              values="${HTML:['Global Admin', 'Manager', 'Responder', 'Observer']}"
+              options="${HTML:['Global Admin', 'Manager', 'Responder', 'Observer']}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Resolve PagerDuty incident if ServiceNow incident is assigned to a group that doesn't exist in PagerDuty"
+              type="checkbox"
+              name="close_incident_on_unknown"
+              value="${HTML:props.close_incident_on_unknown}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Create a new PagerDuty user if the Assigned To user on the incident is not in PagerDuty"
+              type="checkbox"
+              name="auto_provision_users"
+              value="${HTML:props.auto_provision_users}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Do not assign the ServiceNow incident until a PagerDuty user has acknowledged the incident"
+              type="checkbox"
+              name="assign_on_ack_only"
+              value="${HTML:props.assign_on_ack_only}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Provision current Assignment Group members into PagerDuty when provisioning Assignment Groups"
+              type="checkbox"
+              name="auto_provision_grmembers"
+              value="${HTML:props.auto_provision_grmembers}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Create PagerDuty Schedule when provisioning Assignment Groups"
+              type="checkbox"
+              name="auto_provision_group_schedules"
+              value="${HTML:props.auto_provision_group_schedules}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Use PagerDuty teams"
+              type="checkbox"
+              name="use_pd_teams"
+              value="${HTML:props.use_pd_teams}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Create PagerDuty Team when provisioning Assignment Groups"
+              type="checkbox"
+              name="auto_creation_pd_teams"
+              value="${HTML:props.auto_creation_pd_teams}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Enable Response Mobilizer feature"
+              type="checkbox"
+              name="enable_response_mobilizer"
+              value="${HTML:props.enable_response_mobilizer}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Enable Conference Bridge feature"
+              type="checkbox"
+              name="enable_conference_bridge"
+              value="${HTML:props.enable_conference_bridge}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Enable Incident Workflows feature"
+              type="checkbox"
+              name="enable_incident_workflows"
+              value="${HTML:props.enable_incident_workflows}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Enable Status Update feature"
+              type="checkbox"
+              name="enable_status_update"
+              value="${HTML:props.enable_status_update}"
+            /&gt;
+
+            &lt;div class="form-group"&gt;
+              &lt;label class="control-label"&gt;Customize PagerDuty Incident Body:&lt;/label&gt;
+              &lt;textarea style="width: 100%; height: 100px;" id="template-body" name="incident_body_template"&gt;
+                ${HTML:props.incident_body_template}
+              &lt;/textarea&gt;
+            &lt;/div&gt;
+            &lt;g:breakpoint var="sysparm_view"/&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;j:if test="${HTML:changeRequestsInstalled}"&gt;
+        &lt;div class="panel panel-default"&gt;
+          &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
+            &lt;h4 class="panel-title"&gt;
+              &lt;a role="button" href="#legacy-settings" aria-expanded="true"&gt;
+                Change Requests
+              &lt;/a&gt;
+            &lt;/h4&gt;
+          &lt;/div&gt;
+          &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+            &lt;div class="panel-body"&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+                label="Change request state value to use when PagerDuty resolves an incident"
+                name="changerequest_resolved_state_value"
+                value="${HTML:props.changerequest_resolved_state_value}"
+                values="${HTML:changerequest_states_values}"
+                options="${HTML:changerequest_states_options}"
+              /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/j:if&gt;
+
+      &lt;j:if test="${HTML:secureIncidentsEnabled}"&gt;
+        &lt;div class="panel panel-default"&gt;
+          &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
+            &lt;h4 class="panel-title"&gt;
+              &lt;a role="button" href="#legacy-settings" aria-expanded="true"&gt;
+                Security Incidents
+              &lt;/a&gt;
+            &lt;/h4&gt;
+          &lt;/div&gt;
+          &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+            &lt;div class="panel-body"&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+                label="Security incident state value to use when PagerDuty resolves an incident"
+                name="sn_si_resolved_state_value"
+                value="${HTML:props.sn_si_resolved_state_value}"
+                values="${HTML:sn_si_incident_states_values}"
+                options="${HTML:sn_si_incident_states_options}"
+              /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/j:if&gt;
+
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab" id="PagerDutyHeading"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#PagerDuty-settings" data-toggle="collapse"&gt;
+              PagerDuty Settings
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="PagerDuty-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              type="input"
+              name="instance_url"
+              value="${HTML:props.instance_url}"
+              placeholder="https://your-instance.pagerduty.com"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="PagerDuty API access key"
+              type="password"
+              name="api_key"
+              value="${HTML:maskApiKey(props.api_key)}"
+              placeholder="general access REST API key"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_default_service"
+              label="Default service ID"
+              type="input"
+              name="default_service"
+              value="${HTML:props.default_service}"
+              placeholder="PD00001"
+              enabled="${HTML:default_service_user_enable}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_default_user"
+              label="Default user ID"
+              type="input"
+              name="default_user"
+              value="${HTML:props.default_user}"
+              placeholder="PD00001"
+              enabled="${HTML:default_service_user_enable}"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="REST API Endpoint"
+              type="input"
+              name="rest_api_endpoint"
+              value="${HTML:props.rest_api_endpoint}"
+              placeholder="https://api.pagerduty.com"
+            /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab" id="servicenowHeading"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#webhook-configuration" aria-expanded="true" data-toggle="collapse"&gt;
+              Webhook Configuration
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="webhook-configuration" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;div class="pd-webhook-config-section"&gt;
+              &lt;p class="pd-webhook-config-header"&gt;Authentication&lt;/p&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                label="ServiceNow user ID"
+                type="input"
+                name="sn_auth_user"
+                value="${HTML:props.sn_auth_user}"
+                placeholder="username"
+              /&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                label="ServiceNow user password"
+                type="password"
+                name="sn_auth_userpwd"
+                value="${HTML:props.sn_auth_userpwd}"
+                placeholder="password"
+                /&gt;
+            &lt;/div&gt;
+            &lt;div class="pd-webhook-config-section"&gt;
+              &lt;p class="pd-webhook-config-header"&gt;Parameters&lt;/p&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+                label="Sync option"
+                name="webhook_config_sync_option"
+                value="${HTML:props.webhook_config_sync_option}"
+                values="${HTML:['auto', 'manual']}"
+                options="${HTML:['Auto', 'Manual']}"
+              /&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+                label="Task type"
+                name="webhook_config_task_type"
+                value="${HTML:props.webhook_config_task_type}"
+                values="${HTML:['incident', 'sn_si_incident']}"
+                options="${HTML:['Incident', 'Security Incident']}"
+                disabled="${HTML:!secureIncidentsEnabled}"
+              /&gt;
+            &lt;/div&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="ServiceNow REST endpoint for webhook"
+              type="input"
+              name="webhook_restapi"
+              value="${HTML:props.webhook_restapi}"
+              placeholder="api/x_pd_integration/pagerduty2sn"
+            /&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_connection_id"
+              label="Workflow connection"
+              type="input"
+              name="connection_id"
+              value="${HTML:connectionName}"
+              placeholder="(connection will be automatically provisioned on Save)"
+              tooltip_title="This connection is used by PagerDuty Workflows"
+              tooltip_icon="icon-warning-circle"
+              tooltip_target="_self"
+              tooltip_href="#"
+            /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#activity-stream-customization" aria-expanded="true" data-toggle="collapse"&gt;
+              Activity stream customization
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="activity-stream-customization" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;div&gt;
+              Configuration options to control what PagerDuty information is shown in the ServiceNow incident activity stream:
+            &lt;/div&gt;
+            &lt;div class="row"&gt;
+              &lt;div class="col-md-6"&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Incident triggering"
+                  type="checkbox"
+                  name="show_incident_triggering_note"
+                  value="${HTML:props.show_incident_triggering_note}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Incident assignment"
+                  type="checkbox"
+                  name="show_incident_assignment_note"
+                  value="${HTML:props.show_incident_assignment_note}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Incident reassignment and escalation"
+                  type="checkbox"
+                  name="show_incident_reassignment_note"
+                  value="${HTML:props.show_incident_reassignment_note}"
+                /&gt;
+              &lt;/div&gt;
+              &lt;div class="col-md-6"&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Status updates"
+                  type="checkbox"
+                  name="show_status_update_note"
+                  value="${HTML:props.show_status_update_note}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Added responders"
+                  type="checkbox"
+                  name="show_responder_request_related_notes"
+                  value="${HTML:props.show_responder_request_related_notes}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Responders responses"
+                  type="checkbox"
+                  name="show_note_with_responder_response"
+                  value="${HTML:props.show_note_with_responder_response}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Incident workflows"
+                  type="checkbox"
+                  name="show_notes_on_incident_workflow"
+                  value="${HTML:props.show_notes_on_incident_workflow}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                  label="Conference bridge addition"
+                  type="checkbox"
+                  name="show_note_on_conference_bridge_addition"
+                  value="${HTML:props.show_note_on_conference_bridge_addition}"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
+                  label="Custom Fields updates"
+                  type="checkbox"
+                  name="show_notes_on_custom_fields_updates"
+                  value="${HTML:props.show_notes_on_custom_fields_updates}"
+                  show_popover_button="${HTML:props.enable_custom_field_mapping}"
+                  popover_header="Automatically sync ServiceNow Incident Record data with
+                  PagerDuty"
+                  popover_body="Map and mirror data between ServiceNow and PagerDuty with Custom Field Mappings. Upgrade to Enterprise Incident Management package and start configuring your
+                  Custom Field Mappings today."
+                  popover_button="Contact Sales"
+                  popover_onclick_url="${HTML:contactSalesUrl}"
+                  popover_icon="glyphicon glyphicon-lock"
+                /&gt;
+                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
+                  label="Custom Fields errors"
+                  type="checkbox"
+                  name="show_notes_on_custom_fields_errors"
+                  value="${HTML:props.show_notes_on_custom_fields_errors}"
+                  show_popover_button="${HTML:props.enable_custom_field_mapping}"
+                  popover_header="Automatically sync ServiceNow Incident Record data with
+                  PagerDuty"
+                  popover_body="Map and mirror data between ServiceNow and PagerDuty with Custom Field Mappings. Upgrade to Enterprise Incident Management package and start configuring your
+                  Custom Field Mappings today."
+                  popover_button="Contact Sales"
+                  popover_onclick_url="${HTML:contactSalesUrl}"
+                  popover_icon="glyphicon glyphicon-lock"
+                /&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#api-requests-settings" aria-expanded="true" data-toggle="collapse"&gt;
+              PagerDuty API requests customization
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="api-requests-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;div class="form-group"&gt;
+              &lt;label for="http-headers" class="control-label"&gt;HTTP headers&lt;/label&gt;
+              &lt;textarea
+                style="width: 100%; height: 100px; padding: 5px"
+                id="http-headers"
+                name="http_headers"
+                placeholder="Add custom headers, one on each line without quotes (name: value)"
+              &gt;
+                ${HTML:props.http_headers}
+              &lt;/textarea&gt;
+            &lt;/div&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              label="Use MID Server"
+              type="checkbox"
+              name="enable_mid_server"
+              value="${HTML:props.enable_mid_server}"
+            /&gt;
+            &lt;div id="mid-server-config" style="display: none"&gt;
+              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                label="Set MID Server"
+                type="input"
+                name="mid_server"
+                value="${HTML:props.mid_server}"
+              /&gt;
+              &lt;div class="form-group"&gt;
+                &lt;label for="ecc-params" class="control-label"&gt;ECC parameters&lt;/label&gt;
+                &lt;textarea
+                  style="width: 100%; height: 100px; padding: 5px"
+                  id="ecc-params"
+                  name="ecc_params"
+                  placeholder="Set ECC parameters, one on each line. For example, source: http://very.long.endpoint.url"
+                &gt;
+                  ${HTML:props.ecc_params}
+                &lt;/textarea&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class="panel panel-default"&gt;
+        &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
+          &lt;h4 class="panel-title"&gt;
+            &lt;a role="button" href="#legacy-settings" aria-expanded="true" data-toggle="collapse"&gt;
+              Legacy Settings
+            &lt;/a&gt;
+          &lt;/h4&gt;
+        &lt;/div&gt;
+        &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
+          &lt;div class="panel-body"&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              label="Logging verbosity level"
+              name="logging.verbosity"
+              value="${HTML:props['logging.verbosity']}"
+              values=""
+              options="${HTML:['error', 'warn', 'info', 'debug']}"
+            /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/g:ui_form&gt;
+    &lt;div class="btn-container"&gt;
+      &lt;button id="saveBtn" class="btn btn-primary"&gt;Save&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>pd_settings_page</name>
+        <processing_script>(function () {
+  gs.debug('pd_settings_page');
+
+  try {
+    var self = this;
+    var propsKeys = [
+      'api_key',
+      'assign_on_ack_only',
+      'auto_creation_pd_teams',
+      'auto_provision_grmembers',
+      'auto_provision_group_schedules',
+      'auto_provision_users',
+      'changerequest_resolved_state_value',
+      'close_incident_on_unknown',
+      'default_service',
+      'default_user',
+      'default_user_role',
+      'ecc_params',
+      'enable_conference_bridge',
+      'enable_incident_workflows',
+      'enable_mid_server',
+      'enable_response_mobilizer',
+      'enable_status_update',
+      'http_headers',
+      'incident_body_template',
+      'instance_url',
+      'logging.verbosity',
+      'mid_server',
+      'resolved_state_value',
+      'rest_api_endpoint',
+      'show_incident_assignment_note',
+      'show_incident_reassignment_note',
+      'show_incident_triggering_note',
+      'show_note_on_conference_bridge_addition',
+      'show_notes_on_custom_fields_updates',
+      'show_notes_on_custom_fields_errors',
+      'show_note_with_responder_response',
+      'show_notes_on_incident_workflow',
+      'show_responder_request_related_notes',
+      'show_status_update_note',
+      'sn2pd_mapping',
+      'sn_auth_user',
+      'sn_auth_userpwd',
+      'sn_si_resolved_state_value',
+      'use_pd_teams',
+      'webhook_config_sync_option',
+      'webhook_config_task_type',
+      'webhook_restapi'
+    ];
+
+    // Track changed keys that impact workflow connection
+    var propKeysForWorkflowConnection = [
+      'webhook_restapi',
+      'sn_auth_user',
+      'sn_auth_userpwd'
+    ];
+
+    var requiresWorkflowConnectionUpdate = false;
+    for (var i = 0; i &lt; propsKeys.length; i++) {
+      var key = propsKeys[i];
+      var value = self[key];
+
+      if (value !== undefined) {
+        var propName = 'x_pd_integration.' + key;
+        var oldValue = gs.getProperty(propName);
+        if (value !== oldValue) {
+          gs.setProperty(propName, value);
+          if (propKeysForWorkflowConnection.indexOf(key) &gt;= 0) {
+            requiresWorkflowConnectionUpdate = true;
+          }
+        }
+      }
+    }
+    gs.addInfoMessage('Properties successfully updated');
+
+    // Ensure the Workflow connection is provisioned and/or updated
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    var connectionId = pdp.ensureWorkflowConnection(requiresWorkflowConnectionUpdate);
+    if (!pdp.hasError()) {
+      gs.setProperty('x_pd_integration.connection_id', connectionId);
+    } else {
+      gs.addErrorMessage('Failed to provision Workflow connection: ' + pdp.getError());
+    }
+  } catch (e) {
+    gs.addErrorMessage('Error saving settings: ' + e);
+  }
+  response.sendRedirect(gs.getSession().getUrlOnStack());
+})();
+
+</processing_script>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-04-13 15:33:04</sys_created_on>
+        <sys_id>16a0f804db29130070c5771c8c961917</sys_id>
+        <sys_mod_count>330</sys_mod_count>
+        <sys_name>pd_settings_page</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>protected</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_16a0f804db29130070c5771c8c961917</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-07 18:51:55</sys_updated_on>
+    </sys_ui_page>
+</record_update>

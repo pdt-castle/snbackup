@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyWebhookManagementController</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description>Webhooks Management Controller to support Webhooks health check and migration</description>
+        <name>PagerDutyWebhookManagementController</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyWebhookManagementController = Class.create();
+PagerDutyWebhookManagementController.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+
+  /**
+   * Returns the last health check
+   * @returns {String} - JSON encoded object
+   */
+  getLastHealthCheck: function () {
+    var response;
+    var error = null;
+    try {
+      var lastHealthcheckJob = new GlideRecord('x_pd_integration_pagerduty_webhooks_jobs');
+      lastHealthcheckJob.addQuery('type', 'healthcheck');
+      lastHealthcheckJob.orderByDesc('sys_created_on');
+      lastHealthcheckJob.setLimit(1);
+      lastHealthcheckJob.query();
+      if (lastHealthcheckJob.next()) {
+        var job = {
+          sysId: lastHealthcheckJob.getValue('sys_id'),
+          sysCreatedOn: lastHealthcheckJob.getValue('sys_created_on'),
+          type: lastHealthcheckJob.getValue('type'),
+          status: lastHealthcheckJob.getValue('status'),
+          step: lastHealthcheckJob.getValue('step'),
+          data: JSON.parse(lastHealthcheckJob.getValue('data')),
+          executionErrors: lastHealthcheckJob.getValue('execution_errors'),
+        };
+        if (job.status === 'finished' || job.status === 'failed') {
+          var webhooks = [];
+          var webhooksAutoRemediationIds = [];
+          var totalCanBeMigrated = 0;
+          var totalWithInconsistencies = 0;
+          var autoRemediationTotals = {
+            total: 0,
+            webhookServiceMismatch: 0,
+            webhookConfigMismatch: 0,
+            webhookDisabled: 0,
+          };
+          var grWebhooks = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+          grWebhooks.addQuery('last_health_check_id', job.sysId);
+          grWebhooks.query();
+          var totalWebhooks = 0;
+          while (grWebhooks.next()) {
+            totalWebhooks++;
+            var validationErrors = JSON.parse(grWebhooks.getValue('validation_errors')) || [];
+            if (validationErrors.length &gt; 0) {
+              totalWithInconsistencies++;
+              validationErrors.forEach(function (error) {
+                if (error.action_type === 'auto_remediation') {
+                  autoRemediationTotals.total++;
+                  switch (error.code) {
+                    case 'webhook_service_mismatch':
+                      autoRemediationTotals.webhookServiceMismatch++;
+                      break;
+                    case 'webhook_config_mismatch':
+                      autoRemediationTotals.webhookConfigMismatch++;
+                      break;
+                    case 'webhook_disabled':
+                      autoRemediationTotals.webhookDisabled++;
+                      break;
+                  }
+                  webhooksAutoRemediationIds.push(grWebhooks.getValue('sys_id'));
+                }
+              });
+              // removing auto remediation errors from the list
+              validationErrors = validationErrors.filter(function (error) {
+                return error.action_type !== 'auto_remediation';
+              });
+              // sorting errors by action type
+              validationErrors.sort(function (a, b) {
+                if (a.action_type &lt; b.action_type) {
+                  return -1;
+                }
+                if (a.action_type &gt; b.action_type) {
+                  return 1;
+                }
+                return 0;
+              });
+              // adding webhook to the list if there are still errors (manual remediation or requires attention)
+              if (validationErrors.length &gt; 0) {
+                webhooks.push({
+                  sysId: grWebhooks.getValue('sys_id'),
+                  snEntityName: grWebhooks.getValue('sn_entity_name'),
+                  snTable: grWebhooks.getValue('sn_table'),
+                  snEntitySysId: grWebhooks.getValue('sn_entity_sys_id'),
+                  pdServiceId: grWebhooks.getValue('pd_service_id'),
+                  pdServiceUrl: gs.getProperty('x_pd_integration.instance_url') + '/service-directory/' + grWebhooks.getValue('pd_service_id'),
+                  pdServiceName: grWebhooks.getValue('pd_service_name'),
+                  webhookId: grWebhooks.getValue('webhook_id'),
+                  webhookVersion: grWebhooks.getValue('webhook_version'),
+                  errors: validationErrors,
+                });
+              }
+            }
+            var webhookVersion = grWebhooks.getValue('webhook_version');
+            if (webhookVersion === '2') {
+              totalCanBeMigrated++;
+            }
+          }
+          // sorting webhooks by number of manual remediation errors and total number of errors
+          webhooks.sort(function (a, b) {
+            var aErrorsManualRemediation = a.errors.filter(function (error) {
+              return error.action_type === 'manual_remediation';
+            });
+            var bErrorsManualRemediation = b.errors.filter(function (error) {
+              return error.action_type === 'manual_remediation';
+            });
+
+            if (aErrorsManualRemediation.length &lt; bErrorsManualRemediation.length) {
+              return 1;
+            }
+            if (aErrorsManualRemediation.length &gt; bErrorsManualRemediation.length) {
+              return -1;
+            }
+            if (a.errors.length &lt; b.errors.length) {
+              return 1;
+            }
+            if (a.errors.length &gt; b.errors.length) {
+              return -1;
+            }
+            if (a.snEntityName &lt; b.snEntityName) {
+              return 1;
+            }
+            if (a.snEntityName &gt; b.snEntityName) {
+              return -1;
+            }
+            if (a.pdServiceName &lt; b.pdServiceName) {
+              return 1;
+            }
+            if (a.pdServiceName &gt; b.pdServiceName) {
+              return -1;
+            }
+            return 0;
+          });
+
+          response = {
+            job: job,
+            webhooks: webhooks,
+            webhooksAutoRemediationIds: webhooksAutoRemediationIds,
+            autoRemediationTotals: autoRemediationTotals,
+            totalWithInconsistencies: totalWithInconsistencies,
+            totalCanBeMigrated: totalCanBeMigrated,
+            totalWebhooks: totalWebhooks
+          };
+        } else {
+          response = {job: job};
+        }
+      } else {
+        // No health check job found
+        response = {job: null};
+      }
+    } catch (ex) {
+      error = ex.message;
+      response = null;
+    } finally {
+      return JSON.stringify({
+        error: error,
+        result: response,
+      });
+    }
+  },
+
+  /**
+   * Returns the migration status
+   * @returns {String} - JSON encoded object
+   */
+  getMigrationStatus: function () {
+    var error;
+    var response;
+    try {
+      var migrationJob = this.getLatestJobByType('migration');
+      var healthCheckJob = this.getLatestJobByType('healthcheck');
+      var migrationJobStatus = migrationJob ? migrationJob.status : null;
+      var healthCheckJobStatus = healthCheckJob ? healthCheckJob.status : null;
+      var totalWebhooks = 0;
+      if (healthCheckJobStatus === 'finished' &amp;&amp; migrationJobStatus !== 'running') {
+        totalWebhooks = this.getTotalV2Webhooks();
+      }
+      response = {
+        healthCheckJob: healthCheckJob,
+        migrationJob: migrationJob,
+        totalWebhooks: totalWebhooks
+      };
+    } catch (ex) {
+      gs.error('Exception on retrieving the migration status: {0}', ex.message);
+      error = ex.message;
+    } finally {
+      return JSON.stringify({
+        error: error,
+        result: response,
+      });
+    }
+  },
+
+  /**
+   *
+   * @param {String} jobType  - can be ‘healthcheck’ or ‘migration’
+   * @returns {GlideRecord} - returns the last entry of the table x_pd_integration_pagerduty_webhooks_jobs
+   * null if no entry found
+   */
+  getLatestJobByType: function (jobType) {
+    var gr = new GlideRecord('x_pd_integration_pagerduty_webhooks_jobs');
+    gr.addQuery('type', jobType);
+    gr.orderByDesc('sys_created_on');
+    gr.setLimit(1);
+    gr.query();
+    if (gr.next()) {
+      return {
+        sys_id: gr.getValue('sys_id'),
+        sys_created_on: gr.getValue('sys_created_on'),
+        sys_updated_on: gr.getValue('sys_updated_on'),
+        type: gr.getValue('type'),
+        status: gr.getValue('status'),
+        step: gr.getValue('step'),
+        data: JSON.parse(gr.getValue('data')),
+        execution_errors: gr.getValue('execution_errors'),
+      };
+    }
+    gs.info('No {0} job found', jobType);
+    return null;
+
+  },
+
+  /**
+   * Returns the total number of webhooks v2 eligible for migration
+   * @returns {Number}
+   */
+  getTotalV2Webhooks: function () {
+    var count = 0;
+    var ga = new GlideAggregate('x_pd_integration_pagerduty_webhooks');
+    ga.addQuery('webhook_version', 2);
+    ga.addAggregate('COUNT');
+    ga.query();
+    if (ga.next()) {
+      count = ga.getAggregate('COUNT');
+    }
+    return parseInt(count, 10);
+  },
+
+  /**
+   * Run the health check, creating a new job and queueing the event healthcheck_webhooks
+   * @returns {String} - JSON encoded object
+   */
+  runHealthCheck: function () {
+    var response;
+    var error = null;
+    try {
+      // checking if there is already a health check running
+      var grJob = new GlideRecord('x_pd_integration_pagerduty_webhooks_jobs');
+      grJob.addQuery('type', 'healthcheck');
+      grJob.addQuery('status', 'running');
+      grJob.orderByDesc('sys_created_on');
+      grJob.setLimit(1);
+      grJob.query();
+      if (grJob.next()) {
+        error = 'There is already a health check running';
+        response = {status: 'error'};
+      } else {
+        // creating a new healthcheck job
+        var grNewJob = new GlideRecord('x_pd_integration_pagerduty_webhooks_jobs');
+        grNewJob.initialize();
+        grNewJob.setValue('type', 'healthcheck');
+        grNewJob.setValue('status', 'running');
+        grNewJob.setValue('step', 'Initializing');
+        var data = {
+          totalWebhooks: 0,
+          totalWebhooksProcessedSuccess: 0,
+          totalWebhooksProcessedFailed: 0,
+          completePercentage: 0,
+        };
+        grNewJob.setValue('data', JSON.stringify(data));
+        grNewJob.insert();
+
+        // queueing the event healthcheck_webhooks
+        gs.eventQueue('x_pd_integration.healthcheck_webhooks', grNewJob);
+        response = {status: 'running', job: grNewJob.getValue('sys_id')};
+      }
+    } catch (ex) {
+      error = ex.message;
+      response = {status: 'error'};
+    } finally {
+      return JSON.stringify({
+        error: error,
+        result: response,
+      });
+    }
+  },
+
+  /**
+   * Run auto remediation for a webhook
+   * @returns {String} - JSON encoded object
+   */
+  runWebhookRemediation: function () {
+    var response;
+    var error = null;
+    try {
+      var webhookSysId = this.getParameter('sysparm_webhook_sys_id');
+      var webhook = null;
+      // checking if there is already a health check running
+      var grWebhook = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+      grWebhook.addQuery('sys_id', webhookSysId);
+      grWebhook.query();
+      if (grWebhook.next()) {
+        webhook = {
+          sys_id: grWebhook.getValue('sys_id'),
+          validation_errors: JSON.parse(grWebhook.getValue('validation_errors')) || [],
+        };
+      }
+      if (gs.nil(webhook)) {
+        error = 'Webhook not found';
+        response = {status: 'error'};
+      } else {
+        var validationErrors = webhook.validation_errors || [];
+        validationErrors = validationErrors.filter(function (error) {
+          if (error.action_type === 'auto_remediation') {
+            return !this._executeRemediation(grWebhook, error.code);
+          }
+          return true;
+        }, this);
+        grWebhook.setValue('validation_errors', JSON.stringify(validationErrors));
+        grWebhook.update();
+      }
+    } catch (ex) {
+      error = ex.message;
+      response = {status: 'error'};
+    } finally {
+      return JSON.stringify({
+        error: error,
+        result: response,
+      });
+    }
+  },
+
+  /**
+   * Executes remediation for a webhook
+   * @param {GlideRecord} grWebhook - GlideRecord of the webhook
+   * @param {String} code - code of the validation error
+   * @returns {Boolean}
+   */
+  _executeRemediation: function (grWebhook, code) {
+    var pd = new x_pd_integration.PagerDuty();
+    var pdWm = new x_pd_integration.PagerDutyWebhooksManagement();
+    var v3wh = new x_pd_integration.v3webhook();
+    var webhookId = grWebhook.getValue('webhook_id');
+    switch (code) {
+      case 'webhook_service_mismatch':
+        var serviceId = grWebhook.getValue('pd_service_id');
+        var webhookV3Id = pd.searchWebhookByServiceId(serviceId);
+        var webhookV2Id = null;
+        // search for v3 webhook
+        if (!gs.nil(webhookV3Id)) {
+          grWebhook.setValue('webhook_id', webhookV3Id);
+          grWebhook.setValue('webhook_version', 3);
+          grWebhook.update();
+        } else {
+          // search for v2 webhook
+          webhookV2Id = pd.searchWebhookV2ByServiceId(serviceId);
+          if (!gs.nil(webhookV2Id)) {
+            grWebhook.setValue('webhook_id', webhookV2Id);
+            grWebhook.setValue('webhook_version', 2);
+            grWebhook.update();
+          }
+        }
+        if (gs.nil(webhookV3Id) &amp;&amp; gs.nil(webhookV2Id)) {
+          // provisioning a new webhook
+          webhookV3Id = pdWm.createServiceWebhook(grWebhook);
+          if (!gs.nil(webhookV3Id)) {
+            grWebhook.setValue('webhook_id', webhookV3Id);
+            grWebhook.setValue('webhook_version', 3);
+            grWebhook.setValue('extension_schema_id', '');
+            grWebhook.setValue('temporarily_disabled', false);
+            grWebhook.update();
+          } else {
+            return false;
+          }
+        }
+        return true;
+      case 'webhook_config_mismatch':
+        var webhook = null;
+        try {
+          webhook = v3wh.get(webhookId);
+        } catch (e) {
+          gs.error('Error trying to get data from webhook subscription : {1} Error : {2} ', webhookId, e.message);
+        }
+
+        if (!gs.nil(webhook) &amp;&amp; !gs.nil(webhook.webhook_subscription)) {
+          var events = webhook.webhook_subscription.events || [];
+          events = events.filter(function (event) {
+            return event !== 'incident.triggered';
+          });
+          if (grWebhook.getValue('sync_option') === 'auto') {
+            events.push('incident.triggered');
+          }
+          var requestBody = {
+            webhook_subscription: {
+              events: events
+            }
+          };
+          v3wh.update(webhookId, requestBody);
+        } else {
+          return false;
+        }
+        return true;
+      case 'webhook_disabled':
+        var webhookVersion = grWebhook.getValue('webhook_version');
+        if (webhookVersion === '3') {
+          if (pd.enableWebhook(webhookId)) {
+            grWebhook.setValue('temporarily_disabled', false);
+            grWebhook.update();
+            return true;
+          }
+        } else if (webhookVersion === '2') {
+          if (pd.enableWebhookV2(webhookId)) {
+            grWebhook.setValue('temporarily_disabled', false);
+            grWebhook.update();
+            return true;
+          }
+        }
+        return false;
+
+      default:
+        return false;
+    }
+  },
+  type: 'PagerDutyWebhookManagementController'
+});
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-08-10 10:20:17</sys_created_on>
+        <sys_id>d4c2c04ec3a8b510743293477d013160</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PagerDutyWebhookManagementController</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_d4c2c04ec3a8b510743293477d013160</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-08-10 10:20:17</sys_updated_on>
+    </sys_script_include>
+</record_update>

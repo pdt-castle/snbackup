@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Run Server Side Validation Script</description>
+        <display_name>Run Server Side Script</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes/>
+        <order>1</order>
+        <step_config display_value="Run Server Side Script">41de4a935332120028bc29cac2dc349a</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:18:09</sys_created_on>
+        <sys_id>20bb3a7d47397510b15271e7826d43be</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>Run Server Side Script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_20bb3a7d47397510b15271e7826d43be</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-06 15:24:14</sys_updated_on>
+        <table/>
+        <test display_value="PD - CustomFields - PagerDutyCustomFieldsOutboundSync">843bb23d47f57510b15271e7826d4331</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=20bb3a7d47397510b15271e7826d43be"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>20bb3a7d47397510b15271e7826d43be</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:18:09</sys_created_on>
+        <sys_id>7a3c7a7d47397510b15271e7826d4375</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-06 15:24:14</sys_updated_on>
+        <value>(function(outputs, steps, params, stepResult, assertEqual) {&#13;
+    describe('PagerDutyCustomFieldsOutboundSync', function() {&#13;
+        describe('convertValue', function() {&#13;
+            var pagerDutyCustomFieldsOutboundSync;&#13;
+&#13;
+            beforeEach(function() {&#13;
+                pagerDutyCustomFieldsOutboundSync = new x_pd_integration.PagerDutyCustomFieldsOutboundSync();&#13;
+            });&#13;
+&#13;
+            it('should return null if value is null', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'single_value_fixed',&#13;
+                    pdFieldDataType: 'string'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, null, 'displayValue');&#13;
+                expect(result.convertedValue).toBeNull();&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return displayValue if pdFieldType is single_value_fixed', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'single_value_fixed',&#13;
+                    pdFieldDataType: 'string'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, 'value', 'displayValue');&#13;
+                expect(result.convertedValue).toBe('displayValue');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return an integer if pdFieldDataType is integer', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'integer'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, '123', '123');&#13;
+                expect(result.convertedValue).toBe(123);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return a float if pdFieldDataType is float', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'float'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, '123.45', '123.45');&#13;
+                expect(result.convertedValue).toBe(123.45);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return a string if pdFieldDataType is string', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'string'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, 'value', 'displayValue');&#13;
+                expect(result.convertedValue).toBe('value');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+			it('should NOT truncate a string if it is the maximum length', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'string'&#13;
+                };&#13;
+				var maxSize = new x_pd_integration.PagerDutyCustomFieldsSupport().getPdLimits().maxValueLength;&#13;
+				var maxSizedStr = 'a'.repeat(maxSize);&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, maxSizedStr, maxSizedStr);&#13;
+                expect(result.convertedValue).toBe(maxSizedStr);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should truncate a string if it exceeds the maximum length', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'string',&#13;
+                    pdFieldName: 'custom_field'&#13;
+                };&#13;
+				var maxSize = new x_pd_integration.PagerDutyCustomFieldsSupport().getPdLimits().maxValueLength;&#13;
+				var oversizedString = 'a'.repeat(maxSize+1);&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, oversizedString);&#13;
+                expect(result.convertedValue).toBe('a'.repeat(maxSize-1) + '…');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return an URL if pdFieldDataType is url - test relative urls', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'url'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, '/path/to/resource', '/path/to/resource');&#13;
+                var expectedUrl = gs.getProperty('glide.servlet.uri') + 'path/to/resource';&#13;
+                expect(result.convertedValue).toBe(expectedUrl);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+			it('should return an URL if pdFieldDataType is url - test absolute urls', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'url'&#13;
+                };&#13;
+				var targetUrl = 'https://pagerduty.com/incidents';&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, targetUrl, targetUrl);&#13;
+                expect(result.convertedValue).toBe(targetUrl);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should ignore a URL if it exceeds the maximum length', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'url',&#13;
+                    pdFieldName: 'custom_field'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, 'a'.repeat(1000), 'a'.repeat(1000));&#13;
+                expect(result.apply).toBe(false);&#13;
+            });&#13;
+&#13;
+            it('should return a datetime if pdFieldDataType is datetime', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'datetime'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, '2018-07-16 15:00:00', '2018-07-16 15:00:00');&#13;
+                expect(result.convertedValue).toBe('2018-07-16T15:00:00.000Z');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should return a boolean if pdFieldDataType is boolean', function() {&#13;
+                var mapping = {&#13;
+                    pdFieldType: 'text',&#13;
+                    pdFieldDataType: 'boolean'&#13;
+                };&#13;
+                var result = pagerDutyCustomFieldsOutboundSync.convertValue(mapping, 'true', 'true');&#13;
+                expect(result.convertedValue).toBe(true);&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+        });&#13;
+    });&#13;
+&#13;
+})(outputs, steps, params, stepResult, assertEqual);&#13;
+// uncomment the next line to execute this script as a jasmine test&#13;
+jasmine.getEnv().execute();</value>
+        <variable display_value="Test script">989d9e235324220002c6435723dc3484</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>20bb3a7d47397510b15271e7826d43be</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:18:09</sys_created_on>
+        <sys_id>b23c7a7d47397510b15271e7826d4375</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-11 08:18:09</sys_updated_on>
+        <value>3.1</value>
+        <variable display_value="Jasmine version">42f2564b73031300440211d8faf6a777</variable>
+    </sys_variable_value>
+</record_update>

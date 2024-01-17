@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Click the component: 'Link &lt;a&gt;: PagerDuty Refresh Escalation Policies'</description>
+        <display_name>Click Component (Custom UI)</display_name>
+        <inputs/>
+        <mugshots_cache_json>{"0a302ba3f77edcbe487ad887b7bb1e54":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Link &lt;a&gt;: PagerDuty Refresh Escalation Policies\",\"inner_text\":\"PagerDuty Refresh Escalation Policies\",\"sn_atf_mugshot_long_description\":\"Link &lt;a&gt;: PagerDuty Refresh Escalation Policies\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"PagerDuty Refresh Escalation Policies\",\"type\":\"\",\"get_value_result\":\"PagerDuty Refresh Escalation Policies\",\"sn_atf_mugshot_tag_display_name\":\"Link &lt;a&gt;\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"a\",\"isDisabled\":false,\"hash\":\"0a302ba3f77edcbe487ad887b7bb1e54\"}"}</mugshots_cache_json>
+        <notes/>
+        <order>14</order>
+        <snapshot display_value="">ad50af6e2f8b10106a70e93df699b69b</snapshot>
+        <step_config display_value="Click Component (Custom UI)">def25c4b73730300c79260bdfaf6a700</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-09-07 12:49:21</sys_created_on>
+        <sys_id>b05fa16e0743101047edf4218c1ed0ab</sys_id>
+        <sys_mod_count>13</sys_mod_count>
+        <sys_name>Click Component (Custom UI)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_b05fa16e0743101047edf4218c1ed0ab</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-07 21:31:57</sys_updated_on>
+        <table/>
+        <test display_value="[SN-102]">fc28e5a60743101047edf4218c1ed0e8</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=b05fa16e0743101047edf4218c1ed0ab"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>b05fa16e0743101047edf4218c1ed0ab</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-09-07 12:49:21</sys_created_on>
+        <sys_id>535fa16e0743101047edf4218c1ed0e1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-07 12:49:21</sys_updated_on>
+        <value>0a302ba3f77edcbe487ad887b7bb1e54</value>
+        <variable display_value="Component">ee05588b73730300c79260bdfaf6a749</variable>
+    </sys_variable_value>
+</record_update>

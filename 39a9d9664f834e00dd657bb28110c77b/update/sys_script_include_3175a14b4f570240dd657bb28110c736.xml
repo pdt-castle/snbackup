@@ -1,0 +1,2153 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyProvisioning</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>*** Changes made to this script are not supported by PagerDuty ***&#13;
+PagerDuty methods for creating users, group services, and service escalation policies</description>
+        <name>PagerDutyProvisioning</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyProvisioning = Class.create();
+PagerDutyProvisioning.prototype = {
+  initialize: function () {
+    this._errorMsg = '';
+    this._errors = [];
+    this._hasError = false;
+    this.JSON = new global.JSON();
+    this.maxBSDescription = 255;
+
+    this.autoCreateSchedule = gs.getProperty('x_pd_integration.auto_provision_group_schedules');
+    this.autoCreationPdTeams = gs.getProperty('x_pd_integration.auto_creation_pd_teams');
+    this.autoProvisionGrmembers = gs.getProperty('x_pd_integration.auto_provision_grmembers');
+    this.autoProvisionUsers = gs.getProperty('x_pd_integration.auto_provision_users');
+    this.sn2pdMapping = gs.getProperty('x_pd_integration.sn2pd_mapping');
+    this.snAuthUser = gs.getProperty('x_pd_integration.sn_auth_user');
+    this.snAuthUserPwd = gs.getProperty('x_pd_integration.sn_auth_userpwd');
+
+    this.pd = new x_pd_integration.PagerDuty();
+    this.provTable = 'x_pd_integration_pagerduty_service_provisioning';
+    this.rest = new x_pd_integration.PagerDuty_REST();
+    this.servicesProvisioningPage = 'x_pd_integration_services_provisioning';
+    this.userEmail = this.pd.getValidEmail(gs.getUserID());
+  },
+
+  /**
+   * Provision ServiceNow user into PagerDuty.
+   * When in PagerDuty already exists a user with the matching email,
+   * update the form with the PagerDuty user ID.
+   * @param {GlideRecordSecure} User record
+   * @return void
+   */
+  provisionUser: function (user, role, showMessage) {
+    var me = 'provisionUser';
+    var pd = new x_pd_integration.PagerDuty();
+    var id = pd.getUserIdByEmail(user.getValue('email'));
+    gs.debug('{0} user lookup for {1}, id = {2}', me, user.getDisplayValue(), id);
+
+    if (!user.getValue('email')) {
+      gs.debug('{0} user {1} has email {2}', me, user.getDisplayValue(), user.getValue('email'));
+      gs.addErrorMessage('User [' + user.getValue('name') + '] has not been provisioned. E-mail cannot be empty.');
+      return id;
+    }
+
+    if (user.getValue('active') === '0') {
+      gs.debug('{0} user {1} not active', me, user.getDisplayValue());
+      gs.addErrorMessage('User [' + user.getValue('name') + '] has not been provisioned. User is not active.');
+      return id;
+    }
+
+    if (gs.nil(id)) {
+      gs.debug('{0} no PagerDuty user found for {1}, creating user', me, user.getDisplayValue());
+
+      if (gs.nil(role)) {
+        role = this._getDefaultUserRole();
+      }
+
+      if (gs.nil(showMessage)) {
+        showMessage = true;
+      }
+
+      // create a new user
+      id = this._createPDUser(user, role);
+
+      // create contact method for user's phones
+      var phoneFields = ['phone', 'mobile_phone'];
+      // TODO - add support for E164 fields
+      for (var i = 0; i &lt; phoneFields.length; i++) {
+        var field = phoneFields[i];
+        var type = 'phone_contact_method'; // default
+        if (field === 'mobile_phone') {
+          type = 'sms_contact_method';
+        }
+
+        var number = user.getValue(field);
+        if (!gs.nil(number)) {
+          var onlyNumbers = number.match(/[0-9]+/g).join('');
+          var countryCode = this._getCountryCode(onlyNumbers);
+          if (!gs.nil(countryCode)) {
+            var phoneNumber = onlyNumbers.substring(countryCode.length, onlyNumbers.length);
+            var contactObj = this._createContactMethod(id, type, phoneNumber, countryCode);
+            if (!gs.nil(contactObj)) {
+              var contactId = contactObj[0];
+              var contactType = contactObj[1];
+              gs.debug('{0} Ready to create notification rule contactId{1}, contactType:{2}', me, contactId, contactType);
+              if (!gs.nil(contactId)) {
+                // create notification rules
+                this._createNotificationRule(id, contactId, contactType);
+              }
+            }
+          }
+        }
+      }
+
+    } else {
+      gs.debug('{0} found PagerDuty user for {1}, id = {2}', me, user.getDisplayValue(), id);
+      this._updateUser(user, id);
+    }
+
+    var message;
+    if (this._hasError) {
+      var errors = '&lt;br/&gt;' + this._errors.join('&lt;br/&gt;');
+      // eslint-disable-next-line es5/no-es6-methods
+      if (errors.includes('_createPDUser')) {
+        message = 'The user [' + user.getValue('name') + '] has not been provisioned into PagerDuty.' + errors;
+        gs.addErrorMessage(message);
+      }
+    } else {
+      message = 'The user [' + user.getValue('name') + '] has been provisioned into PagerDuty.';
+      if (showMessage) {
+        gs.addInfoMessage(message);
+      }
+    }
+
+    return id;
+  },
+
+  /**
+   * Creates PagerDuty service used by default in ServiceNow
+   * @param {String} userPdId - PagerDuty user ID to be added as a target
+   * in the escalation policy
+   * @returns {String} PagerDuty service ID
+   */
+  provisionDefaultService: function (userPdId) {
+    var me = 'provisionDefaultService';
+    var serviceName = 'SN:' + this._removeInvalidCharacters('ServiceNow Paging');
+
+    if (!userPdId) {
+      this._setError(me, 'Please supply a user PagerDuty id');
+      return;
+    }
+
+    var provisioned = this.provisionDefaultPolicy(userPdId);
+    var policyPdId = provisioned.id;
+    if (provisioned.status === 400) {
+      this.clearErrors();
+      this._setError('The service [' + serviceName + '] already exists in the PagerDuty account');
+      return;
+    }
+
+    var feature = 'services';
+    var postBody = {
+      service: {
+        type: 'service',
+        name: serviceName,
+        escalation_policy: {
+          id: policyPdId,
+          type: 'escalation_policy_reference'
+        },
+        alert_creation: 'create_alerts_and_incidents'
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var status = response.getStatusCode();
+    var body = this.JSON.decode(response.getBody());
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errorMessage = 'Failed to create [' + serviceName + '] service: ' + this._extractErrorMessage(response);
+      this._setError(errorMessage);
+      return;
+    }
+
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
+      return;
+    }
+
+    var serviceId = body.service.id;
+    gs.debug(me + '.id = {0}', serviceId);
+    this.createServiceWebhook(serviceId);
+
+    return serviceId;
+  },
+
+  /**
+   * Creates PagerDuty escalation policy to be used for the default service
+   * @param {String} userPdId - PagerDuty user ID to be used as a target
+   * in the escalation policy
+   * @returns {{status: String, id: String}}
+   */
+  provisionDefaultPolicy: function (userPdId) {
+    var me = 'provisionDefaultPolicy';
+    var epName = 'SN:' + this._removeInvalidCharacters('ServiceNow Paging EP');
+
+    if (!userPdId) {
+      this._setError(me, 'Please supply a user PagerDuty id');
+      return;
+    }
+
+    var feature = 'escalation_policies';
+    var postBody = {
+      escalation_policy: {
+        type: 'escalation_policy',
+        name: epName,
+        escalation_rules: [{
+          escalation_delay_in_minutes: 30,
+          targets: [{
+            id: userPdId,
+            type: 'user_reference'
+          }]
+        }]
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var status = response.getStatusCode();
+    var body = this.JSON.decode(response.getBody());
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errorMessage = 'Failed to create [' + epName + '] escalation policy: ' + this._extractErrorMessage(response);
+      this._setError(errorMessage);
+      return {status: status, id: null};
+    }
+
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
+      return {status: status, id: null};
+    }
+    var id = body.escalation_policy.id;
+    gs.debug(me + '.id = {0}', id);
+    return {status: status, id: id};
+  },
+
+  /**
+   * Provision a default user from ServiceNow to PagerDuty, use an email of the current user
+   * @param {String} userId - ServiceNow current user sys id
+   * @return {String} userPdId - PagerDuty id of the created user
+   */
+  provisionDefaultUser: function (userId) {
+    var me = 'provisionDefaultUser';
+    var userName = 'ServiceNow User';
+
+    if (!userId) {
+      this._setError(me, 'Please supply user sys id');
+      return;
+    }
+
+    var user = new GlideRecordSecure('sys_user');
+    if (!user.get(userId)) {
+      this._setError(me, 'Could not find a user with sys id: ' + userId);
+      return;
+    }
+
+    var userEmail = user.getValue('email');
+    if (!userEmail) {
+      this._setError(me, 'Could not find an email for a user with sys id: ' + userId);
+      return;
+    }
+
+    var postBody = {
+      user: {
+        type: 'user',
+        name: userName,
+        email: userEmail,
+        role: 'user'
+      }
+    };
+
+    var feature = 'users';
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errors = body.error.errors.toString();
+      if (status === 400) {
+        if (errors === 'License error: Bad Request') {
+          var upgradeLink = '&lt;a href="https://support.pagerduty.com/docs/billing-invoices-payments" ' +
+            'target="_blank" rel="noopener noreferrer"&gt;upgrade your plan&lt;/a&gt;';
+          var errorMessage = 'Your PagerDuty account plan has reached the maximum number of users. ' +
+            'In order to add a default user, you will need to ' + upgradeLink + '.';
+
+          this._setError(errorMessage);
+        } else {
+          this._setError('The user [' + userName + '] already exists in the PagerDuty account');
+        }
+      } else {
+        this._setError(this._extractErrorMessage(response));
+      }
+      return;
+    }
+
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
+      return;
+    }
+
+    gs.debug('{0} body.user = {1}', me, this.JSON.encode(body.user));
+    var userPdId = body.user.id;
+    gs.debug('{0} userId = {1}', me, userPdId);
+    return userPdId;
+  },
+  /**
+   * Ensure a valid Workflow connection is provisioned
+   * @param {Boolean} forceUpdate - If existing, force update with latest configuration
+   * @return {String} connId - PagerDuty's Workflow connection ID
+   */
+  ensureWorkflowConnection: function (forceUpdate) {
+    var currentConnectionId = gs.getProperty('x_pd_integration.connection_id');
+    // Create if no connection id saved
+    if (gs.nil(currentConnectionId)) {
+      return this.provisionWorkflowConnection();
+    }
+    // Check first if the connection id is still valid
+    var existingConnection = this.searchWorkflowConnection(currentConnectionId);
+    if (!existingConnection &amp;&amp; !this._hasError) {
+      // Not a valid connection, create new one
+      return this.provisionWorkflowConnection();
+    } else if (forceUpdate) {
+      // Update connection is required.
+      return this.updateWorkflowConnection(existingConnection.id);
+    }
+    return existingConnection.id;
+  },
+  /**
+   * Provision a Workflow connection from configuration properties
+   * @return {String} connId - PagerDuty's Workflow Connection Id
+   */
+  provisionWorkflowConnection: function () {
+    var baseUrl = gs.getProperty('glide.servlet.uri');
+    var webhookRestApi = gs.getProperty('x_pd_integration.webhook_restapi');
+    var snUrl = baseUrl + webhookRestApi;
+    var instanceName = gs.getProperty('instance_name');
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    rest.customHeaders += '\nX-EARLY-ACCESS: flex-actions-early-access';
+
+    var connName = 'ServiceNow instance ' + instanceName;
+    var postBody = {
+      integrationActionId: 'pagerduty.com:servicenow:integration:1',
+      name: connName,
+      authenticationSecrets: {
+        'ServiceNow User ID': this.snAuthUser,
+        'ServiceNow User Password': this.snAuthUserPwd,
+        'Connection Name': connName,
+        URL: snUrl
+      },
+      serviceUrl: snUrl,
+      scopes: ['read', 'write']
+    };
+
+    var feature = 'actions/v1/connections';
+    var response = rest.postREST(feature, postBody);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+
+    if (response.haveError()) {
+      this._setError(this._extractErrorMessage(response));
+      return null;
+    }
+
+    if (status &lt; 201 || status &gt;= 300) {
+      this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
+      return null;
+    }
+
+    return body.id;
+  },
+
+  /**
+    * Update provisioned Workflow connection
+    * @param {String} connectionId - Workflow connection Id to update
+    * @return {String} connectionId - Workflow connection Id that was updated
+    */
+  updateWorkflowConnection: function (connectionId) {
+    var instanceName = gs.getProperty('instance_name');
+    var baseUrl = gs.getProperty('glide.servlet.uri');
+    var webhookRestApi = gs.getProperty('x_pd_integration.webhook_restapi');
+    var snUrl = baseUrl + webhookRestApi;
+    var rest = new x_pd_integration.PagerDuty_REST();
+    rest.customHeaders += '\nX-EARLY-ACCESS: flex-actions-early-access';
+
+    var connName = 'ServiceNow instance ' + instanceName;
+
+    var postBody = {
+      health: {
+        isHealthy: true
+      },
+      name: connName,
+      authenticationSecrets: {
+        'ServiceNow User ID': this.snAuthUser,
+        'ServiceNow User Password': this.snAuthUserPwd,
+        'Connection Name': connName,
+        URL: snUrl
+      },
+      serviceUrl: snUrl
+    };
+
+    var feature = 'actions/v1/connections/' + connectionId;
+
+    var response = rest.patchREST(feature, postBody);
+    var status = response.getStatusCode();
+
+    if (response.haveError()) {
+      this._setError(this._extractErrorMessage(response));
+    }
+
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
+    }
+    return connectionId;
+  },
+
+  /**
+  * Search for existing Workflow connection by Id
+  * @param {String} connectionId - Workflow connection Id to search for
+  * @return {Object} connection - Workflow connection if found or NULL
+  */
+  searchWorkflowConnection: function (connectionId) {
+    // Search connections request
+    var rest = new x_pd_integration.PagerDuty_REST();
+    rest.customHeaders += '\nX-EARLY-ACCESS: flex-actions-early-access';
+
+    var postBody = {
+      id: {
+        isEqualTo: connectionId
+      }
+    };
+
+    var feature = 'actions/v1/connections/search';
+
+    var response = rest.postREST(feature, postBody);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    // Consider a bad request as an invalid Id
+    if (status === 400) {
+      return null;
+    }
+    if (response.haveError()) {
+      this._setError(this._extractErrorMessage(response));
+      return null;
+    }
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
+      return null;
+    }
+
+    if (body.count &gt; 0) {
+      return body.Connections[0];
+    }
+    return null;
+  },
+
+  _getDefaultUserRole: function () {
+    var defaultRoleLabel = gs.getProperty('x_pd_integration.default_user_role');
+
+    switch (defaultRoleLabel) {
+      case 'Global Admin': return 'admin';
+      case 'Manager': return 'user';
+      case 'Responder': return 'limited_user';
+      case 'Observer': return 'observer';
+      default: {
+        gs.debug('faild to resolve Role for label {0}. defaulting to {1}.', defaultRoleLabel, 'user');
+        return 'user';
+      }
+    }
+  },
+
+  /**
+   * Provisions group members to PagerDuty
+   * If user with target email already exists, sets relevant PagerDuty ID
+   * @param {GlideRecordSecure} grGroupMember - sys_user_grmember object
+   * @returns {Array} users' PagerDuty IDs
+   */
+  provisionGroupMembers: function (grGroupMember) {
+
+    grGroupMember.addNotNullQuery('user');
+    grGroupMember.query();
+    var userPdId;
+    var usersPdIds = [];
+    while (grGroupMember.next()) {
+      userPdId = this.provisionUser(grGroupMember.user.getRefRecord(), null, false);
+      usersPdIds.push(userPdId);
+    }
+
+    return usersPdIds;
+  },
+
+  /**
+   * Initiates PagerDuty team creation and adds event to the queue for further escalation policy addition,
+   * along with group members and manager
+   * @param {GlideRecordSecure} grGroup - sys_user_group object
+   * @param {String} epId - PagerDuty escalation policy ID
+   * @returns {String} PagerDuty team ID
+   */
+  createPdTeam: function (grGroup, epId) {
+    var me = 'createPdTeam';
+    gs.debug('{0} group:{1}, epId:{2}', me, grGroup.getValue('name'), epId);
+
+    var teamId = this._createTeam(grGroup);
+    if (gs.nil(teamId)) {
+      return null;
+    }
+
+    if (!epId) {
+      epId = grGroup.getValue('x_pd_integration_pagerduty_escalation');
+    }
+
+    if (gs.nil(epId)) {
+      this._setError(me, 'Failed to get escalation policy');
+      return null;
+    }
+
+    gs.eventQueueScheduled(
+      'x_pd_integration.add_users_to_pd_team',
+      grGroup,
+      teamId,
+      epId,
+      new GlideDateTime().addSeconds(1)
+    );
+
+    return teamId;
+  },
+
+  /**
+   * Adds to escalation policy, users, and manager to the PagerDuty team
+   * @param {GlideRecordSecure} grGroup - sys_user_group object
+   * @param {String} teamId - PagerDuty team ID
+   * @param {String} epId - PagerDuty escalation policy ID
+   */
+  addEpAndUsersToPdTeam: function (grGroup, teamId, epId) {
+    this._addEpToTeam(epId, teamId);
+
+    var usersPdIds = this._getGroupMembersPdIds(grGroup);
+
+    usersPdIds.forEach(function (userPdId) {
+      this.addUserToPdTeam(userPdId, teamId);
+    }, this);
+
+    if (grGroup.getValue('manager')) {
+      var grUser = grGroup.manager.getRefRecord();
+      var managerPdId =
+        grUser.getValue('x_pd_integration_pagerduty_id') ||
+          this.provisionUser(grUser, 'user');
+      this.addUserToPdTeam(managerPdId, teamId, {manager: true});
+    }
+  },
+
+  /**
+   * Adds user to the PagerDuty team
+   * @param {String} pdUserId - PagerDuty user ID
+   * @param {String} teamId - PagerDuty team ID
+   * @param {Object} opts - additional options (e.g., {manager: true})
+   */
+  addUserToPdTeam: function (pdUserId, teamId, opts) {
+    var me = 'addUserToPdTeam';
+    var payload = {};
+    if (opts &amp;&amp; opts.manager) {
+      payload.role = 'manager';
+    }
+    var feature = 'teams/' + teamId + '/users/' + pdUserId;
+    var response = this.rest.putREST(feature, payload, this.userEmail);
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (status !== 204) {
+      this._setError(me, 'User with PagerDuty ID ' + pdUserId + ' has not been added to the team with ID ' + teamId + '.');
+    }
+  },
+
+  removeUserFromPdTeam: function (pdUserId, teamId, group) {
+    var me = 'removeUserFromPdTeam';
+    gs.debug('{0} pdUserId:{1}, teamId:{2}', me, pdUserId, teamId);
+    var response = this.rest.deleteREST('teams/' + teamId + '/users/' + pdUserId);
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (status !== 204) {
+      this._setError(me, 'Failed remove user from team, ' + pdUserId);
+      var error_message = this.pd.getUserNameByPDID(pdUserId) + ' could not removed from the ' + this.pd.getTeamNameByPDID(teamId) +
+      ' Team in PagerDuty. This is likely due to the user still being on a corresponding Escalation Policy in PagerDuty. You can remove the user from the team manually in PagerDuty.';
+      group.x_pd_integration_pd_error_message = error_message;
+      group.update();
+    }
+  },
+
+  /**
+   * Creates PagerDuty team based on ServiceNow group
+   * @param {GlideRecordSecure} grGroup - sys_user_group object
+   * @returns {String} PagerDuty team ID
+   */
+  _createTeam: function (grGroup) {
+    var me = '_createTeam';
+    gs.debug('{0} group:{1}', me, grGroup.getDisplayValue());
+    var postBody = {
+      team: {
+        type: 'team',
+        name: this._removeInvalidCharacters(grGroup.getValue('name')),
+        description: grGroup.getValue('description') || ''
+      }
+    };
+    var response = this.rest.postREST('teams', postBody, this.userEmail);
+
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (status === 402) {
+      this._setError(me, 'PagerDuty account does not have the "teams" feature.');
+      return null;
+    } else if (status !== 201) {
+      var message = this._extractErrorMessage(response);
+      this._setError(me, message);
+      gs.addErrorMessage('Team for the group [' + grGroup.getValue('name') + '] has not been created. ' + message);
+      return null;
+    }
+
+    var body = JSON.parse(response.getBody());
+    var teamId = body.team.id;
+    gs.addInfoMessage('Team for the group [' + grGroup.getValue('name') + '] has been created.');
+
+    return teamId;
+  },
+
+  /**
+   * Adds escalation policy to the PagerDuty team
+   * @param {String} epId - PagerDuty escalation policy ID
+   * @param {String} teamId - PagerDuty team ID
+   */
+  _addEpToTeam: function (epId, teamId) {
+    var me = '_addEpToTeam';
+    gs.debug('{0} epId:{1} teamId:{2}', me, epId, teamId);
+    var feature = 'teams/' + teamId + '/escalation_policies/' + epId;
+    var response = this.rest.putREST(feature, {}, this.userEmail);
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (status === 402) {
+      this._setError(me, 'PagerDuty account does not have the "teams" feature.');
+    } else if (status !== 204) {
+      this._setError(me, 'Failed to add escalation policy to the team with PagerDuty ID ' + teamId + '.');
+    }
+  },
+
+  /**
+   * Gets group members' PagerDuty IDs
+   * @param {GlideRecordSecure} grGroup - sys_user_group object
+   * @returns {Array} users' PagerDuty IDs
+   */
+  _getGroupMembersPdIds: function (grGroup) {
+    var usersPdIds = [];
+    var grGroupMember = new GlideRecordSecure('sys_user_grmember');
+    grGroupMember.addQuery('group', grGroup.getValue('sys_id'));
+    grGroupMember.addNotNullQuery('user.x_pd_integration_pagerduty_id');
+    grGroupMember.query();
+    while (grGroupMember.next()) {
+      usersPdIds.push(String(grGroupMember.user.x_pd_integration_pagerduty_id));
+    }
+
+    return usersPdIds;
+  },
+
+  /**
+   * Get country code from provided phone number
+   * @param {String} phone number
+   * @return {String} country code
+   */
+  _getCountryCode: function (phoneNumber) {
+    var COUNTRY_CODES = [880, 32, 226, 359, 387, 1246, 681, 590, 1441, 673, 591, 973, 257, 229, 975, 1876, 267, 685, 599, 55, 1242, 441534, 375, 501, 7, 250, 381, 670, 262, 993, 992, 40, 690, 245, 1671, 502, 30, 240, 590, 81, 592, 441481, 594, 995, 1473, 44, 241, 503, 224, 220, 299, 350, 233, 968, 216, 962, 385, 509, 36, 852, 504, 58, 1787, 970, 680, 351, 47, 595, 964, 507, 689, 675, 51, 92, 63, 870, 48, 508, 260, 212, 372, 20, 27, 593, 39, 84, 677, 251, 252, 263, 966, 34, 291, 382, 373, 261, 590, 212, 377, 998, 95, 223, 853, 976, 692, 389, 230, 356, 265, 960, 596, 1670, 1664, 222, 441624, 256, 255, 60, 52, 972, 33, 246, 290, 358, 679, 500, 691, 298, 505, 31, 47, 264, 678, 687, 227, 672, 234, 64, 977, 674, 683, 682, 225, 41, 57, 86, 237, 56, 61, 242, 236, 243, 420, 357, 61, 506, 599, 238, 53, 268, 963, 599, 996, 254, 211, 597, 686, 855, 1869, 269, 239, 421, 82, 386, 850, 965, 221, 378, 232, 248, 7, 1345, 65, 46, 249, 1809, 1767, 253, 45, 1284, 49, 967, 213, 598, 262, 961, 1758, 856, 688, 886, 1868, 90, 94, 423, 371, 676, 370, 352, 231, 266, 66, 228, 235, 1649, 218, 379, 1784, 971, 376, 1268, 93, 1264, 1340, 354, 98, 374, 355, 244, 1684, 54, 61, 43, 297, 91, 35818, 994, 353, 62, 380, 974, 258, 1];
+
+    for (var i = 4; i &gt;= 1; i--) {
+      var countryCode = phoneNumber.substr(0, i);
+      for (var j = 0; j &lt; COUNTRY_CODES.length; j++) {
+        if (COUNTRY_CODES[j] === parseInt(countryCode, 10)) {
+          return countryCode;
+        }
+      }
+    }
+    return null;
+  },
+
+  /**
+   * Create user contact methods from user phone number
+   * @param {String} User PagerDuty ID
+   * @param {String} contact type [email_contact_method, phone_contact_method, push_notification_contact_method, sms_contact_method]
+   * @param {String} address
+   * @return {String} contact method ID
+   */
+  _createContactMethod: function (userID, type, address, countryCode) {
+    var me = '_createContactMethod';
+    gs.debug('{0} creating contact method for userID {1}, type:{2}, address:{3}', me, userID, type, address);
+
+    var postBody = {
+      contact_method: {
+        type: type,
+        address: address,
+        country_code: countryCode
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var feature = 'users/' + userID + '/contact_methods';
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errCode = body.error.code;
+      var errors = body.error.errors.toString();
+      var errorMessage = 'error: ' + body.error.message;
+      this._setError(me, errCode + ':' + errorMessage + ':' + errors);
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      gs.debug('{0} body.contact_method= {1}', me, this.JSON.encode(body.contact_method));
+      var contactID = body.contact_method.id;
+      var contactType = body.contact_method.type;
+      gs.debug('{0} userId = {1}, contactID = {2}, contactType = {3}', me, userID, contactID, contactType);
+      return [contactID, contactType];
+    }
+    this._setError(me, 'unknown error, (' + status + ') body:' + response.getBody());
+  },
+
+  /**
+   * Create notification rules for user phone number
+   * @param {String} contact method ID
+   * @return void
+   */
+  _createNotificationRule: function (userID, contactID, contactType) {
+    var me = '_createNotificationRule';
+    gs.debug('{0} creating notifcation rule for contactID {1}', me, contactID);
+
+    if (gs.nil(contactID)) {
+      this._setError(me, 'Missing required contactID');
+      return;
+    }
+
+    var postBody = {
+      notification_rule: {
+        type: 'assignment_notification_rule',
+        start_delay_in_minutes: 0,
+        contact_method: {
+          id: contactID,
+          type: contactType
+        },
+        urgency: 'high'
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var feature = 'users/' + userID + '/notification_rules';
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errCode = body.error.code;
+      var errors = body.error.errors.toString();
+      var errorMessage = 'error: ' + body.error.message;
+
+      this._setError(me, errCode + ':' + errorMessage + ':' + errors);
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      gs.debug('{0} body.notification_rule= {1}', me, this.JSON.encode(body.notification_rule));
+    } else {
+      this._setError(me, 'unknown error, (' + status + ') body:' + response.getBody());
+    }
+  },
+
+  /**
+   * Update ServiceNow user record with PagerDuty ID, using import table
+   * @param {GlideRecordSecure} user record
+   * @param {String} PagerDuty ID for user
+   * @return void
+   */
+  _updateUser: function (user, id) {
+    var me = '_updateUser';
+    // update user through import set for tracking purposes
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_user_import');
+    gr.setValue('user_sysid', user.getUniqueValue());
+    gr.setValue('id', id);
+    gr.insert();
+    gs.debug('{0} added import for for user {1} with id:{2}', me, user.getDisplayValue(), id);
+  },
+
+  /**
+   * Create a new PagerDuty user
+   * @param {GlideRecordSecure} user record
+   * @param {String} PagerDuty role level
+   * (admin|limited_user|observer|owner|read_only_user|restricted_access|
+   * read_only_limited_user|user)
+   * @return void / userid
+   */
+  _createPDUser: function (user, role) {
+    var me = '_createPDUser';
+    gs.debug('{0} creating user for {1} with {2} role', me, user.getDisplayValue(), role);
+    var postBody = {
+      user: {
+        type: 'user',
+        name: user.getDisplayValue(),
+        email: user.getValue('email'),
+        role: role
+      }
+    };
+
+    var title = user.getValue('title');
+    if (!gs.nil(title)) {
+      postBody.user.job_title = title;
+    }
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var feature = 'users';
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errCode = body.error.code;
+      var errors = body.error.errors.toString();
+      var errorMessage = 'error: ' + body.error.message;
+
+      this._setError(me, errCode + ':' + errorMessage + ':' + errors);
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      gs.debug('{0} body.user = {1}', me, this.JSON.encode(body.user));
+      var userId = body.user.id;
+      gs.debug('{0} userId = {1}', me, userId);
+
+      this._updateUser(user, userId);
+      return userId;
+    }
+    this._setError(me, 'unknown error, (' + status + ') body:' + response.getBody());
+  },
+
+  _getCurrentOrDefaultUserPdId: function () {
+    var me = '_getCurrentOrDefaultUserPdId';
+    var grUser = new GlideRecordSecure('sys_user');
+    var userPdId;
+    if (grUser.get(gs.getUserID())) {
+      userPdId = grUser.getValue('x_pd_integration_pagerduty_id');
+      gs.debug('{0} found userPdId {1} in user record', me, userPdId);
+
+      if (gs.nil(userPdId)) {
+        if (this.autoProvisionUsers === 'true') {
+          gs.debug('{0} auto-provisioning enabled, creating PagerDuty user for ID:{1}', me, userPdId);
+          gs.info(
+            '{0} current user \'{1}\' does not have a PagerDuty ID, auto-provisioning enabled, attempting to create it',
+            me, userPdId
+          );
+
+          userPdId = this.provisionUser(grUser);
+          gs.debug('{0} provisioned new user {1}:{2}', me, grUser.getDisplayValue(), userPdId);
+        } else {
+          // attempt to use default user from property
+          var defaultUserId = gs.getProperty('x_pd_integration.default_user');
+          if (gs.nil(defaultUserId)) {
+            gs.error('{0} attempting to use default user property but it is empty, aborting group provisioning', me);
+          } else {
+            userPdId = defaultUserId;
+          }
+        }
+      }
+    }
+
+    return userPdId;
+  },
+
+  /**
+   * Creates PagerDuty escalation policy (and optionally provisions group members),
+   * depending on configuration settings also creates schedule, team, service, and webhook
+   * @param {GlideRecordSecure} grGroup - sys_user_group object
+   * @param {String} userPdId - PagerDuty user ID
+   * @param {Object} opts - additional options (e.g., {reduce_targets: 'true'})
+   * @returns {Object} object with saved PagerDuty IDs
+   */
+  provisionGroupService: function (grGroup, userPdId, opts) {
+    var me = 'provisionGroupService';
+
+    if (grGroup.getValue('x_pd_integration_pagerduty_service')) {
+      gs.error('{0} group {1} already has a service ID, aborting provisioning', me, grGroup.getDisplayValue());
+      gs.addErrorMessage('[' + grGroup.getValue('name') + '] group already has a PagerDuty service ID. Provisioning has been cancelled.');
+      return;
+    }
+
+    var scheduleId;
+    if (this.autoCreateSchedule === 'true') {
+      scheduleId = this.createSchedule(grGroup);
+    }
+
+    var epId;
+    var mappedGroupMembersPdIds = this._getGroupMembersPdIds(grGroup);
+
+    if (this.autoProvisionGrmembers === 'true') {
+      var grGroupMember = new GlideRecordSecure('sys_user_grmember');
+      if (grGroupMember.get('group', grGroup.getValue('sys_id'))) {
+        var groupMembersPdIds = this.provisionGroupMembers(grGroupMember);
+        if (opts &amp;&amp; opts.reduce_targets === 'true') {
+          groupMembersPdIds = groupMembersPdIds.slice(0, 49);
+        }
+        epId = this._createPolicy(grGroup, groupMembersPdIds, scheduleId &amp;&amp; [scheduleId]);
+      } else {
+        return gs.addErrorMessage('"Provision Assignment Group members into PagerDuty" option is checked, but the group does not contain members. Provisioning has been canceled.');
+      }
+    } else if (mappedGroupMembersPdIds.length) {
+      epId = this._createPolicy(grGroup, mappedGroupMembersPdIds, scheduleId &amp;&amp; [scheduleId]);
+    } else {
+      epId = this._createPolicy(grGroup, [userPdId], scheduleId &amp;&amp; [scheduleId]);
+    }
+
+    if (!epId) {
+      gs.error('{0} failed to create escalation policy, cannot create group service', me);
+      return;
+    }
+
+    var teamId;
+    if (this.autoCreationPdTeams === 'true') {
+      teamId = this.createPdTeam(grGroup, epId);
+    }
+
+    var serviceId;
+    var webhookId;
+    var message = 'The group [' + grGroup.getValue('name') + '] has been provisioned into PagerDuty. ';
+    if (this.sn2pdMapping === 'Assignment Groups map to PagerDuty') {
+      serviceId = this._createPdService(grGroup, epId);
+      if (!serviceId) {
+        gs.error('{0}: failed to create service', me);
+        return;
+      }
+
+      webhookId = this.createServiceWebhook(serviceId, grGroup);
+      message += gs.nil(teamId)
+        ? 'The service and an escalation policy were created.'
+        : 'The service, an escalation policy, and the team were created.';
+      gs.addInfoMessage(message);
+    } else {
+      message += 'The escalation policy was created.';
+      gs.addInfoMessage(message);
+    }
+
+    return this.updateGroupPdIds(grGroup, {
+      escalation_id: epId,
+      schedule_id: scheduleId,
+      service_id: serviceId,
+      webhook_id: webhookId,
+      team_id: teamId
+    });
+  },
+
+  /**
+   * Creates PagerDuty service, webhook subscription, and
+   * escalation policy if Change Group (assignment_group column)
+   * in the Configuration Item (CI) form is not set to the mapped Group [sys_user_group]
+   * @param {GlideRecordSecure} grCi - cmdb_ci object
+   * @param {String} userPdId - PagerDuty user ID
+   * @param {Object} opts - additional options (e.g., {reduce_targets: true}
+   * on Group provisioning, when the number of group members more than 49)
+   * @returns {String} PagerDuty service ID
+   */
+  provisionCIService: function (grCi, userPdId, opts) {
+    var me = 'provisionCIService';
+    var fnDesc = 'Failed to provision the service for the CI [' + grCi.name + ']';
+
+    gs.debug('{0} ci:{1}, userPdId:{2}', me, grCi.getDisplayValue(), userPdId);
+
+    if (!userPdId) {
+      userPdId = this._getCurrentOrDefaultUserPdId();
+    }
+
+    if (!gs.nil(grCi.x_pd_integration_pagerduty_service)) {
+      this._setError(fnDesc, 'the configuration item already has the service id');
+      return;
+    }
+
+    var policyId;
+    if (!gs.nil(grCi.assignment_group)) {
+      var grGroup = grCi.assignment_group.getRefRecord();
+      if (!gs.nil(grGroup.sys_id)) {
+        var epHelper = new x_pd_integration.EscalationPolicyHelper();
+        policyId = epHelper.getPDEscalationPolicyId(grGroup.sys_id);
+        if (!policyId) {
+          policyId = this.provisionGroupService(grGroup, userPdId, opts).escalation_id;
+        }
+      } else {
+        this._setError(fnDesc, 'group [' + grGroup.name + '] does not exist');
+        return;
+      }
+    } else {
+      policyId = this._createPolicy(grCi, [userPdId]);
+    }
+
+    if (gs.nil(policyId)) {
+      this._setError(fnDesc, 'escalation policy was not created');
+      return;
+    }
+
+    var serviceId = this._createPdService(grCi, policyId);
+    if (gs.nil(serviceId)) {
+      this._setError(fnDesc, 'failed to create service');
+      return;
+    }
+
+    var webhookId = this.createServiceWebhook(serviceId, grCi);
+
+    this._updateCI(grCi, serviceId, webhookId);
+
+    return serviceId;
+  },
+
+  /**
+   * Creates PagerDuty Schedule
+   * @param {GlideRecord} sys_user_group object
+   * @returns {String} PagerDuty Schedule ID
+   */
+  createSchedule: function (grGroup) {
+    var me = 'createSchedule';
+    var pdScheduleId;
+    gs.debug('{0} group:{1}', me, grGroup.getDisplayValue());
+    var feature = 'schedules';
+    var currentDate = new Date();
+    var inOneMonth = new Date();
+    var numberOfDaysToAdd = 30;
+    inOneMonth = new Date(inOneMonth.setDate(inOneMonth.getDate() + numberOfDaysToAdd));
+    var zoneName = 'America/Los_Angeles';
+    var pdUserId;
+    if (gs.nil(grGroup.manager)) {
+      var firstGroupMemberSysId = this._getFirstGroupMemberSysId(grGroup);
+      var snUserId = firstGroupMemberSysId || gs.getUserID();
+      var grUser = new GlideRecordSecure('sys_user');
+      if (!grUser.get(snUserId)) {
+        gs.addErrorMessage('The schedule can\'t be created since there are no users for the scheduling layer.');
+        return;
+      }
+      pdUserId = this.provisionUser(grUser);
+    } else {
+      pdUserId = this.provisionUser(grGroup.manager.getRefRecord());
+    }
+    var groupName = this._removeInvalidCharacters(grGroup.getDisplayValue());
+    var postBody = {
+      schedule: {
+        type: feature,
+        time_zone: zoneName,
+        name: 'SN-' + groupName,
+        description: 'Schedule was created by ServiceNow',
+        schedule_layers: [
+          {
+            name: 'ServiceNow default schedule layer',
+            start: currentDate.toISOString(),
+            end: null,
+            rotation_virtual_start: currentDate.toISOString(),
+            rotation_turn_length_seconds: 86400,
+            users: [
+              {
+                id: pdUserId,
+                type: 'user'
+              }
+            ]
+          }
+        ]
+      }
+    };
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var status = response.getStatusCode();
+    gs.debug('_createSchedule response: {0}:{1}', status, response.getBody());
+
+    if (status === 200 || status === 201) {
+      var body = this.JSON.decode(response.getBody());
+      pdScheduleId = body.schedule.id;
+      gs.addInfoMessage('Schedule for the group [' + groupName + '] has been created.');
+      gs.debug('schedule.id = {0}', pdScheduleId);
+    } else {
+      this._setError(me, this._extractErrorMessage(response));
+      gs.addErrorMessage('Schedule for the group [' + groupName + '] has not been created. ' + this._extractErrorMessage(response));
+      gs.error('Error in _createSchedule: ' + response.getErrorMessage());
+    }
+
+    return pdScheduleId;
+  },
+
+  /**
+   * Creates a webhook subscription
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @param {GlideRecordSecure} grRec - record from a table (e.g., cmdb_ci, sys_user_group),
+   * used to populate x_pd_integration_pagerduty_webhook column with ID
+   * overrides task_type from global settings
+   * @returns {String} PagerDuty webhook ID
+   */
+  createServiceWebhook: function (pdServiceId, grRec) {
+    var me = 'createServiceWebhook';
+    var webhookId;
+
+    try {
+      var v3wh = new x_pd_integration.v3webhook();
+      webhookId = v3wh.create(pdServiceId, grRec);
+    } catch (e) {
+      this._setError(me, e.message);
+    }
+
+    return webhookId;
+  },
+
+  /**
+   * Update ServiceNow group record with PagerDuty ids from props object
+   * @param {GlideRecordSecure} group record
+   * @param {Object} props - object with keys &amp; values for update ServiceNow group record
+   * @return {Object} - object with only saved ids;
+   */
+  updateGroupPdIds: function (group, props) {
+    var me = '_updateGroupPdIds';
+    gs.debug('{0} try to update pd ids for group:{1}', me, group.getDisplayValue());
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_group_import');
+    gr.setValue('group_sysid', group.getUniqueValue());
+
+    Object.keys(props).forEach(function (key) {
+      if (props[key]) {
+        gr.setValue(key, props[key]);
+      } else {
+        delete props[key];
+      }
+    });
+
+    gr.insert();
+    gs.debug('{0} added import for for group {1} with {2}', me, group.getDisplayValue(), this.JSON.encode(props));
+    return props;
+  },
+
+  /**
+   * @deprecated since version 5.0, left for backward compatibility
+   * Update ServiceNow group record with PagerDuty service, policy ID and webhook ID, using import table
+   * @param {GlideRecordSecure} group record
+   * @param {String} PagerDuty service ID
+   * @param (String) PagerDuty escalation policy ID
+   * @param (String) PagerDuty webhook ID
+   * @return void
+   */
+  _updateGroup: function (group, serviceID, escalationID, webhookID, scheduleID) {
+    var me = '_updateGroup';
+    // update user through import set for tracking purposes
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_group_import');
+    gr.setValue('group_sysid', group.getUniqueValue());
+    gr.setValue('escalation_id', escalationID);
+    gr.setValue('service_id', serviceID);
+    gr.setValue('webhook_id', webhookID);
+    if (scheduleID) {
+      gr.setValue('schedule_id', scheduleID);
+    }
+    gr.insert();
+    gs.debug(
+      '{0} added import for for group {1} with service:{2}, policy:{3}, schedule:{4} and webhook:{5}', me, group.getDisplayValue(),
+      serviceID,
+      escalationID,
+      scheduleID,
+      webhookID
+    );
+  },
+
+  /**
+   * @deprecated since version 5.0, left for backward compatibility
+   * Update ServiceNow group record with PagerDuty policy ID using import table
+   * @param {GlideRecordSecure} group record
+   * @param (String) PagerDuty escalation policy ID
+   * @return void
+   */
+  _updateGroupEP: function (group, escalationID) {
+    var me = '_updateGroupEP';
+    // update group through import set for tracking purposes
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_group_import');
+    gr.setValue('group_sysid', group.getUniqueValue());
+    gr.setValue('escalation_id', escalationID);
+    gr.insert();
+    gs.debug('{0} added import for for group {1} with policy:{2}', me, group.getDisplayValue(), escalationID);
+  },
+
+  /**
+   * Update ServiceNow ci record with PagerDuty service, policy ID and webhook ID, using import table
+   * @param {GlideRecordSecure} ci record
+   * @param {String} PagerDuty service ID
+   * @param (String) PagerDuty webhook ID
+   * @return void
+   */
+  _updateCI: function (ci, serviceID, webhookID) {
+    var me = '_updateCI';
+    // update CI through import set for tracking purposes
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_ci_import');
+    gr.setValue('cmdb_ci_sysid', ci.getUniqueValue());
+    gr.setValue('service_id', serviceID);
+    gr.setValue('webhook_id', webhookID);
+    gr.insert();
+    gs.debug('{0} added import for ci {1} with service:{2} and webhook:{3}', me, ci.getDisplayValue(), serviceID, webhookID);
+  },
+
+  /**
+   * Creates PagerDuty service
+   * @param {GlideRecordSecure} grRec - record of a table (e.g., cmdb_ci, sys_user_group)
+   * @param {String} epId - PagerDuty escalation policy ID
+   * @returns {String} PagerDuty service ID
+   */
+  _createPdService: function (grRec, epId) {
+    var me = '_createPdService';
+    var serviceName = 'SN:' + this._removeInvalidCharacters(grRec.getDisplayValue());
+
+    var feature = 'services';
+    var postBody = {
+      service: {
+        type: 'service',
+        name: serviceName,
+        status: 'active',
+        escalation_policy: {
+          id: epId,
+          type: 'escalation_policy_reference'
+        },
+        alert_creation: 'create_alerts_and_incidents'
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, response.getBody());
+
+    if (response.haveError()) {
+      var errorMessage = 'Failed to create [' + serviceName + '] service: ' + this._extractErrorMessage(response);
+      this._setError(errorMessage);
+      return;
+    }
+
+    if (status &lt; 200 || status &gt;= 300) {
+      this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
+      return;
+    }
+
+    return body.service.id;
+  },
+
+  /**
+   * Create a PagerDuty escalation policy for a group
+   * @param {GlideRecordSecure} sys_user_group record
+   * @param {Array} pdUserIds users PagerDuty IDs, used as policy target
+   * @return {String} new policy ID
+   */
+  _createPolicy: function (group, pdUserIds, pdScheduleIds) {
+    var me = '_createPolicy';
+
+    var userTargets = pdUserIds.reduce(function (filtered, pdUserId) {
+      if (!pdUserId) {
+        gs.debug('{0} skipping user with undefined pdUserId - likely a user we could not provision due to empty email', me);
+      } else {
+        filtered.push({
+          id: pdUserId,
+          type: 'user_reference'
+        });
+      } return filtered;
+    }, []);
+
+    var scheduleTargets = [];
+    if (pdScheduleIds) {
+      scheduleTargets = pdScheduleIds.map(function (scheduleId) {
+        return {
+          id: scheduleId,
+          type: 'schedule_reference'
+        };
+      });
+    }
+
+    var targets = scheduleTargets.concat(userTargets);
+    var epName = 'SN:' + this._removeInvalidCharacters(group.getDisplayValue());
+
+    var postBody = {
+      escalation_policy: {
+        type: 'escalation_policy',
+        name: epName,
+        escalation_rules: [
+          {
+            escalation_delay_in_minutes: 30,
+            targets: targets
+          }
+        ]
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var feature = 'escalation_policies';
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var status = response.getStatusCode();
+    var body = this.JSON.decode(response.getBody());
+
+    if (response.haveError()) {
+      var errCode = body.error.code;
+      var errorMessage = body.error.errors[0].toString();
+      this._setError(me, '[' + epName + ']' + errCode + ':' + errorMessage + '.');
+      gs.addErrorMessage('Escalation policy [' + epName + '] has not been created. ' + errorMessage + '.');
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      var id = body.escalation_policy.id;
+      gs.debug('createPolicy.id = {0}', id);
+      return id;
+    }
+  },
+
+  _getFirstGroupMemberSysId: function (group) {
+    var grs = new GlideRecordSecure('sys_user_grmember');
+    grs.addQuery('group', group.sys_id);
+    grs.setLimit(1);
+    grs.query();
+    if (grs.next()) {
+      return grs.getValue('user').toString();
+    }
+    return null;
+  },
+
+  // not in use
+  addScheduleToEscalationPolicy: function (escalationID, scheduleID) {
+    var me = 'addScheduleToEscalationPolicy';
+    gs.debug('{0} escalationID:{1} scheduleID:{2}', me, escalationID, scheduleID);
+    var feature = 'escalation_policies/' + escalationID;
+    var putBody = {
+      escalation_policy: {
+        escalation_rules: [
+          {
+            escalation_delay_in_minutes: 1,
+            targets: [
+              {
+                id: scheduleID,
+                type: 'schedule_reference'
+              }
+            ]
+          }
+        ]
+      }
+    };
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.putREST(feature, putBody, userEmail);
+    var status = response.getStatusCode();
+    gs.debug('_createSchedule response: {0}:{1}', status, response.getBody());
+
+    if (status !== 200 || status !== 201) {
+      gs.error('Error in _createSchedule: ' + response.getErrorMessage());
+    }
+  },
+
+  /**
+   * Does class have an error?
+   * @return {Boolean}
+   */
+  hasError: function () {
+    return this._hasError;
+  },
+
+  /**
+   * Get last error message
+   * @return {String} error message
+   */
+  getError: function () {
+    if (!gs.nil(this._errorMsg)) {
+      return this._errorMsg;
+    }
+  },
+
+  /** Services Provisioning module */
+
+  /**
+   * Initiates CIs provisioning along with dependencies,
+   * which are represented in the provisioning table as relationships.
+   * The table is populated based on the configuration
+   * in the Services Provisioning module
+   */
+  customProvisioning: function () {
+    this.clearAssociatingFlag();
+
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery('provisioned', false);
+    grs.query();
+    var relationships = [];
+    while (grs.next()) {
+      relationships.push({
+        parent_type: String(grs.parent_type),
+        parent_ci_sys_id: String(grs.parent_ci.sys_id),
+        child_type: String(grs.child_type),
+        child_ci_sys_id: String(grs.child_ci.sys_id),
+        rel_sys_id: String(grs.sys_id)
+      });
+    }
+
+    var dependencies = relationships.reduce(function (acc, rel) {
+      var key = rel.parent_ci_sys_id + ':' + rel.parent_type;
+      if (acc.hasOwnProperty(key)) {
+        acc[key].children.push({
+          ci_sys_id: rel.child_ci_sys_id,
+          service_type: rel.child_type,
+          rel_sys_id: rel.rel_sys_id
+        });
+      } else {
+        acc[key] = {
+          children: [
+            {
+              ci_sys_id: rel.child_ci_sys_id,
+              service_type: rel.child_type,
+              rel_sys_id: rel.rel_sys_id
+            }
+          ]
+        };
+      }
+
+      return acc;
+    }, {});
+
+    Object.keys(dependencies).forEach(function (key) {
+      dependencies[key].children.forEach(function (child) {
+        this.clearProvisioningErrors(child.rel_sys_id);
+      }, this);
+
+      var relSysId = dependencies[key].children[0].rel_sys_id;
+
+      var parentSysId = key.split(':')[0];
+      var parentType = key.split(':')[1];
+
+      if (gs.nil(parentSysId)) {
+        return;
+      }
+
+      var grParentCi = new GlideRecordSecure('cmdb_ci');
+      if (!grParentCi.get(parentSysId)) {
+        return;
+      }
+
+      var parentPdId;
+      if (parentType === 'business_service') {
+        parentPdId = this.searchBsPdId(grParentCi);
+        if (!gs.nil(parentPdId)) {
+          this.setBsPdIds(grParentCi, parentPdId);
+        } else {
+          parentPdId = this.provisionWrapErrors(grParentCi, 'parent', relSysId, 'provisionCiBs');
+          this.setPdId(grParentCi, parentPdId, 'parent', 'business_service');
+        }
+
+        this.provisionRelationships({
+          parent_ci_pd_id: parentPdId,
+          parent_ci_type: 'business_service',
+          dependencies: dependencies,
+          key: key
+        });
+      } else {
+        // parentType === 'technical_service'
+        parentPdId = grParentCi.getValue('x_pd_integration_pagerduty_service');
+        if (gs.nil(parentPdId)) {
+          parentPdId = this.provisionWrapErrors(grParentCi, 'parent', relSysId, 'provisionCiTs');
+        }
+        this.setPdId(grParentCi, parentPdId, 'parent', 'technical_service');
+
+        this.provisionRelationships({
+          parent_ci_pd_id: parentPdId,
+          parent_ci_type: 'service',
+          dependencies: dependencies,
+          key: key
+        });
+      }
+    }, this);
+  },
+
+  /**
+   * Provisions parent/child CIs relationships
+   * @param {Object} args
+   * @param {String} args.parent_ci_pd_id - Parent CI's PagerDuty ID
+   * @param {String} args.parent_ci_type - CI's type (service, business_service)
+   * @param {Object} args.dependencies - Object with CI's chlildren (array of objects)
+   * @param {String} args.key - Unique key identifying parent CI (sys_id:type)
+   */
+  provisionRelationships: function (args) {
+    var parentPdId = args.parent_ci_pd_id;
+    var parentType = args.parent_ci_type;
+    var dependencies = args.dependencies;
+    var key = args.key;
+
+    dependencies[key].children.forEach(function (child) {
+      if (gs.nil(child.ci_sys_id)) {
+        this.setProvisionedFlag(child.rel_sys_id);
+        return;
+      }
+
+      var grChildCi = new GlideRecordSecure('cmdb_ci');
+      if (!grChildCi.get(child.ci_sys_id)) {
+        return;
+      }
+
+      var childPdId;
+      var relationship;
+      if (child.service_type === 'business_service') {
+        childPdId = this.searchBsPdId(grChildCi);
+        if (!gs.nil(childPdId)) {
+          this.setBsPdIds(grChildCi, childPdId);
+        } else {
+          childPdId = this.provisionWrapErrors(grChildCi, 'child', child.rel_sys_id, 'provisionCiBs');
+          this.setPdId(grChildCi, childPdId, 'child', 'business_service');
+        }
+        relationship = {
+          supporting_service: {
+            id: childPdId,
+            type: 'business_service'
+          },
+          dependent_service: {
+            id: parentPdId,
+            type: parentType
+          }
+        };
+        this.enqueueAssociation(grChildCi, JSON.stringify(relationship), child.rel_sys_id);
+      } else {
+        // child.service_type === 'technical_service'
+        childPdId = grChildCi.getValue('x_pd_integration_pagerduty_service');
+        if (gs.nil(childPdId)) {
+          childPdId = this.provisionWrapErrors(grChildCi, 'child', child.rel_sys_id, 'provisionCiTs');
+        }
+        this.setPdId(grChildCi, childPdId, 'child', 'technical_service');
+        relationship = {
+          supporting_service: {
+            id: childPdId,
+            type: 'service'
+          },
+          dependent_service: {
+            id: parentPdId,
+            type: parentType
+          }
+        };
+        this.enqueueAssociation(grChildCi, JSON.stringify(relationship), child.rel_sys_id);
+      }
+    }, this);
+  },
+
+  /**
+   * Retrieves statistics from the provisioning table
+   * of how many CIs being successfully provisioned and how many was skipped due to errors
+   * @returns {Object.&lt;string, number&gt;}
+   */
+  getProvisioningStats: function () {
+    var provisioned = {};
+    var skipped = {};
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.query();
+    while (grs.next()) {
+      if (grs.parent_ci) {
+        if (grs.parent_service_pagerduty_id &amp;&amp; !grs.provisioning_errors) {
+          provisioned[makeKey(grs, 'parent')] = true;
+        } else {
+          skipped[makeKey(grs, 'parent')] = true;
+        }
+      }
+      if (grs.child_ci) {
+        if (grs.child_service_pagerduty_id &amp;&amp; !grs.provisioning_errors) {
+          provisioned[makeKey(grs, 'child')] = true;
+        } else {
+          skipped[makeKey(grs, 'child')] = true;
+        }
+      }
+    }
+
+    return {
+      provisioned: Object.keys(provisioned).length,
+      skipped: Object.keys(skipped).length
+    };
+
+    function makeKey (grs, role) {
+      return String(grs[role + '_type'] + '_' + grs[role + '_service_pagerduty_id']);
+    }
+  },
+
+  /**
+   * Queries association status of the parent/child services being provisioned
+   * @returns {Object} stats
+   * @returns {Number} stats.max
+   * @returns {Number} stats.value
+   * @returns {Array} stats.services (parent_ci_name, child_ci_name)
+   */
+  queryAssociationStatus: function () {
+    var stats = {
+      max: 0,
+      value: 0,
+      services: []
+    };
+    var ga = new GlideAggregate(this.provTable);
+    ga.addNotNullQuery('parent_ci');
+    ga.addNotNullQuery('parent_service_pagerduty_id');
+    ga.addNotNullQuery('child_ci');
+    ga.addNotNullQuery('child_service_pagerduty_id');
+    ga.addNullQuery('provisioning_errors');
+    ga.addAggregate('COUNT');
+    ga.query();
+    if (ga.next()) {
+      stats.max = ga.getAggregate('COUNT');
+    }
+
+    ga = new GlideAggregate(this.provTable);
+    ga.addNotNullQuery('parent_ci');
+    ga.addNotNullQuery('parent_service_pagerduty_id');
+    ga.addNotNullQuery('child_ci');
+    ga.addNotNullQuery('child_service_pagerduty_id');
+    ga.addNullQuery('provisioning_errors');
+    ga.addQuery('provisioned', true);
+    ga.addAggregate('COUNT');
+    ga.query();
+    if (ga.next()) {
+      stats.value = ga.getAggregate('COUNT');
+    }
+
+    var assocRecord = this.getAssociatingRecord();
+    if (assocRecord &amp;&amp; assocRecord.services) {
+      stats.services = assocRecord.services;
+    }
+
+    return stats;
+  },
+
+  /**
+   * Resets relationship provisioning errors in the table
+   * @param {String} relSysId - relationship sys_id
+   */
+  clearProvisioningErrors: function (relSysId) {
+    var fn = 'clearProvisioningErrors';
+    var grs = new GlideRecordSecure(this.provTable);
+    if (!grs.get(relSysId)) {
+      gs.error('{0} There is no relationship with sys_id {1} in the provisioning table', fn, relSysId);
+      return;
+    }
+    grs.provisioning_errors = '';
+    grs.update();
+  },
+
+  /**
+   * Retrieves relationship provisioning errors
+   * @param {String} relSysId - relationship sys_id
+   * @returns {String} provisioning errors
+   */
+  getProvisioningError: function (relSysId) {
+    var fn = 'getProvisioningError';
+    var grs = new GlideRecordSecure(this.provTable);
+    if (!grs.get(relSysId)) {
+      gs.error('{0} There is no relationship with sys_id {1} in the provisioning table', fn, relSysId);
+      return;
+    }
+
+    return String(grs.provisioning_errors);
+  },
+
+  /**
+   * Initiates CI provisioning into PagerDuty as a service or business service
+   * and registers any errors occured along the way in the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} role - Role in the relationship (parent, child)
+   * @param {String} relSysId - Relationship sys_id
+   * @param {String} fnName - Function name responsible for provisioning
+   * @returns {String} PagerDuty service or business service ID
+   */
+  provisionWrapErrors: function (grCi, role, relSysId, fnName) {
+    this.clearErrors();
+
+    // remember errors
+    var oldError = this.getProvisioningError(relSysId);
+
+    // fetch new errors
+    var result = null;
+    if (fnName === 'provisionCiBs') {
+      result = this.provisionCiBs(grCi, role);
+    } else {
+      result = this.provisionCiTs(grCi, role);
+    }
+
+    // merge errors
+    var ciName = '';
+    if (grCi.name) {
+      ciName = '[' + grCi.name + ']: ';
+    }
+    var newErrors = this.getErrors().join('. ');
+    if (newErrors.length) {
+      newErrors = ciName + newErrors;
+    }
+    var allErrors = [oldError].concat(newErrors).filter(Boolean);
+
+    // write new errors
+    var grs = new GlideRecordSecure(this.provTable);
+    if (!grs.get(relSysId)) {
+      gs.error('No record with sys_id [' + relSysId + '] in [' + this.provTable + ']');
+      return;
+    }
+    grs.provisioning_errors = allErrors.join('. \n');
+    grs.update();
+    this.clearErrors();
+
+    return result;
+  },
+
+  /**
+   * Creates PagerDuty business service with a name
+   * taken from the provisioning table
+   * POST business_services
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} role - Role in the relationship (parent, child)
+   * @returns {String} PagerDuty business service ID
+   */
+  provisionCiBs: function (grCi, role) {
+    var fn = 'provisionCiBs';
+    var fnDesc = 'Error during Business Service creation';
+    var pdBusinessServiceId;
+    grCi.name = this.getCiName(grCi, role);
+    if (!grCi.name) {
+      this._setError(fnDesc, 'there is no CI name for CI [' + grCi.sys_id + ']');
+      return;
+    }
+
+    var name = 'SN:' + this._removeInvalidCharacters(grCi.name);
+    var description = String(grCi.short_description);
+    if (description.length &gt; this.maxBSDescription) {
+      var replacement = '...';
+      description = description.substring(0, this.maxBSDescription - replacement.length) + replacement;
+    }
+    var owner = {
+      name: String(grCi.owned_by.name),
+      email: String(grCi.owned_by.email)
+    };
+    var contact = owner.name &amp;&amp; owner.email
+      ? owner.name + ', ' + owner.email
+      : owner.name || owner.email;
+
+    var teamId = String(grCi.assignment_group.x_pd_integration_pagerduty_team);
+    var teamObj = {};
+    if (!gs.nil(teamId)) {
+      teamObj = {id: teamId};
+    }
+
+    var feature = 'business_services';
+    var postBody = {
+      business_service: {
+        name: name,
+        description: description,
+        point_of_contact: contact,
+        team: teamObj
+      }
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var body = this.JSON.decode(response.getBody());
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', fn, status, response.getBody());
+
+    if (response.haveError()) {
+      this._setError(fnDesc, this._extractErrorMessage(response));
+      return;
+    }
+
+    if (status === 200) {
+      pdBusinessServiceId = body.business_service.id;
+    } else {
+      this._setError(fnDesc, 'status: ' + status + ', response: ' + response.getBody());
+    }
+
+    return pdBusinessServiceId;
+  },
+
+  /**
+   * Creates PagerDuty service for the provided CI with a name
+   * taken from the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} role - Role in the relationship (parent, child)
+   * @returns {String} PagerDuty service ID
+   */
+  provisionCiTs: function (grCi, role) {
+    var fnDesc = 'Error during Technical Service creation';
+
+    grCi.name = this.getCiName(grCi, role);
+    if (!grCi.name) {
+      this._setError(fnDesc, 'there is no CI name for CI [' + grCi.sys_id + ']');
+      return;
+    }
+    var serviceId = this.provisionCIService(grCi, null, null);
+
+    return serviceId;
+  },
+
+  /**
+   * Retrieves provided CI's name from the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci record
+   * @param {String} role - Role in the relationship (parent, child)
+   * @returns {String} CI's name
+   */
+  getCiName: function (grCi, role) {
+    var name = grCi.name;
+    var grs = new GlideRecordSecure(this.provTable);
+    if (role === 'parent') {
+      grs.addQuery('parent_ci', grCi.sys_id);
+    } else {
+      grs.addQuery('child_ci', grCi.sys_id);
+    }
+    grs.query();
+    if (grs.next()) {
+      if (role === 'parent') {
+        name = String(grs.parent_ci_name);
+      } else {
+        name = String(grs.child_ci_name);
+      }
+    }
+
+    return name;
+  },
+
+  /**
+   * Queues an event in the event manager.
+   * Scheduled for processing after 1 second of the current date/time
+   * to increase chances that all the PagerDuty entities with the corresponding IDs
+   * are actually created
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} relationshipJSON - Stringified JSON with relationship data
+   * @param {String} relSysId - Relationship sys_id
+   */
+  enqueueAssociation: function (grCi, relationshipJSON, relSysId) {
+    gs.eventQueueScheduled(
+      'x_pd_integration.associate_dependencies',
+      grCi,
+      relationshipJSON,
+      relSysId,
+      new GlideDateTime().addSeconds(1)
+    );
+  },
+
+  /**
+   * Initiates services dependencies association
+   * Invoked by Script Action 'Associate Dependencies' triggered by event
+   * x_pd_integration.associate_dependencies
+   * @param {GlideRecord} cmdb_ci object
+   * @param {String} relationshipJSON - Stringified JSON with relationship data
+   * @param {String} relSysId - relationship sys_id
+   * @returns {Boolean}
+   */
+  associateServiceDependencies: function (grCi, relationshipJSON, relSysId) {
+    this.clearErrors();
+    this.clearAssociatingFlag();
+    this.setAssociatingFlag(relSysId);
+
+    var result = this.associateServiceDependenciesImpl(grCi, relationshipJSON, relSysId);
+    var errorStr = this.getErrors().join('. ');
+
+    var grs = new GlideRecordSecure(this.provTable);
+    if (!grs.get(relSysId)) {
+      gs.error('No record with sys_id [' + relSysId + '] in [' + this.provTable + ']');
+      return;
+    }
+    grs.provisioning_errors = errorStr;
+    if (result) {
+      grs.provisioning_errors = '';
+    }
+    grs.update();
+    this.clearErrors();
+
+    return result;
+  },
+
+  /**
+   * Establishes association between services
+   * POST service_dependencies/associate
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} relationshipJSON - Stringified JSON with relationship data
+   * @param {String} relSysId - Relationship sys_id
+   * @returns {Boolean}
+   */
+  associateServiceDependenciesImpl: function (grCi, relationshipJSON, relSysId) {
+    var fn = 'associateServiceDependenciesImpl';
+    var fnDesc = 'Failed to associate service dependency';
+
+    var relationship = JSON.parse(relationshipJSON);
+
+    if (!relationship.supporting_service.id) {
+      this._setError(fnDesc, 'there is no supporting service id for the CI [' + grCi.name + '].');
+      return;
+    }
+    if (!relationship.dependent_service.id) {
+      this._setError(fnDesc, 'there is no dependent service id for the CI [' + grCi.name + '].');
+      return;
+    }
+
+    var feature = 'service_dependencies/associate';
+    var postBody = {
+      relationships: [relationship]
+    };
+
+    var pd = new x_pd_integration.PagerDuty();
+    var userEmail = pd.getValidEmail(gs.getUserID());
+    var response = this.rest.postREST(feature, postBody, userEmail);
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', fn, status, response.getBody());
+
+    if (response.haveError()) {
+      this._setError(fnDesc, '[' +
+        relationship.supporting_service.id + ':' + relationship.supporting_service.type +
+        '-&gt;' +
+        relationship.dependent_service.id + ':' + relationship.dependent_service.type +
+        ']. ' + this._extractErrorMessage(response));
+      return;
+    }
+
+    if (status === 200) {
+      this.setProvisionedFlag(relSysId);
+    } else {
+      this._setError(fnDesc, 'status: ' + status + ', response: ' + response.getBody());
+      return;
+    }
+
+    return true;
+  },
+
+  /**
+   * Resets the association flag to false
+   */
+  clearAssociatingFlag: function () {
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery('associating', true);
+    grs.query();
+    while (grs.next()) {
+      grs.associating = false;
+      grs.update();
+    }
+  },
+
+  /**
+   * Sets flag indicating initiation of the service dependencies association
+   * @param {String} relSysId - Relationship sys_id
+   */
+  setAssociatingFlag: function (relSysId) {
+    var grs = new GlideRecordSecure(this.provTable);
+    if (!grs.get(relSysId)) {
+      throw new Error('No record in ' + this.provTable + ' with sys_id: ' + relSysId);
+    }
+    grs.associating = true;
+    grs.update();
+  },
+
+  /**
+   * Retrieves data about the relationship being in the association process
+   * @returns {Object} record
+   * @returns {Array} record.services (parent_ci_name, child_ci_name)
+   * @returns {String} record.sys_id
+   */
+  getAssociatingRecord: function () {
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery('associating', true);
+    grs.query();
+    if (grs.next()) {
+      return {
+        services: [String(grs.parent_ci_name), String(grs.child_ci_name)],
+        sys_id: String(grs.sys_id)
+      };
+    }
+  },
+
+  /**
+   * Sets the flag to true when an association between services is established
+   * @param {String} relSysId - Relationship sys_id
+   */
+  setProvisionedFlag: function (relSysId) {
+    var provError = this.getProvisioningError(relSysId);
+    if (provError.length) {
+      return;
+    }
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery('sys_id', relSysId);
+    grs.query();
+    if (grs.next()) {
+      grs.provisioned = true;
+      grs.update();
+    }
+  },
+
+  /**
+   * Sets PagerDuty ID for the provided CI in the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} pdId - PagerDuty ID
+   * @param {String} role - Role in the relationship (parent, child)
+   * @param {String} type - PagerDuty service type (business_service, technical_service)
+   */
+  setPdId: function (grCi, pdId, role, type) {
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery(role + '_ci', grCi.sys_id);
+    grs.addQuery(role + '_type', type);
+    grs.query();
+    while (grs.next()) {
+      grs[role + '_service_pagerduty_id'] = pdId;
+      grs.update();
+    }
+  },
+
+  /**
+   * Searches for PagerDuty business service ID for the GlideRecord object provided.
+   * Since we do not store business service IDs in individual CIs, unlike technical service IDs,
+   * the data source is the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @returns {String} PagerDuty business service ID
+   */
+  searchBsPdId: function (grCi) {
+    return this._searchBsPdId(grCi, 'parent') || this._searchBsPdId(grCi, 'child');
+  },
+
+  /**
+   * Helper function to search for PagerDuty business service ID
+   * in the provisioning table
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} role - Role in the relationship (parent, child)
+   * @returns {String} PagerDuty business service ID
+   */
+  _searchBsPdId: function (grCi, role) {
+    var bsPdId;
+    var grs = new GlideRecordSecure(this.provTable);
+    grs.addQuery(role + '_ci', grCi.sys_id);
+    grs.addQuery(role + '_type', 'business_service');
+    grs.addNotNullQuery(role + '_service_pagerduty_id');
+    grs.query();
+    if (grs.next()) {
+      bsPdId = '' + grs[role + '_service_pagerduty_id'];
+    }
+
+    return bsPdId;
+  },
+
+  /**
+   * Sets PagerDuty IDs in the provisioning table
+   * for parent and child CIs of type business_service
+   * @param {GlideRecord} grCi - cmdb_ci object
+   * @param {String} bsPdId - PagerDuty business service ID
+   */
+  setBsPdIds: function (grCi, bsPdId) {
+    this._setParentBsPdIds(grCi, bsPdId);
+    this._setChildBsPdIds(grCi, bsPdId);
+  },
+
+  /**
+   * Helper function - sets PagerDuty IDs in the provisioning table
+   * for parent CIs of type business_service
+   * @param {Gliderecord} grCi - cmdb_ci object
+   * @param {String} bsPdId - PagerDuty business service ID
+   */
+  _setParentBsPdIds: function (grCi, bsPdId) {
+    var grs = new GlideRecordSecure('x_pd_integration_pagerduty_service_provisioning');
+    grs.addQuery('parent_ci', grCi.sys_id);
+    grs.addQuery('parent_type', 'business_service');
+    grs.addNullQuery('parent_service_pagerduty_id');
+    grs.query();
+    while (grs.next()) {
+      grs.parent_service_pagerduty_id = bsPdId;
+      grs.update();
+    }
+  },
+
+  /**
+   * Helper function - sets PagerDuty IDs in the provisioning table
+   * for child CIs of type business_service
+   * @param {Gliderecord} grCi - cmdb_ci object
+   * @param {String} bsPdId - PagerDuty business service ID
+   */
+  _setChildBsPdIds: function (grCi, bsPdId) {
+    var grs = new GlideRecordSecure('x_pd_integration_pagerduty_service_provisioning');
+    grs.addQuery('child_ci', grCi.sys_id);
+    grs.addQuery('child_type', 'business_service');
+    grs.addNullQuery('child_service_pagerduty_id');
+    grs.query();
+    while (grs.next()) {
+      grs.child_service_pagerduty_id = bsPdId;
+      grs.update();
+    }
+  },
+
+  /** Common helper functions */
+
+  _setError: function (func, msg) {
+    this._errorMsg = func + ' error: ' + msg;
+    this._hasError = true;
+    gs.error('{0} error: {1}', func, msg);
+    if (!msg) {
+      this._errors.push(func);
+    } else {
+      this._errors.push(func + ': ' + msg);
+    }
+  },
+
+  getErrors: function () {
+    return this._errors;
+  },
+
+  clearErrors: function () {
+    this._errors = [];
+  },
+
+  _extractErrorMessage: function (response) {
+    var errorMessage = response.getErrorMessage();
+    var errorBody = JSON.parse(response.getBody());
+    if (errorBody &amp;&amp; errorBody.error &amp;&amp; errorBody.error.errors) {
+      var errors = errorBody.error.errors;
+      if (Array.isArray(errors)) {
+        errorMessage = errors.join('.\n') + '.';
+      } else if (typeof errors === 'object') {
+        if (Object.keys(errors).length) {
+          errorMessage = '';
+          Object.keys(errors).forEach(function (key) {
+            errorMessage += ' ' + key + ' ' + errors[key] + '.';
+          });
+        }
+      }
+    }
+    return response.getStatusCode() + ' ' + errorMessage;
+  },
+
+  _removeInvalidCharacters: function (name) {
+    return name.replace(/[`~!@#$%^&amp;*()|+=?;:'",&lt;&gt;{}[\]\\/]/gi, '');
+  },
+
+  type: 'PagerDutyProvisioning'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-28 21:59:18</sys_created_on>
+        <sys_id>3175a14b4f570240dd657bb28110c736</sys_id>
+        <sys_mod_count>514</sys_mod_count>
+        <sys_name>PagerDutyProvisioning</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_3175a14b4f570240dd657bb28110c736</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-20 16:02:57</sys_updated_on>
+    </sys_script_include>
+</record_update>

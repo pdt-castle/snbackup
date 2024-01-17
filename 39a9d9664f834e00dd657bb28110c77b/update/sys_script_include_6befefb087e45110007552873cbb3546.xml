@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyInboundV3</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Inbound processor handler for PagerDuty webhook v3 callback</description>
+        <name>PagerDutyInboundV3</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyInboundV3 = Class.create();
+PagerDutyInboundV3.prototype = {
+  type: 'PagerDutyInboundV3',
+  initialize: function () {
+    this.import_table = 'x_pd_integration_webhook_import';
+    this.rr_import_table = 'x_pd_integration_pagerduty_response_requests_import';
+
+    /*
+      Register specific event type handlers below.
+      Note: Other events not listed here are processed by the _extractCommon function (see _consumeThrowable)
+    */
+    this.eventHandlers = {
+      'incident.annotated': this._extractAnnotated,
+      'incident.priority_updated': this._extractPriorityUpdated,
+      'incident.resolved': this._extractResolved,
+      'incident.responder.added': this._extractResponderRequests,
+      'incident.responder.replied': this._extractResponderRequests,
+      'incident.triggered': this._onEventTriggered,
+    };
+  },
+
+  consume: function (payload, queryParams) {
+    try {
+      this._consumeThrowable(payload, queryParams);
+    } catch (ex) {
+      gs.error('Error in PagerDutyInboundV3: ' + JSON.stringify(ex, null, 2));
+    }
+  },
+
+  _consumeThrowable: function (payload, queryParams) {
+    var rows = [];
+    rows.push(this._extractCommon(payload, queryParams));
+
+    // Lookup specific handler for the event type.
+    var eventHandler = this.eventHandlers[payload.event_type];
+    if (eventHandler) {
+      rows.push(eventHandler.bind(this)(payload, queryParams));
+    }
+
+    var importRow = new GlideRecordSecure(this.import_table);
+    importRow = mergeRows(importRow, rows);
+    importRow.insert();
+  },
+
+  _onEventTriggered: function (payload, queryParams) {
+    var priority = this._extractPriorityUpdated(payload);
+    var triggered = this._extractTriggered(payload, queryParams);
+    return merge(priority, triggered);
+  },
+
+  _extractAnnotated: function (payload) {
+    var dest = {};
+
+    dest.timestamp = payload.occurred_at;
+    if (payload.agent &amp;&amp; payload.agent.type === 'user_reference') {
+      dest.username = payload.agent.summary;
+    }
+    if (payload.data &amp;&amp; payload.data.type === 'incident_note') {
+      dest.note = payload.data.content;
+    }
+
+    return dest;
+  },
+
+  _extractCommon: function (payload, queryParams) {
+    var data = payload.data;
+    var dest = {};
+
+    if (data.type === 'incident') {
+      // Webhook carries an Incident object as part of the event
+      dest.id = data.id;
+    } else {
+      // Webhook is for another object (incident_conference_bridge, incident_responder, ...)
+      // In these cases, the incident id is on the Incident reference object
+      dest.id = data.incident.id;
+    }
+
+    if (data.incident_key) {
+      dest.incident_key = data.incident_key;
+    }
+
+    if (queryParams.task_type &amp;&amp; queryParams.task_type.length) {
+      dest.target_table = queryParams.task_type[0];
+    } else {
+      dest.target_table = 'incident';
+    }
+    var taskRecord = new GlideRecordSecure('task');
+    if (taskRecord.get('x_pd_integration_incident_id', data.id)) {
+      dest.target_table = taskRecord.sys_class_name;
+    }
+
+    if (payload.agent) {
+      dest.username = payload.agent.summary;
+    }
+    dest.timestamp = payload.occurred_at;
+    dest.subject = data.title;
+    dest.payload = JSON.stringify(payload);
+
+    if (data.service) {
+      dest.service_name = data.service.summary;
+      dest.service_id = data.service.id;
+    }
+
+    if (data.assignees &amp;&amp; data.assignees[0]) {
+      dest.assigned_to_name = data.assignees[0].summary;
+      dest.assigned_to_pd_id = data.assignees[0].id;
+    }
+
+    dest.message_type = payload.event_type;
+
+    dest.status = data.status;
+    dest.url = data.html_url;
+    dest.pagerduty_number = data.number;
+
+    if (data.escalation_policy) {
+      dest.escalation_policy = data.escalation_policy.summary;
+      dest.escalation_policy_id = data.escalation_policy.id;
+    }
+
+    return dest;
+  },
+
+  _extractPriorityUpdated: function (payload) {
+    var dest = {};
+
+    if (payload.data &amp;&amp; payload.data.priority) {
+      dest.priority_id = payload.data.priority.id;
+    }
+
+    return dest;
+  },
+
+  _extractResolved: function (payload) {
+    var dest = {};
+
+    if (payload.agent &amp;&amp; payload.agent.type === 'user_reference') {
+      dest.resolved_by_pd_id = payload.agent.id;
+      dest.resolved_by_name = payload.agent.summary;
+    }
+
+    if (payload.data.resolve_reason &amp;&amp; payload.data.resolve_reason.type === 'merge_resolve_reason') {
+      dest.resolve_reason = payload.data.resolve_reason.type;
+      dest.parent_pd_id = payload.data.resolve_reason.incident.id;
+    }
+
+    return dest;
+  },
+
+  _extractResponderRequests: function (payload) {
+    var data = payload.data;
+    var dest = {};
+
+    dest.target_table = this.rr_import_table;
+
+    dest.subject = data.message;
+
+    if (data.user) {
+      dest.assigned_to_name = data.user.summary;
+      dest.assigned_to_pd_id = data.user.id;
+    }
+
+    dest.status = data.state;
+
+    if (data.incident) {
+      dest.url = data.incident.html_url;
+    }
+
+    return dest;
+  },
+
+  _extractTriggered: function (payload, queryParams) {
+    var dest = {};
+
+    if (queryParams.ci &amp;&amp; queryParams.ci.length) {
+      dest.ci_sys_id = queryParams.ci[0];
+    }
+
+    if (queryParams.group &amp;&amp; queryParams.group.length) {
+      var ep = getGroupEscalationPolicy(queryParams.group[0], payload.data);
+      if (ep.name &amp;&amp; ep.id) {
+        dest.escalation_policy = ep.name;
+        dest.escalation_policy_id = ep.id;
+      }
+    }
+
+    if (payload.client) {
+      dest.message_channel_client = payload.client.name;
+    }
+
+    dest.payload = global.JSON.stringify(this.attachFirstTriggerLogEntry(payload));
+
+    return dest;
+  },
+
+  /**
+   * Fetches first trigger log entry from PagerDuty API,
+   * adds it to the payload object under first_trigger_log_entry property
+   * @param {Object} payload
+   * @returns {Object} payload
+   */
+  attachFirstTriggerLogEntry: function (payload) {
+    var pdIncidentId;
+    if (payload.data &amp;&amp; payload.data.id) {
+      pdIncidentId = payload.data.id;
+    }
+
+    if (!pdIncidentId) {
+      return payload;
+    }
+
+    if (payload.hasOwnProperty('first_trigger_log_entry')) {
+      return payload;
+    }
+
+    if (gs.getProperty('x_pd_integration.fetch_first_trigger_log_entry') !== 'true') {
+      return payload;
+    }
+
+
+    var pd = new x_pd_integration.PagerDuty();
+    var logEntry = pd.getFirstTriggerLogEntry(pdIncidentId);
+    if (gs.nil(logEntry)) {
+      return payload;
+    }
+
+    payload.data.first_trigger_log_entry = logEntry;
+
+    return payload;
+  }
+};
+
+function getGroupEscalationPolicy (name, incidentData) {
+  var agId = null;
+  var gr = new GlideRecordSecure('sys_user_group');
+  gr.addQuery('name', name);
+  gr.addQuery('active', true);
+  gr.query();
+  if (gr.next()) {
+    agId = gr.getValue('sys_id');
+  }
+  var epHelper = new x_pd_integration.EscalationPolicyHelper();
+  var snPriId = null;
+  if (incidentData.priority) {
+    snPriId = epHelper.convertPriToSn(incidentData.priority.id);
+  }
+  var pdEpId = epHelper.getPDEscalationPolicyIdWithPriority(agId, snPriId);
+  var pdEpName = epHelper.getEpNameById(pdEpId);
+  return {id: pdEpId, name: pdEpName};
+}
+
+function merge (obj1, obj2) {
+  Object.keys(obj2).forEach(function (k) {
+    obj1[k] = obj2[k];
+  });
+  return obj1;
+}
+
+function mergeRows (dest, rows) {
+  rows.forEach(function (row) {
+    dest = merge(dest, row);
+  });
+  return dest;
+}
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-07-05 13:51:19</sys_created_on>
+        <sys_id>6befefb087e45110007552873cbb3546</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PagerDutyInboundV3</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_6befefb087e45110007552873cbb3546</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-07-05 13:51:19</sys_updated_on>
+    </sys_script_include>
+</record_update>

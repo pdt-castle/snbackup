@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices>Assignment Groups map to PagerDuty,Configuration Items and Assignment Groups map to PagerDuty</choices>
+        <description>Choose ServiceNow to PagerDuty mapping</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_pd_integration.sn2pd_mapping</name>
+        <read_roles>admin,x_pd_integration.admin</read_roles>
+        <suffix>sn2pd_mapping</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-04-27 22:34:46</sys_created_on>
+        <sys_id>283baa0f4f9e760016183ce18110c7a5</sys_id>
+        <sys_mod_count>71</sys_mod_count>
+        <sys_name>x_pd_integration.sn2pd_mapping</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_properties_283baa0f4f9e760016183ce18110c7a5</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-03 16:04:56</sys_updated_on>
+        <type>choicelist</type>
+        <value>Configuration Items and Assignment Groups map to PagerDuty</value>
+        <write_roles>admin,x_pd_integration.admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=283baa0f4f9e760016183ce18110c7a5"/>
+</record_update>

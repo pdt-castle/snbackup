@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Run Server Side Validation Script</description>
+        <display_name>Run Server Side Script</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes/>
+        <order>1</order>
+        <snapshot/>
+        <step_config display_value="Run Server Side Script">41de4a935332120028bc29cac2dc349a</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-06-21 13:59:02</sys_created_on>
+        <sys_id>41eca34e37b213009373097973990e3b</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_name>Run Server Side Script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_41eca34e37b213009373097973990e3b</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2018-06-21 14:22:46</sys_updated_on>
+        <table/>
+        <test display_value="a[LO-945] dont remove team member">f7f0e6f937b213009373097973990e68</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=41eca34e37b213009373097973990e3b"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>41eca34e37b213009373097973990e3b</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-06-21 13:59:02</sys_created_on>
+        <sys_id>ec21f3ce37b213009373097973990ee3</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2018-06-21 14:22:46</sys_updated_on>
+        <value>(function(outputs, steps, stepResult, assertEqual) {&#13;
+	var member = new GlideRecord('sys_user_grmember');&#13;
+	member.get('92dfa2eb37a213009373097973990ebc');&#13;
+	member.query();&#13;
+&#13;
+	while (member.next()) {&#13;
+		gs.debug(member.user.sys_id);&#13;
+		var user = new GlideRecord('sys_user');&#13;
+		user.get(member.user.sys_id);&#13;
+		user.query();&#13;
+&#13;
+		while (user.next()) {&#13;
+			gs.debug(user.getValue('name'));&#13;
+		}&#13;
+	}&#13;
+})(outputs, steps, stepResult, assertEqual);&#13;
+</value>
+        <variable display_value="Test script">989d9e235324220002c6435723dc3484</variable>
+    </sys_variable_value>
+</record_update>

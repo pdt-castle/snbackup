@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyInboundCustomScript</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>/*** Changes made to this script are not supported by PagerDuty ***/&#13;
+PagerDutyInboundCustomScript allows customization of additional transformation  for PagerDuty inbound webhook type.</description>
+        <name>PagerDutyInboundCustomScript</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyInboundCustomScript = Class.create();
+PagerDutyInboundCustomScript.prototype = {
+  initialize: function() {
+  },
+
+  /* Add custom script to perform additional transformation
+   * @param (Object) source entry from webhook import set
+   * @param (Object) target incident entry
+   * @param (String) action is either insert or update
+   */
+  customPostTransformActivity: function(source, target, action) {
+    // Add custom transformation sript
+    // This script is performed after the out-of-box transformation is performed
+    // For example, setting the category and subcategory fields on PagerDuty trigger webhook type and when action is insert
+    // and the Configuration Item is Email
+    //if (source.message_type == "incident.trigger" || source.message_type == "incident.triggered") {
+    //   if (action == "insert") {
+    //    if (!gs.nil(target.cmdb_ci) &amp;&amp; target.cmdb_ci.name == "Email") {
+    //      target.setValue('category', 'Request');
+    //      target.setValue('subcategory', 'Password Reset');
+    //    }
+    //  }
+    //}
+    if (source.message_type == "incident.annotate" || source.message_type == "incident.annotated") {
+      if (action == "update") {
+        if (RegExp("^Resolution Note: ", 'i').test(source.note)) {
+          target.setValue('close_notes', source.note);
+        }
+      }
+    }
+    else if (source.message_type == "incident.resolve" || source.message_type == "incident.resolved") {
+      if (action == "update") {
+        target.setValue('close_notes', 'Resolved via PagerDuty\n' + target.close_notes);
+      }
+    }
+  },
+
+  type: 'PagerDutyInboundCustomScript'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-11-22 15:19:17</sys_created_on>
+        <sys_id>404b55524f2283008c1b4a318110c7f3</sys_id>
+        <sys_mod_count>16</sys_mod_count>
+        <sys_name>PagerDutyInboundCustomScript</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_404b55524f2283008c1b4a318110c7f3</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-05-04 22:28:11</sys_updated_on>
+    </sys_script_include>
+</record_update>

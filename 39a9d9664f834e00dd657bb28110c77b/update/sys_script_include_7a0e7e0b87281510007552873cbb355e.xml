@@ -1,0 +1,812 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PdWebhookTransformV3</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Transformation script for V3 webhooks</description>
+        <name>PdWebhookTransformV3</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+
+/*
+  For variables go to:
+  https://docs.servicenow.com/bundle/utah-integrate-applications/page/script/server-scripting/reference/r_TransformationScriptVariables.html
+*/
+
+var PdWebhookTransformV3 = (function () {
+  var ASSIGN_ON_ACK_ONLY = gs.getProperty('x_pd_integration.assign_on_ack_only');
+  var CLIENT = new x_pd_integration.PagerDuty().client;
+  var NOTES_HELPER = x_pd_integration.WorkNotesHelper;
+  var PRIORITY_TABLE = 'x_pd_integration_pagerduty_priority';
+  var RR_IMPORT_TABLE = 'x_pd_integration_pagerduty_response_requests_import';
+  /*
+    Register specific message handlers below.
+    Note: Any message not listed here will be logged as error and ignored (see transform)
+  */
+  var MESSAGE_HANDLERS = {
+    'incident.acknowledged': transformAcknowledged,
+    'incident.annotated': transformAnnotated,
+    'incident.conference_bridge.updated': transformConferenceBridgeUpdated,
+    'incident.custom_field_values.updated': transformCustomFieldValuesUpdated,
+    'incident.delegated': transformDelegated,
+    'incident.escalated': transformEscalated,
+    'incident.priority_updated': transformPriorityUpdated,
+    'incident.reassigned': transformReassigned,
+    'incident.resolved': transformResolved,
+    'incident.responder.added': transformResponders,
+    'incident.responder.replied': transformResponders,
+    'incident.triggered': onMessageTriggered,
+    'incident.unacknowledged': transformUnacknowledged,
+    'incident.workflow.completed': transformIncidentWorkflow,
+    'incident.workflow.started': transformIncidentWorkflow,
+  };
+  var SERVICENOW_CLIENT_NAME = 'ServiceNow';
+
+  function tryTransform () {
+    try {
+      transform();
+      // Execute dynamic inbound field rules
+      runInboundFieldRules();
+      // Call customizable script
+      runInboundCustomScript();
+    } catch (e) {
+      gs.error('Error in PdWebhookTransformV3: ' + e.message);
+    }
+  }
+
+  function transform () {
+    var rows = [];
+    var messageType = String(source.message_type);
+
+    // Lookup specific handler for the message type.
+    var messageHandler = MESSAGE_HANDLERS[messageType];
+    if (messageHandler) {
+      rows.push(messageHandler());
+    } else {
+      gs.error('Unknown event type: ' + messageType);
+      ignore = true;
+    }
+
+    mergeRows(target, rows);
+  }
+
+  function onMessageTriggered () {
+    var priority = transformPriority();
+    var triggered = transformTriggered();
+    return merge(priority, triggered);
+  }
+
+  function transformUnacknowledged () {
+    ignore = true;
+    return {};
+  }
+
+  function transformAcknowledged () {
+    if (action === 'insert') {
+      ignore = true;
+      return {};
+    } else if (action === 'update') {
+      var assignmentsSummary = parseAssignmentsSummary();
+      return tryToAcknowledge(assignmentsSummary);
+    }
+  }
+
+  function transformIncidentWorkflow () {
+    var messageType = source.message_type.split('.').pop();
+    var dest = {};
+    var rows = [];
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      var eventPayloadData = JSON.parse(source.payload);
+      var incidentWorkflowName = eventPayloadData.data.incident_workflow.summary;
+      var note = 'Incident Workflow "' + incidentWorkflowName + '" ' + messageType + '.';
+
+      rows.push(showIncidentWorkflowNote(note));
+    }
+    return mergeRows(dest, rows);
+  }
+
+  function transformAnnotated () {
+    var dest = {};
+
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      // eslint-disable-next-line es5/no-es6-methods
+      if (source.note &amp;&amp; !source.note.includes('(from ServiceNow:')) {
+        dest.work_notes = NOTES_HELPER.build(source.note + ' (PagerDuty:' + source.username + ' on ' +
+          (new GlideDateTime()).getDisplayValue() + ')');
+      }
+    }
+    return dest;
+  }
+
+  function transformConferenceBridgeUpdated () {
+    var dest = {};
+    var rows = [];
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      var eventPayloadData = JSON.parse(source.payload);
+      // Webhook represents conference numbers as an array, but Incident metadata only stores one.
+      // We'll just take the first one.
+      var conferenceNumber = '';
+      if (eventPayloadData.data.conference_numbers &amp;&amp; eventPayloadData.data.conference_numbers.length &gt; 0) {
+        conferenceNumber = eventPayloadData.data.conference_numbers[0].number || '';
+      }
+      var conferenceURL = eventPayloadData.data.conference_url || '';
+      var newConferenceBridgeValue = (conferenceNumber + ' ' + conferenceURL).trim();
+
+      if (newConferenceBridgeValue === target.getValue('x_pd_integration_conf_bridge')) {
+        // No change
+        return dest;
+      }
+      var note = 'PagerDuty Conference Bridge: \n';
+      if (conferenceNumber) {
+        note = note + 'Dial-in number: ' + conferenceNumber + '\n';
+      }
+      if (conferenceURL) {
+        note = note + 'URL: ' + conferenceURL + '\n';
+      }
+      dest.x_pd_integration_conf_bridge = newConferenceBridgeValue;
+      rows.push(showConferenceBridgeUpdatedNote(note));
+    }
+    return mergeRows(dest, rows);
+  }
+
+  function transformCustomFieldValuesUpdated () {
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      var processor = new x_pd_integration.PagerDutyCustomFieldsInboundSync();
+      ignore = !processor.processCustomFieldValuesUpdated(target, JSON.parse(source.payload));
+    }
+    return {};
+  }
+
+  function transformEscalated () {
+    var dest = {};
+
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      dest = stateAndAssign('escalate');
+    }
+
+    return dest;
+  }
+
+  function transformDelegated () {
+    var dest = {};
+    var rows = [];
+
+    if (action === 'insert') {
+      ignore = true;
+    }
+
+    if (action !== 'update') {
+      return mergeRows(dest, rows);
+    }
+
+    if (String(source.message_channel_client) === CLIENT) {
+      gs.debug('The delegation is ignored, because it was originated in ServiceNow');
+      return mergeRows(dest, rows);
+    }
+
+    var epId = String(source.escalation_policy_id);
+    var epName = String(source.escalation_policy);
+    var priorityValue = String(target.priority);
+    var newGroupId = getGroupIdByEpIdAndPriorityValue(epId, priorityValue);
+
+    if (!newGroupId) {
+      rows.push(showReassignmentNote('PagerDuty incident was not delegated to the ' + epName +
+        ' escalation policy because there is no corresponding assignment group in ServiceNow'));
+      return mergeRows(dest, rows);
+    }
+
+    dest.assignment_group = newGroupId;
+
+    var newGroupName = getGroupName(newGroupId);
+
+    var newAssigneeId;
+    var assigneesIds = getAssigneesIds(JSON.parse(source.payload));
+    var groupMembersIds = getGroupMemberIds(newGroupId);
+
+    var foundUser = assigneesIds.some(function (assigneeId) {
+      if (groupMembersIds[assigneeId]) {
+        newAssigneeId = assigneeId;
+        return true;
+      }
+      return false;
+    });
+
+    if (foundUser) {
+      dest.assigned_to = newAssigneeId;
+      rows.push(showReassignmentNote('PagerDuty incident was delegated to the assignment ' +
+        'group ' + newGroupName));
+    } else {
+      dest.assigned_to = '';
+      rows.push(showReassignmentNote('PagerDuty incident was delegated to the ' + newGroupName +
+        ' assignment group, but the assignee field is cleared because the target user in' +
+        ' PagerDuty is not present in the ' + newGroupName + ' assignment group'));
+    }
+
+    if (ASSIGN_ON_ACK_ONLY === 'true') {
+      dest.state = triggerStateValue(source.target_table);
+      if (foundUser) {
+        dest.assigned_to = '';
+        rows.push(showReassignmentNote('PagerDuty incident was delegated to the ' + newGroupName +
+          ' assignment group, and since the option [Do not assign until acknowledged] is on, the' +
+          ' assignee was cleared'));
+      }
+    }
+
+    return mergeRows(dest, rows);
+  }
+
+  function transformPriorityUpdated () {
+    var dest = {};
+
+    if (action === 'insert') {
+      ignore = true;
+    } else {
+      dest = transformPriority();
+    }
+
+    return dest;
+  }
+
+  function transformPriority () {
+    var dest = {};
+    var gr = new GlideRecord(PRIORITY_TABLE);
+
+    if (source.priority_id) {
+      gr.addQuery('pagerduty_priority_id', source.priority_id);
+    } else {
+      gr.orderByDesc('priority');
+      gr.setLimit(1);
+    }
+
+    gr.query();
+
+    if (gr.next()) {
+      if (action === 'insert' || target.getValue('priority') !== gr.getValue('priority')) {
+        if (gr.impact &amp;&amp; gr.urgency &amp;&amp; gr.priority) {
+          dest.impact = String(gr.impact);
+          dest.urgency = String(gr.urgency);
+        } else {
+          gs.error('The priority table [' + PRIORITY_TABLE + '] is incomplete. Please populate the' +
+            ' values for the columns: [impact] and [urgency].');
+        }
+      } else {
+        gs.debug('Transform: ignore incident.priority_updated since the priority is already set');
+        ignore = true;
+      }
+    } else if (source.priority_id) {
+      gs.error('The priority with id [' + source.priority_id + '] is not found in the priority table [' +
+          PRIORITY_TABLE + ']. Check if all the ids in the table match the ids for your account' +
+          ' here: https://developer.pagerduty.com/api-reference/0fa9ad52bf2d2-list-priorities.' +
+          ' Specify your API key in the Authorization header and click "Send API Request".');
+    } else {
+      gs.error('The priority table [' + PRIORITY_TABLE + '] is empty. You need to make sure the' +
+          ' priority table is complete and up-to-date. You can do it by going to [PagerDuty -' +
+          ' Actions - Refresh Priorities]. This will pull all the priority ids from PagerDuty. You' +
+          ' then need to fill the columns [impact] and [urgency] yourself.');
+    }
+    return dest;
+  }
+
+  function transformReassigned () {
+    var dest = {};
+
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      dest = stateAndAssign('assign');
+    }
+
+    return dest;
+  }
+
+  function transformResolved () {
+    var dest = {};
+
+    if (action === 'insert') {
+      ignore = true;
+    } else if (action === 'update') {
+      if (isTargetIncidentResolved(source.target_table)) {
+        ignore = true;
+        gs.debug('Transform: ignore incident.resolved since the target is already resolved');
+        return {};
+      }
+
+      gs.info('Transform: PagerDuty incident was resolved, setting incident {0} to resolved state', target.getDisplayValue());
+
+      var resolveReason = String(source.resolve_reason);
+      var targetTable = String(source.target_table);
+
+      if (resolveReason === 'merge_resolve_reason') {
+        // Set parent because resolve was due to a merge
+        var parentSysId = getIncidentIdByPdId(source.parent_pd_id, targetTable);
+        if (targetTable === 'incident') {
+          dest.parent_incident = parentSysId;
+        } else if (targetTable === 'sn_si_incident') {
+          dest.parent_security_incident = parentSysId;
+        }
+        // Set work notes referencing parent incident number
+        var parentIncidentNumber = getIncidentNumberBySysId(parentSysId, targetTable);
+        if (source.resolved_by_name) {
+          dest.work_notes = NOTES_HELPER.build('PagerDuty incident was resolved by ' + source.resolved_by_name + ' due to PagerDuty merge with incident ' + parentIncidentNumber);
+        } else {
+          dest.work_notes = NOTES_HELPER.build('PagerDuty incident was resolved due to PagerDuty merge with incident ' + parentIncidentNumber);
+        }
+      } else if (source.resolved_by_name) {
+        dest.work_notes = NOTES_HELPER.build('PagerDuty incident was resolved by ' + source.resolved_by_name);
+      } else {
+        dest.work_notes = NOTES_HELPER.build('PagerDuty incident was resolved');
+      }
+
+      dest.state = resolvedStateValue(source.target_table);
+      dest.close_code = 'Solved (Permanently)';
+      // dest.close_notes = 'Resolved via PagerDuty\n' + target.close_notes;
+    }
+
+    return dest;
+  }
+
+  function transformResponders () {
+    var dest = {};
+
+    if (action === 'update') {
+      var rec = new GlideRecordSecure(RR_IMPORT_TABLE);
+      rec.initialize();
+      rec.assigned_to = getUserId(source.assigned_to_pd_id);
+      rec.assignment_group = getGroupIdByEpId(source.escalation_policy_id);
+      rec.incident = getIncidentIdByPdId(source.id);
+
+      rec.message = String(source.subject);
+      rec.pd_group_id = String(source.escalation_policy_id);
+      rec.pd_user_id = String(source.assigned_to_pd_id);
+
+      var states = {
+        pending: 'Pending',
+        joined: 'Accepted',
+        declined: 'Declined'
+      };
+      rec.state = states[String(source.status)] || '(unknown)';
+      rec.insert();
+    }
+
+    ignore = true;
+    return dest;
+  }
+
+  function transformTriggered () {
+    var dest = {};
+    var rows = [];
+    var newGroupId = '';
+
+    var assignmentsSummary = parseAssignmentsSummary();
+
+    var messageChannelClient = String(source.message_channel_client);
+
+    dest.x_pd_integration_incident = String(source.id);
+    dest.x_pd_integration_incident_key = String(source.incident_key);
+
+    // action meaning
+    // -&gt; insert means we don't have incident in SNow side
+    // -&gt; update means we already have incident in SNow side
+    if (action === 'insert') {
+      // Just add prefix if the webhook is called from PD side firstly
+      dest.short_description = 'PagerDuty: ' + source.subject;
+
+      rows.push(showTriggeringNote('PagerDuty incident was triggered for nonexistent incident, new incident created'));
+
+      if (messageChannelClient !== CLIENT) {
+        var epId = String(source.escalation_policy_id);
+        var priorityId = String(source.priority_id);
+        newGroupId = getGroupIdByEpIdAndPriorityId(epId, priorityId);
+        if (newGroupId) {
+          dest.assignment_group = newGroupId;
+        }
+      }
+
+      var serviceId = String(source.service_id);
+      var ciId = String(source.ci_sys_id);
+      if (serviceId &amp;&amp; !ciId) {
+        dest.cmdb_ci = getCiSysId(serviceId);
+      }
+
+      if (ciId) {
+        dest.cmdb_ci = ciId;
+      }
+
+      var assignedPdId = String(source.assigned_to_pd_id);
+      if (assignedPdId) {
+        var status = String(source.status);
+        if (status === 'acknowledged' || ASSIGN_ON_ACK_ONLY === 'false') {
+          rows.push(tryToAssign(newGroupId));
+        }
+      }
+    } else if (action === 'update') {
+      rows.push(showTriggeringNote('PagerDuty incident was triggered and will notify ' + assignmentsSummary));
+
+      if (ASSIGN_ON_ACK_ONLY === 'true') {
+        rows.push(showAssignmentNote('PagerDuty incident was assigned to ' + assignmentsSummary));
+      } else {
+        rows.push(tryToAssign(newGroupId));
+      }
+    }
+    return mergeRows(dest, rows);
+  }
+
+  function runInboundFieldRules () {
+    var eventMap = {
+      'incident.triggered': 'trigger',
+      'incident.acknowledged': 'acknowledge',
+      'incident.unacknowledged': 'unacknowledge',
+      'incident.resolved': 'resolve',
+      'incident.escalated': 'escalate',
+      'incident.delegated': 'delegate',
+      'incident.annotated': 'annotate',
+      'incident.custom': 'custom'
+    };
+    var event = eventMap[source.message_type];
+
+    if (event) {
+      var pifr = new x_pd_integration.PagerDutyInboundFieldRule();
+      pifr.setTargetFieldValuesFromPayload(event, source, target, SERVICENOW_CLIENT_NAME);
+    }
+  }
+
+  function runInboundCustomScript () {
+    var customScript = new x_pd_integration.PagerDutyInboundCustomScript();
+    customScript.customPostTransformActivity(source, target, action);
+  }
+
+  function getAssigneesIds (payload) {
+    var assignees = payload.data &amp;&amp; payload.data.assignees;
+    if (!assignees || !assignees.length) {
+      return [];
+    }
+    assignees = assignees.map(function (assignee) {
+      return getId(getUserByPdId(assignee.id));
+    });
+    return assignees;
+  }
+
+  function getCiSysId (serviceId) {
+    var gr = new GlideRecordSecure('cmdb_ci');
+    if (gr.get('x_pd_integration_pagerduty_service', serviceId)) {
+      return gr.getValue('sys_id');
+    }
+    return null;
+  }
+
+  function getGroupIdByEpId (pdEpId) {
+    if (!pdEpId) {
+      return null;
+    }
+    var helper = new x_pd_integration.EscalationPolicyHelper();
+    return helper.getAssignmentGroupId(pdEpId);
+  }
+
+  function getGroupIdByEpIdAndPriorityId (epId, priorityId) {
+    if (!epId) {
+      return;
+    }
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    return epHelper.getAssignmentGroupIdWithPriority(epId, priorityId);
+  }
+
+  function getGroupIdByEpIdAndPriorityValue (epId, priorityValue) {
+    if (!epId) {
+      return;
+    }
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    return epHelper.getAssignmentGroupIdWithPriorityValue(epId, priorityValue);
+  }
+
+  /**
+   * @param {String} groupId a sys_id of an assignment group
+   * @returns {Object} a hash of group member sys_ids
+   */
+  function getGroupMemberIds (groupId) {
+    var ids = {};
+    var gr = new GlideRecordSecure('sys_user_grmember');
+    gr.addQuery('group', groupId);
+    gr.query();
+    while (gr.next()) {
+      ids[String(gr.user)] = true;
+    }
+    return ids;
+  }
+
+  function getGroupName (sysId) {
+    if (!sysId) {
+      return '';
+    }
+    var gr = new GlideRecordSecure('sys_user_group');
+    if (gr.get(sysId)) {
+      return gr.getValue('name');
+    }
+    return '';
+  }
+
+  function getId (record) {
+    if (!record) {
+      return null;
+    }
+    return record.getValue('sys_id');
+  }
+
+  function getIncidentIdByPdId (pdId, table) {
+    if (!pdId) {
+      return null;
+    }
+    var tableName = table || 'incident';
+    var columnName = (tableName === 'incident' ? 'x_pd_integration_incident' : 'x_pd_integration_incident_id');
+    var gr = new GlideRecordSecure(tableName);
+    if (gr.get(columnName, pdId)) {
+      return gr.getValue('sys_id');
+    }
+    return null;
+  }
+
+  function getIncidentNumberBySysId (sysId, table) {
+    if (!sysId) {
+      return null;
+    }
+    var tableName = table || 'incident';
+    var gr = new GlideRecordSecure(tableName);
+    if (gr.get('sys_id', sysId)) {
+      return gr.getValue('number');
+    }
+    return null;
+  }
+
+  function getUserByPdId (pdId) {
+    var gr = new GlideRecordSecure('sys_user');
+    if (gr.get('x_pd_integration_pagerduty_id', pdId)) {
+      return gr;
+    }
+    return null;
+  }
+
+  function getUserId (userPdId) {
+    var userId = getId(getUserByPdId(userPdId));
+    if (!userId) {
+      var pdClient = new x_pd_integration.PagerDuty();
+      var email = pdClient.getUserEmailFromPagerDuty(userPdId);
+      userId = getUserIdByEmail(email);
+    }
+    return userId;
+  }
+
+  function getUserIdByEmail (email) {
+    if (!email) {
+      return;
+    }
+    var gr = new GlideRecordSecure('sys_user');
+    gr.addQuery('email', email);
+    gr.query();
+    if (gr.next()) {
+      return gr.getValue('sys_id');
+    }
+  }
+
+  function getUserName (id) {
+    if (!id) {
+      return '';
+    }
+    var gr = new GlideRecordSecure('sys_user');
+    if (gr.get(id)) {
+      return gr.getValue('name');
+    }
+    return '';
+  }
+
+  function isTargetIncidentResolved (table) {
+    var helper = new x_pd_integration.TaskEntityHelper(target, table);
+    return helper.isTaskHasResolvedState(target.state);
+  }
+
+  function merge (obj1, obj2) {
+    Object.keys(obj2).forEach(function (k) {
+      obj1[k] = obj2[k];
+    });
+    return obj1;
+  }
+
+  function mergeRows (dest, rows) {
+    rows.forEach(function (row) {
+      dest = merge(dest, row);
+    });
+    return dest;
+  }
+
+  function parseAssignmentsSummary () {
+    var payload = JSON.parse(source.payload);
+    var assignees = payload.data &amp;&amp; payload.data.assignees;
+    var assignmentsSummary = [];
+    if (assignees) {
+      assignees.forEach(function (assignee) {
+        assignmentsSummary.push(assignee.summary);
+      });
+    }
+    assignmentsSummary.splice(-2, 2, assignmentsSummary.slice(-2).join(' and '));
+    return assignmentsSummary.join(', ');
+  }
+
+  function resolvedStateValue (table) {
+    var helper = new x_pd_integration.TaskEntityHelper(target, table);
+    return helper.resolvedStateValue();
+  }
+
+  function showAssignmentNote (note) {
+    var dest = {};
+    if (NOTES_HELPER.isEnabled('show_incident_assignment_note')) {
+      dest.work_notes = NOTES_HELPER.build(note);
+    }
+    return dest;
+  }
+
+  function showReassignmentNote (note) {
+    var dest = {};
+    if (NOTES_HELPER.isEnabled('show_incident_reassignment_note')) {
+      dest.work_notes = NOTES_HELPER.build(note);
+    }
+    return dest;
+  }
+
+  function showTriggeringNote (note) {
+    var dest = {};
+    if (NOTES_HELPER.isEnabled('show_incident_triggering_note')) {
+      dest.work_notes = NOTES_HELPER.build(note);
+    }
+    return dest;
+  }
+
+  function showConferenceBridgeUpdatedNote (note) {
+    var dest = {};
+    if (NOTES_HELPER.isEnabled('show_note_on_conference_bridge_addition')) {
+      dest.work_notes = NOTES_HELPER.build(note);
+    }
+    return dest;
+  }
+
+  function showIncidentWorkflowNote (note) {
+    var dest = {};
+    if (NOTES_HELPER.isEnabled('show_notes_on_incident_workflow')) {
+      dest.work_notes = NOTES_HELPER.build(note);
+    }
+    return dest;
+  }
+
+  /**
+   * @param {String} type is one of: "assign", "delegate" or "escalate"
+   * @returns {Object} a representation of a destination row
+   */
+  function stateAndAssign (type) {
+    var dest = {};
+    var rows = [];
+    var postfix = {
+      assign: 'ed',
+      escalate: 'd'
+    };
+
+    var assignmentsSummary = parseAssignmentsSummary();
+    var assignToUser = getUserByPdId(source.assigned_to_pd_id);
+    var assignToUserId = getId(assignToUser);
+    var messageChannelClient = String(source.message_channel_client);
+
+    if (ASSIGN_ON_ACK_ONLY === 'true') {
+      if (messageChannelClient === CLIENT &amp;&amp; assignToUserId === String(target.assigned_to) ||
+        String(source.status) === 'acknowledged') {
+        dest.state = triggerStateValue(source.target_table);
+      } else {
+        rows.push(showReassignmentNote('PagerDuty incident was ' + type + postfix[type] + ' to ' +
+          assignmentsSummary + ' with assignOnAckOnly=true so the assignee was cleared'));
+        dest.assigned_to = '';
+        dest.state = triggerStateValue(source.target_table);
+      }
+      return mergeRows(dest, rows);
+    }
+
+    if (!assignToUser) {
+      rows.push(showAssignmentNote('PagerDuty incident was ' + type + postfix[type] + ' to ' +
+        assignmentsSummary + ', but ServiceNow could not locate the user ' + source.assigned_to_name +
+        ' with the id ' + source.assigned_to_pd_id + ' to ' + type + ' the incident to'));
+      return mergeRows(dest, rows);
+    }
+
+    dest.assigned_to = assignToUserId;
+    rows.push(showAssignmentNote('PagerDuty incident was ' + type + postfix[type] + ' to ' +
+      assignmentsSummary));
+
+    return mergeRows(dest, rows);
+  }
+
+  function triggerStateValue (table) {
+    var helper = new x_pd_integration.TaskEntityHelper(target, table);
+    return helper.triggerStateValue();
+  }
+
+  function tryToAcknowledge (assignmentsSummary) {
+    var dest;
+    var assignToUser = getUserByPdId(source.assigned_to_pd_id);
+    if (assignToUser) {
+      dest = showAssignmentNote('PagerDuty incident was acknowledged by ' +
+        assignmentsSummary);
+      dest.assigned_to = assignToUser.getUniqueValue();
+    } else {
+      dest = showAssignmentNote('PagerDuty incident acknowledged by ' +
+        assignmentsSummary + ', but ServiceNow could not locate user with PagerDuty ID ' +
+        source.assigned_to_pd_id + ' to assign the incident to them');
+    }
+    return dest;
+  }
+
+  function tryToAssign (newGroupId) {
+    var dest = {};
+    var rows = [];
+
+    var newGroupName = getGroupName(newGroupId);
+    var newAssigneeId;
+    var assigneesIds = getAssigneesIds(JSON.parse(source.payload));
+    var groupMembersIds = getGroupMemberIds(newGroupId);
+
+    var foundUser = assigneesIds.some(function (assigneeId) {
+      if (groupMembersIds[assigneeId]) {
+        newAssigneeId = assigneeId;
+        return true;
+      }
+      return false;
+    });
+
+    var newAssigneeName = getUserName(newAssigneeId);
+
+    if (foundUser) {
+      dest.assigned_to = newAssigneeId;
+      rows.push(showAssignmentNote('PagerDuty incident was assigned to the user ' +
+        newAssigneeName));
+    } else {
+      dest.assigned_to = '';
+      rows.push(showAssignmentNote('PagerDuty incident was assigned to the ' + newGroupName +
+        ' assignment group, but the assignee field is cleared because the target user in' +
+        ' PagerDuty is not present in the ' + newGroupName + ' assignment group'));
+    }
+
+    if (!newGroupId) {
+      var assignToUser = getUserByPdId(source.assigned_to_pd_id);
+      if (assignToUser) {
+        dest.assigned_to = assignToUser.getUniqueValue();
+        rows.push(showAssignmentNote('PagerDuty incident was assigned to the user ' +
+          assignToUser.getValue('name')));
+      } else {
+        rows.push(showAssignmentNote('PagerDuty incident was assigned to the user ' +
+          source.assigned_to_name + ', but ServiceNow could not locate the user with PagerDuty ID ' +
+          source.assigned_to_pd_id + ' to assign the incident to them'));
+      }
+    }
+    return mergeRows(dest, rows);
+  }
+  return {tryTransform: tryTransform};
+})();
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-07-12 10:00:43</sys_created_on>
+        <sys_id>7a0e7e0b87281510007552873cbb355e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PdWebhookTransformV3</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_7a0e7e0b87281510007552873cbb355e</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-07-12 10:00:43</sys_updated_on>
+    </sys_script_include>
+</record_update>

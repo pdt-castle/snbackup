@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.ObjectController</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>ObjectController</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var features = {
+  escalation_policies: {
+    sourceTable: 'x_pd_integration_escalation_policies',
+    destField: 'x_pd_integration_pagerduty_escalation',
+    idField: 'escalation_policy_id',
+    nameField: 'escalation_policy_name',
+  },
+  services: {
+    sourceTable: 'x_pd_integration_services',
+    destField: 'x_pd_integration_pagerduty_service',
+    idField: 'service_id',
+    nameField: 'service_name',
+  },
+};
+
+// Objects are PagerDuty objects, like Escalation Policies or Services
+// Controller is needed to manipulate those on ServiceNow side
+var ObjectController = x_pd_integration.AjaxHelper.createAjaxController({
+  type: 'ObjectController',
+
+  // Get PagerDuty Escalation Policies or Services from ServiceNow database
+  getObjects: function getObjects(feature) {
+    if (!features[feature])
+      throw new Error('No such feature: [' + feature + ']. Please check modal parameters or UI Macros.');
+    var tableName = features[feature].sourceTable;
+    if (!gs.tableExists(tableName))
+      throw new Error('No such table: [' + tableName + '].');
+    var objects = _getObjects(tableName, feature);
+    var lastTime = _getLastUpdatedTime(tableName);
+    if (lastTime) {
+      lastTime = 'Last updated at &lt;b&gt;' + lastTime + '&lt;/b&gt;';
+    }
+    return {
+      objects: objects,
+      lastTime: lastTime,
+    };
+  },
+
+  // Use cached objects for successive load calls when typing
+  loadObjects: function loadObjects(text, objects) {
+    return { items: objects };
+  },
+
+  // On clicking "select" button
+  // setValue('escalation_policies', recordSysId, 'sys_user_group', id)
+  // setValue('services',            recordSysId, 'sys_user_group', id)
+  // setValue('services',            recordSysId, 'cmdb_ci',                 id)
+  // setValue('services',            recordSysId, 'cmdb_ci_email_server',    id)
+  // setValue('services',            recordSysId, 'cmdb_ci_app_server_java', id)
+  setValue: function setValue(payload) {
+    var feature = payload.feature;
+    if (!features[feature])
+      throw new Error('No such feature like [' + feature + ']. Please check modal parameters or UI Macros.');
+    var recordSysId = payload.recordSysId;
+    var tableName = payload.tableName;
+    var value = payload.value;
+    if (!value)
+      throw new Error('Value is empty.');
+    var fieldName = features[feature].destField;
+    _setValue(tableName, recordSysId, fieldName, value);
+  },
+
+});
+
+var _getObjects = function(tableName, feature) {
+  var objects = [];
+  var rec = new GlideRecordSecure(tableName);
+  rec.addQuery('active', true);
+  rec.query();
+  while (rec.next()) {
+    var obj = {
+      id: '' + rec[features[feature].idField],
+      text: '' + rec[features[feature].nameField],
+      description: '' + rec[features[feature].idField],
+    };
+    objects.push(obj);
+  }
+  return objects;
+};
+
+var _setValue = function(tableName, sysId, fieldName, value) {
+  try {
+    var rec = new GlideRecordSecure(tableName);
+    if (!rec.get(sysId)) {
+      throw new Error('There is no record with sysId [' + sysId + '] in [' + tableName + ']');
+    }
+    rec[fieldName] = value;
+    rec.update();
+  } catch (ex) {
+    throw new Error(ex);
+  }
+};
+
+var _getLastUpdatedTime = function(tableName) {
+  var time = '';
+  var rec = new GlideRecordSecure(tableName);
+  rec.orderByDesc('sys_updated_on');
+  rec.query();
+  if (rec.next()) {
+    time = '' + rec.sys_updated_on;
+  }
+  return time;
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-05-15 13:40:46</sys_created_on>
+        <sys_id>33dba1e1db30501036b9f53a29961933</sys_id>
+        <sys_mod_count>158</sys_mod_count>
+        <sys_name>ObjectController</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_33dba1e1db30501036b9f53a29961933</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:46:39</sys_updated_on>
+    </sys_script_include>
+</record_update>

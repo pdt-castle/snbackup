@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_db_view_table_field">
+    <sys_db_view_table_field action="INSERT_OR_UPDATE">
+        <field>sys_id</field>
+        <sys_class_name>sys_db_view_table_field</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-05-28 16:53:45</sys_created_on>
+        <sys_id>5a15dd71070158109f3bff1d7c1ed0b7</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_id</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_db_view_table_field_5a15dd71070158109f3bff1d7c1ed0b7</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-05-28 16:53:45</sys_updated_on>
+        <table>sys_user_group</table>
+        <view_table display_value="sys_user_group">9275c4b907c918109f3bff1d7c1ed0a7</view_table>
+    </sys_db_view_table_field>
+</record_update>

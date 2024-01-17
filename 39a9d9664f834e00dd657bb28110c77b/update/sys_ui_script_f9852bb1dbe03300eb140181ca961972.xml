@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_pd_integration.PdMultiselect</name>
+        <script>    /*jshint esnext: true */
+
+    var x_pd_integration = x_pd_integration || {};
+
+    x_pd_integration.PdMultiselect = (function() {
+      "use strict";
+
+      var showLoader = function(element) {
+        element.querySelector('.pdms-loading-spinner .icon-loading').style.visibility = 'visible';
+      };
+
+      var hideLoader = function(element) {
+        element.querySelector('.pdms-loading-spinner .icon-loading').style.visibility = 'hidden';
+      };
+
+      var centerVertically = function(container, content) {
+        var offset = (container.offsetHeight - content.offsetHeight) / 2;
+        content.style.top = offset + 'px';
+      };
+
+      var getCss = function(args) {
+        var height = args.height;
+        var padding = args.padding;
+
+        var heightProp = 'max-height: 200px; height: auto;';
+        var paddingProp = 'padding: 5px;';
+
+        if (height) {
+          heightProp = 'height: ' + height + 'px;';
+        }
+        if (padding) {
+          paddingProp = 'padding: ' + padding + 'px;';
+        }
+
+        return `
+          .pdms-container {
+            position: relative;
+          }
+
+          .pdms-container .pdms-body {
+            border: 1px lightgray solid;
+            border-radius: 3px;
+            cursor: text;
+          }
+
+          .pdms-container .pdms-body ul {
+            display: flex;
+            min-height: 32px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+          }
+
+          .pdms-container .pdms-body li {
+            display: block;
+            margin-left: 5px;
+          }
+
+          .pdms-container .pdms-body li:not(:last-child) {
+            text-decoration: underline;
+            border-radius: 3px;
+            padding: 0 5px;
+          }
+
+          .pdms-container .pdms-body li:last-child {
+            flex-grow: 1;
+          }
+
+          .pdms-container .pdms-body input {
+            height: 2rem;
+            border: none;
+            width: 100%;
+          }
+
+          .pdms-container .pdms-body input:focus {
+            outline: none;
+            box-shadow: none;
+          }
+
+          .pdms-container .pdms-suggestions {
+            width: 100%;
+            box-shadow: 0 0 3px gray;
+            box-sizing: border-box;
+            visibility: hidden;
+            position: absolute;
+            top: 100%;
+            z-index: 3;
+            background-color: white;
+            ` + heightProp + `
+            overflow-x: hidden;
+            overflow-y: auto;
+          }
+
+          .pdms-container .pdms-suggestions ul {
+            ` + paddingProp + `
+            margin: 0;
+            max-height: 100%;
+          }
+
+          .pdms-container .pdms-suggestions li {
+            display: block;
+            cursor: pointer;
+            padding: 0px;
+          }
+
+          .pdms-container .pdms-suggestions li:hover,
+          .pdms-container .pdms-suggestions li.active {
+            background-color: #EEE;
+            border-radius: 3px;
+          }
+
+          .pdms-container .pdms-suggestions.visible {
+            visibility: visible;
+          }
+
+          .pdms-loading-spinner .icon-loading {
+            position: absolute;
+            top: 20%;
+            left: 48%;
+            visibility: hidden;
+          }
+
+          .pdms-loading-spinner ul {
+            width: 100%;
+            box-shadow: 0 0 3px gray;
+            box-sizing: border-box;
+            visibility: hidden;
+            position: absolute;
+            top: 100%;
+            z-index: 3;
+            background-color: white;
+            height: auto;
+            ` + paddingProp + `
+            margin: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            max-height: 100%;
+          }
+          .pdms-container .pdms-body ul {
+            background-color: #fff;
+          }
+        `;
+      };
+
+      class PdMultiselect {
+        constructor({ element, height, initValues, load, onUpdate, padding }) {
+          this.props = arguments[0];
+
+          var css = document.createElement('style');
+          css.innerHTML = getCss({ height: height, padding: padding });
+          document.body.appendChild(css);
+
+          element.innerHTML = `
+          &lt;div class="pdms-container"&gt;
+            &lt;div class="pdms-body"&gt;
+                &lt;div class="pdms-loading-spinner"&gt;&lt;span class="icon-loading"&gt;&lt;/span&gt;&lt;/div&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;&lt;input&gt;&lt;/li&gt;
+                &lt;/ul&gt;
+            &lt;/div&gt;
+            &lt;div class="pdms-error-message"&gt;
+            &lt;/div&gt;
+            &lt;div class="pdms-loading-spinner"&gt;
+              &lt;ul&gt;&lt;li&gt;&lt;span class="icon-loading"&gt;&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;
+            &lt;/div&gt;
+            &lt;div class="pdms-suggestions"&gt;
+                &lt;ul&gt;
+                &lt;/ul&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          `;
+
+          const i = element.querySelector('.pdms-body input');
+          i.onfocus = e =&gt; this.onInputFocus(e);
+          i.onclick = e =&gt; this.onInputFocus(e);
+
+          window.addEventListener('mousedown', (e) =&gt; {
+            if (!element.contains(e.target)){
+              this.onInputBlur(e);
+            }
+          });
+
+          i.onchange = e =&gt; this.onInputEvent(e);
+          i.onkeypress = e =&gt; this.onInputEvent(e);
+          i.onkeydown = e =&gt; this.onInputEvent(e);
+          i.onpaste = e =&gt; this.onInputEvent(e);
+          i.oninput = e =&gt; this.onInputEvent(e);
+
+          element.querySelector('.pdms-body ').onclick = e =&gt; this.onMainAreaClick(e);
+          this.lastInputValue = '';
+          this.typingTimeout = null;
+          this.loadedSuggestions = [];
+          this.bsConfigured = true;
+
+          if (initValues) {
+            initValues(null, (result) =&gt; {
+              hideLoader(element);
+              const items = result.items || [];
+              for (var i = 0; i &lt; items.length; i++) {
+                this.addElementToSelection(items[i].id, items[i].text, { focus: false });
+              }
+              this.bsConfigured = result.bsConfigured;
+              if (!this.bsConfigured) {
+                this.loadedSuggestions = [{id: '', text: 'No Business Services configured in PagerDuty'}];
+              }
+            });
+            showLoader(element);
+          }
+        }
+
+        showLoaderForSuggestions() {
+          const { element } = this.props;
+          const ul = element.querySelector('.pdms-loading-spinner ul');
+          const loader = element.querySelector('.pdms-loading-spinner ul .icon-loading');
+          centerVertically(ul, loader);
+          ul.style.visibility = 'visible';
+          loader.style.visibility = 'visible';
+        }
+
+        hideLoaderForSuggestions() {
+          const { element } = this.props;
+          element.querySelector('.pdms-loading-spinner ul .icon-loading').style.visibility = 'hidden';
+          element.querySelector('.pdms-loading-spinner ul').style.visibility = 'hidden';
+        }
+
+        onInputFocus() {
+          const { element } = this.props;
+          this.blurred = false;
+          this.lastInputValue = element.querySelector('.pdms-body input').value;
+          this.updateSuggestions(this.lastInputValue);
+        }
+
+        onInputBlur() {
+          const { element } = this.props;
+          this.blurred = true;
+          element.querySelector('.pdms-suggestions').classList.remove('visible');
+        }
+
+        onMainAreaClick() {
+          this.focusInput();
+        }
+
+        onInputEvent(e) {
+          const { element } = this.props;
+          const newVal = e.target.value;
+          if (this.lastInputValue !== newVal) {
+            this.lastInputValue = newVal;
+            this.updateSuggestions(newVal);
+          }
+
+          if (e.key === 'Backspace' &amp;&amp; !this.lastInputValue) {
+            const ul = element.querySelector('.pdms-container .pdms-body ul');
+            if (ul.children.length &gt; 1) {
+              ul.removeChild(ul.children[ul.children.length - 2]);
+              this.renderLoadedSuggestions();
+              this.updateSelections();
+            }
+          }
+
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.selectActiveSuggestion();
+          }
+
+          if (e.key === 'ArrowUp') {
+            this.activatePreviousSuggestion();
+            this.scrollList({direction: 'up'});
+          }
+
+          if (e.key === 'ArrowDown') {
+            this.activateNextSuggestion();
+            this.scrollList({direction: 'down'});
+          }
+        }
+
+        activatePreviousSuggestion() {
+          const { element } = this.props;
+          const currentSuggestion = element.querySelector('.pdms-suggestions li.active') || element.querySelector('.pdms-suggestions li');
+          if (currentSuggestion) {
+            const nextSuggestion = currentSuggestion.previousElementSibling || element.querySelector('.pdms-suggestions li:last-child');
+            this.toggleActiveSuggestion(currentSuggestion, nextSuggestion);
+          }
+        }
+
+        activateNextSuggestion() {
+          const { element } = this.props;
+          const currentSuggestion = element.querySelector('.pdms-suggestions li.active') || element.querySelector('.pdms-suggestions li:last-child');
+          if (currentSuggestion) {
+            const nextSuggestion = currentSuggestion.nextElementSibling || element.querySelector('.pdms-suggestions li');
+            this.toggleActiveSuggestion(currentSuggestion, nextSuggestion);
+          }
+        }
+
+        toggleActiveSuggestion(currentSuggestion, nextSuggestion) {
+          currentSuggestion.classList.remove('active');
+          nextSuggestion.classList.add('active');
+        }
+
+        selectActiveSuggestion() {
+          const { element } = this.props;
+
+          const currentSuggestion = element.querySelector('.pdms-suggestions li.active');
+
+          if (currentSuggestion) {
+            this.addElementToSelection(currentSuggestion.getAttribute('data-id'), currentSuggestion.innerText);
+          }
+        }
+
+        focusInput() {
+          const { element } = this.props;
+          this.blurred = false;
+          element.querySelector('.pdms-body input').focus();
+        }
+
+        resetInput() {
+          const { element } = this.props;
+          const input = element.querySelector('.pdms-body input');
+          input.value = this.lastInputValue = '';
+        }
+
+        updateSuggestions(filter) {
+          const { element } = this.props;
+          let suggestions = element.querySelector('.pdms-suggestions');
+          if (!suggestions.classList.contains('visible')) {
+            this.showLoaderForSuggestions();
+          }
+          clearTimeout(this.typingTimeout);
+          this.typingTimeout = setTimeout(() =&gt; {
+            this.typingTimeout = null;
+            this.props.load(filter, (result) =&gt; {
+              const items = result.items || [];
+              this.mergeIntoSuggestions(items);
+              this.renderLoadedSuggestions();
+              let suggestionsList = element.querySelector('.pdms-suggestions ul');
+              if (!suggestionsList.children.length) {
+                this.onInputBlur();
+              }
+              else {
+                if (!this.blurred) {
+                  if (!this.bsConfigured) {
+                    suggestions.style.height = 'auto';
+                  }
+                  suggestions.classList.add('visible');
+                }
+              }
+              this.hideLoaderForSuggestions();
+            });
+          }, 300);
+          this.renderLoadedSuggestions();
+        }
+
+        updateSelections() {
+          const { onUpdate } = this.props;
+          if (onUpdate) {
+            onUpdate(this.getSelectedIds());
+          }
+        }
+
+        getSelectedIds() {
+          const { element } = this.props;
+          const ul = element.querySelector('.pdms-container .pdms-body ul');
+          var selection = [];
+          for(var i = 0; i &lt; ul.children.length - 1; i++) {
+            const item = ul.children[i];
+            selection.push(item.getAttribute('data-id'));
+          }
+          return selection;
+        }
+
+        renderLoadedSuggestions() {
+          const { element } = this.props;
+          const filter = this.lastInputValue = element.querySelector('.pdms-body input').value;
+          const selected = this.getSelectedIds();
+
+          element.querySelector('.pdms-suggestions ul').innerHTML =
+            this.loadedSuggestions
+              .filter(i =&gt; i.text.toLowerCase().includes(filter.toLowerCase()) &amp;&amp; selected.indexOf(i.id) === -1)
+              .map(i =&gt; "&lt;li data-id=" + i.id + "&gt;" + i.text + "&lt;/li&gt;").join('');
+
+          var els = element.querySelector('.pdms-suggestions ul').children;
+          for(var i = 0; i &lt; els.length; i++) {
+            let el = els[i];
+            let id = el.getAttribute('data-id');
+            if (id.length) {
+              el.onclick = () =&gt; this.addElementToSelection(id, el.innerText);
+            }
+          }
+        }
+
+        mergeIntoSuggestions(list) {
+          function cmp(a, b) { return ('' + a.text + a.id).localeCompare('' + b.text + b.id); }
+          this.loadedSuggestions = [].concat(this.loadedSuggestions, list);
+          this.loadedSuggestions =
+            this.loadedSuggestions
+              .sort(cmp)
+              .filter((val, index, arr) =&gt; index === 0 || val.id !== arr[index - 1].id);
+        }
+
+        addElementToSelection(id, text, opts) {
+          const { element } = this.props;
+          var li = document.createElement('li');
+          li.setAttribute('data-id', id);
+          li.innerText = text;
+          const ul = element.querySelector('.pdms-container .pdms-body ul');
+          ul.insertBefore(li, element.querySelector('.pdms-container .pdms-body li:last-child'));
+          this.resetInput();
+          if (!opts || opts.focus) {
+            this.focusInput();
+          }
+          this.renderLoadedSuggestions();
+          this.updateSelections();
+        }
+
+        scrollList(arg) {
+          const { element, padding } = this.props;
+          const { direction } = arg;
+          let viewport = element.querySelector('.pdms-suggestions');
+          if (!viewport) return;
+          let viewportRect = viewport.getBoundingClientRect();
+          let viewportRectTop = viewportRect.top + window.scrollY;
+          let viewportRectBottom = viewportRect.bottom + window.scrollY;
+
+          let list = element.querySelector('.pdms-suggestions ul');
+
+          let first = list.firstChild;
+          if (!first) return;
+          let rectFirst = first.getBoundingClientRect();
+          let offsetTopInitial = rectFirst.top + window.scrollY;
+
+          let active = element.querySelector('.pdms-suggestions ul li.active');
+          if (!active) return;
+          let activeRect = active.getBoundingClientRect();
+          let offsetTop = activeRect.top + window.scrollY;
+
+          if (
+            offsetTop &lt; viewportRectTop
+            ||
+            offsetTop &gt; (viewportRectBottom - activeRect.height)
+          ) {
+            if (direction === 'down') {
+              list.scrollTop = offsetTop - list.clientHeight - offsetTopInitial + activeRect.height + padding * 2;
+            }
+            if (direction === 'up') {
+              list.scrollTop = offsetTop - offsetTopInitial;
+            }
+          }
+        }
+
+      }
+      return PdMultiselect;
+    })();
+</script>
+        <script_name>PdMultiselect</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2019-04-02 14:39:17</sys_created_on>
+        <sys_id>f9852bb1dbe03300eb140181ca961972</sys_id>
+        <sys_mod_count>445</sys_mod_count>
+        <sys_name>x_pd_integration.PdMultiselect</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_script_f9852bb1dbe03300eb140181ca961972</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-04-23 11:32:21</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

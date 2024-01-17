@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyDeprovisioning</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>PagerDutyDeprovisioning</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyDeprovisioning = Class.create();
+PagerDutyDeprovisioning.prototype = {
+  initialize: function() {
+    this.pd = new x_pd_integration.PagerDuty();
+    this.rest = new x_pd_integration.PagerDuty_REST();
+  },
+
+  deleteUser: function(user) {
+    var pdUserID = user.x_pd_integration_pagerduty_id.toString();
+    var feature = 'users/' + pdUserID;
+
+    var response = this.rest.deleteREST(feature);
+    var statusCode = response.getStatusCode();
+
+    switch (statusCode) {
+      case 400:
+        var responseBody = JSON.parse(response.getBody());
+        var message = responseBody.error.errors[0];
+        gs.addErrorMessage(message);
+        break;
+      case 204:
+        gs.addInfoMessage(user.name + ' PagerDuty user has been successfully deleted.');
+        this.removePagerDutyID(user);
+        break;
+      case 404:
+        gs.addErrorMessage('PagerDuty user with ID ' + pdUserID + ' does not exist.');
+        this.removePagerDutyID(user);
+        break;
+      default:
+        gs.addErrorMessage(response.getErrorMessage());
+    }
+  },
+
+  removePagerDutyID: function(user) {
+    var grs = new GlideRecordSecure('sys_user');
+    grs.addQuery('sys_id', user.getUniqueValue());
+    grs.query();
+    while (grs.next()) {
+      grs.setValue('x_pd_integration_pagerduty_id', '');
+      grs.update();
+    }
+  },
+
+  type: 'PagerDutyDeprovisioning',
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-03-27 19:36:19</sys_created_on>
+        <sys_id>b0876efd2f3300101bf7ffecf699b6f0</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PagerDutyDeprovisioning</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_b0876efd2f3300101bf7ffecf699b6f0</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:47:22</sys_updated_on>
+    </sys_script_include>
+</record_update>

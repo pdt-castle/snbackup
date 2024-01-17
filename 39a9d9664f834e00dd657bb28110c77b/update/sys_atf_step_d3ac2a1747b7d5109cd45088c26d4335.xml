@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Navigate to the 'PagerDuty Settings' module in the 'PagerDuty' application</description>
+        <display_name>Navigate to Module</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes>Go to the "Settings Page"</notes>
+        <order>1</order>
+        <snapshot/>
+        <step_config display_value="Navigate to Module">c832fc4073720300c79260bdfaf6a7a0</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-21 16:44:23</sys_created_on>
+        <sys_id>d3ac2a1747b7d5109cd45088c26d4335</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>Navigate to Module</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_d3ac2a1747b7d5109cd45088c26d4335</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-16 17:12:11</sys_updated_on>
+        <table/>
+        <test display_value="PD: Settings page - Use PagerDuty teams checkbox (wrong api_key)">57ac2a1747b7d5109cd45088c26d432f</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+</record_update>

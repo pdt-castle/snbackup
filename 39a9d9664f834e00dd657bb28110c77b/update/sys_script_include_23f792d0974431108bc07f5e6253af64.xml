@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.HealthcheckController</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description>Controller script to support integration health check</description>
+        <name>HealthcheckController</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var HealthcheckController = Class.create();
+HealthcheckController.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+
+  initialize: function (request, responseXML, gc) {
+    this.request = request;
+    this.responseXML = responseXML;
+    this.gc = gc;
+
+    this.results = {};
+    this.logs = [];
+    this.jobs = {
+      check: {
+        provisionWorkflowConnection: {
+          description: 'Setup workflow connection',
+          execute: this.provisionWorkflowConnection,
+          required: [],
+        },
+        ensureAsyncProcessingMode: {
+          description: 'Setup webhook async processing mode',
+          execute: this.ensureAsyncProcessingMode,
+          required: [],
+        },
+        testRestConnection: {
+          description: 'Test PagerDuty REST API Connection',
+          execute: this.testRestConnection,
+          required: [],
+        },
+        testDefaultUserSettings: {
+          description: 'Test Default User Settings',
+          execute: this.testDefaultUserSettings,
+          required: ['testRestConnection'],
+        },
+        testServiceNowUserAuthentication: {
+          description: 'Test ServiceNow User Authentication',
+          execute: this.testServiceNowUserAuthentication,
+          required: [],
+        },
+      }
+    };
+  },
+
+  check: function () {
+    try {
+      this.log('~~ Started running a PagerDuty Integration Health Check');
+      var checkObj = this.jobs.check;
+      Object.keys(checkObj).forEach(function (itemName) {
+        this.executeN(checkObj[itemName], itemName);
+      }, this);
+    } catch (ex) {
+      this.log('[\u2717] ' + ex.message);
+    } finally {
+      this.log('~~ Finished running a PagerDuty Integration Health Check');
+    }
+    return global.JSON.stringify(this.results);
+  },
+
+  execute0: function (item, itemName) {
+    var result = false;
+    try {
+      if (itemName in this.results) {
+        return this.results[itemName];
+      }
+      var desc = this.jobs.check[itemName].description;
+      if (desc) {
+        this.log('~~ ' + desc);
+      }
+      result = Boolean(item.execute.bind(this)());
+      if (desc) {
+        this.log((result ? '[\u2714] ' : '[\u2717] ') + desc + (result ? ' completed with success' : ' failed'));
+      }
+    } catch (ex) {
+      this.log('[\u2717] Error when executing [' + itemName + ']: ' + ex.message);
+    }
+    return result;
+  },
+
+  executeN: function (item, itemName) {
+    var result;
+    if (item.required.length === 0) {
+      result = this.execute0(item, itemName);
+    } else {
+      var requiredItemsResult = item.required.every(function (requiredItemName) {
+        return Boolean(this.executeN(this.jobs.check[requiredItemName], requiredItemName));
+      }, this);
+      if (requiredItemsResult) {
+        result = this.execute0(this.jobs.check[itemName], itemName);
+      }
+    }
+    this.results[itemName] = result;
+    return result;
+  },
+
+  log: function (message) {
+    this.logs.push(message);
+    gs.info(message);
+  },
+
+  /* ********************************* */
+  /* ******* Healthcheck logic ******* */
+  /* ********************************* */
+
+  provisionWorkflowConnection: function () {
+    this.log('Validating that the workflow connection has been created correctly on the ServiceNow side');
+    // Ensure the workflow connection was created
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    var connectionId = pdp.ensureWorkflowConnection(false);
+    if (pdp.hasError()) {
+      this.log('A workflow connection provisioning failed due to: ' + pdp.getError());
+      this.log('A workflow connection is not configured on the PagerDuty Settings page. Please check the above errors');
+      return false;
+    }
+    gs.setProperty('x_pd_integration.connection_id', connectionId);
+    this.log('A workflow connection is configured on the PagerDuty Settings page');
+    return true;
+  },
+
+  ensureAsyncProcessingMode: function () {
+    // Enable 'Can create' and 'Can update' Application Access for the 'sysauto_script' table
+    try {
+      var record = new GlideRecord('sys_db_object');
+      if (record.get('name', 'sysauto_script')) {
+        if (record.getValue('update_access') === '0' || record.getValue('create_access') === '0') {
+          var restMessage = new sn_ws.RESTMessageV2();
+          var url = gs.getProperty('glide.servlet.uri') + 'api/now/table/sys_db_object/' + record.getValue('sys_id');
+          restMessage.setEndpoint(url);
+          restMessage.setHttpMethod('patch');
+          restMessage.setRequestHeader('Content-Type', 'application/json');
+          restMessage.setRequestBody('{"create_access": true, "update_access": true}');
+          restMessage.setBasicAuth(
+            gs.getProperty('x_pd_integration.sn_auth_user'),
+            gs.getProperty('x_pd_integration.sn_auth_userpwd')
+          );
+          var response = restMessage.execute();
+          var status = response.getStatusCode();
+          if (status !== 200) {
+            this.log('[\u2717] Could not enable \'Can create\' and \'Can update\' Application Access for \'sysauto_script\'');
+            // don't return false, try subsequent operations anyway
+          } else {
+            this.log('[\u2714] Successfully enabled \'Can create\' and \'Can update\' Application Access for \'sysauto_script\'');
+          }
+        } else {
+          this.log('[\u2714] \'Can create\' and \'Can update\' Application Access for \'sysauto_script\' is enabled');
+        }
+      }
+    } catch (e) {
+      this.log('[\u2717] Could not enable \'Can create\' and \'Can update\' Application Access for \'sysauto_script\': ' +
+        e.message);
+      // don't return false, try subsequent operations anyway
+    }
+
+    // Create the webhook events processors (Scheduled Script Executions)
+    var results = [];
+    results.push(this.ensureAsyncProcessingModeEventProcessor('Pagerduty Webhook Events Processor', 'pagerduty_webhook_queue'));
+    for (var i = 1; i &lt;= 4; i++) {
+      results.push(this.ensureAsyncProcessingModeEventProcessor('Pagerduty Webhook Events Processor (' + i + ')', 'pagerduty_webhook_queue_' + i));
+    }
+    // eslint-disable-next-line brace-style
+    if (!results.every(function (r) { return r === true; })) {
+      return false;
+    }
+
+    // Enable async processing mode
+    try {
+      if (gs.getProperty('x_pd_integration.webhook_processing_mode') === 'sync') {
+        gs.setProperty('x_pd_integration.webhook_processing_mode', 'async_multi');
+        this.log('[\u2714] Async webhook processing mode was successfully enabled (x_pd_integration.webhook_processing_mode)');
+      } else {
+        this.log('[\u2714] Async webhook processing mode is enabled (x_pd_integration.webhook_processing_mode)');
+      }
+    } catch (e) {
+      this.log('[\u2717] Could not enable async webhook processing mode:' + e.message);
+      return false;
+    }
+
+    return true;
+  },
+
+  ensureAsyncProcessingModeEventProcessor: function (name, queue) {
+    try {
+      var query = new GlideRecord('sysauto_script');
+      if (!query.get('name', name)) {
+        var record = new GlideRecord('sysauto_script');
+        record.initialize();
+        record.name = name;
+        record.active = true;
+        record.sys_scope = 'global';
+        record.conditional = false;
+        record.run_type = 'periodically';
+        // if run_as is set to the string 'NULL', it will default to 'system'
+        record.run_as = gs.getProperty('x_pd_integration.sn_auth_user');
+        record.run_period = new GlideDuration(5000);
+        record.script =
+          '/*** Changes made to this script are not supported by PagerDuty ***/' +
+          '\ntry { ' +
+          '\n  GlideEventManager(\'' + queue + '\').process();' +
+          '\n} catch (e) {' +
+          '\n  gs.error("Error processing Pagerduty Webhook Events from \'' + queue + '\': {0}", e);' +
+          '\n}';
+        if (record.insert()) {
+          this.log('[\u2714] Scheduled Script Execution \'' + name + '\' was created successfully (sysauto_script)');
+        } else {
+          this.log('[\u2717] Could not create Scheduled Script Execution \'' + name + '\' (sysauto_script)');
+          return false;
+        }
+      } else {
+        this.log('[\u2714] Scheduled Script Execution \'' + name + '\' exists (sysauto_script)');
+      }
+    } catch (e) {
+      this.log('[\u2717] Could not create Scheduled Script Execution \'' + name + '\' (sysauto_script): ' +
+        e.message);
+      return false;
+    }
+    return true;
+  },
+
+  testRestConnection: function () {
+    this.log('Test PagerDuty REST API Connection');
+    var pdtest = new x_pd_integration.PagerDutyTest();
+    if (!pdtest.testConnection()) {
+      this.log('PagerDuty REST API Connection test failed');
+      return false;
+    }
+    this.log('PagerDuty REST API Connection successfully tested');
+    return true;
+  },
+
+  testDefaultUserSettings: function () {
+    this.log('Test Default User Settings');
+    var pdtest = new x_pd_integration.PagerDutyTest();
+    if (!pdtest.testDefaultUserConfig()) {
+      this.log('Default User Settings test failed');
+      return false;
+    }
+    this.log('Default User Settings successfully tested');
+    return true;
+  },
+
+  testServiceNowUserAuthentication: function () {
+    this.log('Test ServiceNow User Authentication');
+    var pdtest = new x_pd_integration.PagerDutyTest();
+    if (!pdtest.testUserAuth()) {
+      this.log('ServiceNow User Authentication test failed');
+      return false;
+    }
+    this.log('ServiceNow User Authentication successfully tested');
+    return true;
+  },
+
+  type: 'HealthcheckController'
+});
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-07-11 14:13:03</sys_created_on>
+        <sys_id>23f792d0974431108bc07f5e6253af64</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>HealthcheckController</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_23f792d0974431108bc07f5e6253af64</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-07-11 14:15:13</sys_updated_on>
+    </sys_script_include>
+</record_update>

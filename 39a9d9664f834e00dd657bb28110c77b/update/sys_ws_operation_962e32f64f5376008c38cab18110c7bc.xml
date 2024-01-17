@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_operation">
+    <sys_ws_operation action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <consumes>application/json,application/xml,text/xml</consumes>
+        <consumes_customized>false</consumes_customized>
+        <default_operation_uri>/api/x_pd_integration/pagerduty2sn/userauth</default_operation_uri>
+        <enforce_acl>e9c0c2df4ffc07008c38cab18110c766</enforce_acl>
+        <http_method>POST</http_method>
+        <name>User Authentication</name>
+        <operation_script>(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+
+    // Return status code 200 if it gets here - passed the basic authentication step
+	gs.debug("Scripted REST GET pagerduty2sn API started - user authentication succeeded");
+	response.setStatus(200);
+
+})(request, response);</operation_script>
+        <operation_uri>/api/x_pd_integration/v1/pagerduty2sn/userauth</operation_uri>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <relative_path>/userauth</relative_path>
+        <request_example/>
+        <requires_acl_authorization>true</requires_acl_authorization>
+        <requires_authentication>true</requires_authentication>
+        <short_description/>
+        <sys_class_name>sys_ws_operation</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-06-15 22:21:46</sys_created_on>
+        <sys_id>962e32f64f5376008c38cab18110c7bc</sys_id>
+        <sys_mod_count>5</sys_mod_count>
+        <sys_name>User Authentication</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ws_operation_962e32f64f5376008c38cab18110c7bc</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-08-30 20:45:29</sys_updated_on>
+        <web_service_definition display_value="pagerduty2sn">a65dd102dbcd260087f0f5f0cf9619bd</web_service_definition>
+        <web_service_version display_value="v1">90bdd102dbcd260087f0f5f0cf9619f5</web_service_version>
+    </sys_ws_operation>
+</record_update>

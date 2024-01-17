@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyCustomFieldsInboundSync</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script for custom fields inbound syncronization</description>
+        <name>PagerDutyCustomFieldsInboundSync</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyCustomFieldsInboundSync = Class.create();
+PagerDutyCustomFieldsInboundSync.prototype = {
+  initialize: function () {
+    this.baseUrl = gs.getProperty('glide.servlet.uri');
+    this.support = new x_pd_integration.PagerDutyCustomFieldsSupport();
+    this.controlRecordValidity = 600; // seconds
+    this.showNotesOnUpdate = x_pd_integration.WorkNotesHelper.isEnabled('show_notes_on_custom_fields_updates');
+    this.showNotesOnError = x_pd_integration.WorkNotesHelper.isEnabled('show_notes_on_custom_fields_errors');
+  },
+
+  /**
+   * Updates the ServiceNow target record based on the payload of a webhook event of type 'incident.custom_field_values.updated'.
+   * Note: only records of type 'incident' are supported, but the code is generic enough to support any other types.
+   * @param {GlideRecord} target - The GlideRecord of the target table.
+   * @param {Object} event - The event received from PagerDuty.
+   * @returns {Boolean} - True if any field was updated, false otherwise.
+   * @public
+   */
+  processCustomFieldValuesUpdated: function (target, event) {
+    try {
+      var enableCustomFieldMapping = gs.getProperty('x_pd_integration.enable_custom_field_mapping');
+      if (enableCustomFieldMapping !== 'true') {
+        gs.debug('PagerDuty update custom fields is disabled, no ability present in the PD account');
+        return;
+      }
+      if (event.data.custom_fields &amp;&amp; event.data.changed_custom_fields &amp;&amp; !this._shouldEventBeIgnored(event)) {
+        return this._applyChangesToTarget(target, event.data.custom_fields, event.data.changed_custom_fields);
+      }
+    } catch (e) {
+      gs.error('Error processing the "incident.custom_field_values.updated" webhook event: {0}', e);
+    }
+    return false;
+  },
+
+  /**
+   * Decides if the event should be ignored or not based on the existence of a record on the control table.
+   * See the complete explanation at PagerDutyCustomFieldsOutboundSync.updateAllPdCustomFieldsOnIncidentTrigger.
+   * @param {Object} event - The event received from PagerDuty.
+   * @returns {Boolean} - True if the event should be ignore, false otherwise.
+   * @private
+   */
+  _shouldEventBeIgnored: function (event) {
+    var result = false;
+    try {
+      var gr = new GlideRecordSecure('x_pd_integration_custom_field_mapping_control');
+      if (gr.get('pd_incident_id', event.data.incident.id)) {
+        // check if record is still valid (created less than 10 minutes ago)
+        var validity = new GlideDateTime(gr.getValue('sys_created_on'));
+        validity.addSeconds(this.controlRecordValidity);
+        result = validity.after(new GlideDateTime());
+        // delete record either way
+        gr.deleteRecord();
+      }
+    } catch (e) {
+      gs.error('Error checking if the "incident.custom_field_values.updated" webhook event should be ignored: {0}', e);
+    }
+    gs.debug('Ignore the "incident.custom_field_values.updated" webhook event (id={0}) for incident {1}? {2}', event.id, event.data.incident.id, result);
+    return result;
+  },
+
+  /**
+   * Verifies if the data received corresponds to an update that only sets custom fields to their default values.
+   * If that is the case, there is an high probability that this is the event that PagerDuty triggers immediately
+   * after a PagerDuty incident is triggered (but only if there are default values defined at PagerDuty).
+   * NOTE: this function is not used at the moment, but it may be used from '_shouldEventBeIgnored' in case we need
+   * to guarantee that only the first event that sets default values is ignored.
+   * @param {Array} customFields - The custom fields received from PagerDuty. Includes the metadata and current values
+   * of all custom fields of the incident, not just the ones that have changed.
+   * @param {Array} changedCustomFields - The custom fields that have changed.
+   * @returns {Boolean} - True if any field was updated, false otherwise.
+   * @private
+   */
+  _isDefaultValuesEvent: function (customFields, changedCustomFields) {
+    var isDefaultValuesEvent = true;
+    var mappings = this.support.getMappings();
+    changedCustomFields.forEach(function (changedCustomField) {
+      var mapping = this._getMappingByPdFieldName(mappings, changedCustomFields[i].name);
+      var customField = this._getCustomFieldByPdFieldName(customFields, changedCustomFields[i].name);
+      if (mapping &amp;&amp; customField &amp;&amp; global.JSUtil.nil(changedCustomField.value)) { // previous value was null
+        if (mapping.pdFieldDataType === 'boolean') { // booleans have an implicit default value of false
+          isDefaultValuesEvent = (customField.value === false) &amp;&amp; isDefaultValuesEvent;
+        } else {
+          isDefaultValuesEvent = (customField.value === mapping.defaultValue) &amp;&amp; isDefaultValuesEvent;
+        }
+      }
+    }, this);
+    return isDefaultValuesEvent;
+  },
+
+  /**
+   * Updates the ServiceNow fields of the target ServiceNow record with the values received from PagerDuty.
+   * @param {GlideRecord} target - The GlideRecord of the target table.
+   * @param {Array} customFields - The custom fields received from PagerDuty. Includes the metadata and current values
+   * of all custom fields of the incident, not just the ones that have changed.
+   * @param {Array} changedCustomFields - The custom fields that have changed.
+   * @returns {Boolean} - True if any field was updated, false otherwise.
+   * @private
+   */
+  _applyChangesToTarget: function (target, customFields, changedCustomFields) {
+    var updated = false;
+    var updates = [];
+    var errors = [];
+    var ignores = [];
+    var mappings = this.support.getMappings();
+    if (mappings.length &gt; 0) {
+      for (var i = 0; i &lt; changedCustomFields.length; i++) {
+        var mapping = this._getMappingByPdFieldName(mappings, changedCustomFields[i].name);
+        var customField = this._getCustomFieldByPdFieldName(customFields, changedCustomFields[i].name);
+        if (mapping &amp;&amp; customField) {
+          try {
+            updated = this._applyChangesToField(target, mapping, customField.value, updates, errors, ignores) || updated;
+          } catch (e) {
+            errors.push('Field "' + mapping.snFieldDisplayName + '" was not updated due to an unexpected error: ' + e);
+          }
+        }
+      }
+
+      // log final result
+      this.support.logProcessingResult('inbound', updates, errors, ignores);
+      // show note in activity stream (if enabled)
+      if ((this.showNotesOnUpdate &amp;&amp; updates.length &gt; 0) || (this.showNotesOnError &amp;&amp; errors.length &gt; 0)) {
+        target.work_notes = this.support.buildNoteWithUpdatesAndErrors('inbound', this.showNotesOnUpdate, this.showNotesOnError, updates, errors);
+        updated = true;
+      }
+    }
+    return updated;
+  },
+
+  /**
+   * Updates the ServiceNow field referenced in the 'mapping' parameter with the value received from PagerDuty.
+   * @param {GlideRecord} target - The GlideRecord of the target table.
+   * @param {Object} mapping - The mapping between the PagerDuty and the ServiceNow field.
+   * @param {String} value - The value received from PagerDuty.
+   * @param {Array} updates - An array of strings to which the update messages will be added.
+   * @param {Array} errors - An array of strings to which the error messages will be added.
+   * @param {Array} ignores - The list of ignored updates that will be logged.
+   * @returns {Boolean} - True if the field was updated, false otherwise.
+   * @private
+   */
+  _applyChangesToField: function (target, mapping, value, updates, errors, ignores) {
+    if (!target.isValidField(mapping.snFieldName)) {
+      errors.push('Field "' + mapping.snFieldDisplayName + '" was deleted in ServiceNow');
+      this.support.setMappingInError(mapping.sysId, 'Sync Failed: The ServiceNow field used for this mapping was deleted in ServiceNow. ' +
+        '\nNext step: Delete this mapping. Create a new ServiceNow field and map it again to restore functionality.');
+      return false;
+    }
+    var currentValue = target.getValue(mapping.snFieldName);
+    var currentDisplayValue = target.getDisplayValue(mapping.snFieldName) || currentValue;
+    if (global.JSUtil.nil(value) &amp;&amp; global.JSUtil.nil(currentValue)) {
+      // values may be different (eg: null vs empty string), but they are considered equivalent so the update is skipped
+      ignores.push('Field "' + mapping.snFieldDisplayName + '" was not updated because the value received is equivalent (current="' + currentValue + '"; new="' + value + '")');
+      return false;
+    } else if (String(value) !== currentValue) {
+      var field = target.getElement(mapping.snFieldName);
+      var result = this._convertValue(mapping, field, field.getED(), value, currentValue);
+      if (result.apply) {
+        field.setValue(result.convertedValue);
+        updates.push('Field "' + mapping.snFieldDisplayName + '" was updated to "' + result.convertedValue + '"');
+        return true;
+      } else if (result.error) {
+        errors.push(result.message);
+        return false;
+      }
+    }
+    ignores.push('Field "' + mapping.snFieldDisplayName + '" was not updated because the value received is equivalent (current="' + currentValue + '"; new="' + value + '")');
+    return false;
+  },
+
+  /**
+   * Converts the value received from PagerDuty to the format expected by ServiceNow.
+   * @param {Object} mapping - The mapping between the PagerDuty and the ServiceNow field.
+   * @param {GlideElement} field - The ServiceNow field.
+   * @param {GlideElementDescriptor} descriptor - The ServiceNow field descriptor.
+   * @param {String} value - The value received from PagerDuty.
+   * @param {String} currentValue - The current value of the ServiceNow field.
+   * @returns {Object} A result object with the following properties:
+   *  - apply: A boolean indicating whether the value should be applied or not.
+   *  - convertedValue: The converted value.
+   * @private
+   */
+  _convertValue: function (mapping, field, descriptor, value, currentValue) {
+    if (global.JSUtil.nil(value)) {
+      return {apply: true, convertedValue: ''};
+    } else if (descriptor.isChoiceTable()) {
+      // choice fields can be of different data types, but because we are using the
+      // Labels as the values we don't need to check the underlying data type
+      // Note: isChoiceTable() returns false for fields with choice type "suggestion"
+      return this._convertToChoiceOption(mapping, field, descriptor, value, currentValue);
+    } else if (mapping.snFieldDataType === 'string') {
+      return this._convertToString(mapping, field, descriptor, value, currentValue);
+    } else if (mapping.snFieldDataType === 'url') {
+      return this._convertToUrl(mapping, field, descriptor, value, currentValue);
+    } else if (mapping.snFieldDataType === 'glide_date') {
+      return this._convertToDate(mapping, field, descriptor, value, currentValue);
+    } else if (mapping.snFieldDataType === 'glide_date_time' || mapping.snFieldDataType === 'due_date') {
+      return this._convertToDatetime(mapping, field, descriptor, value, currentValue);
+    } else if (mapping.snFieldDataType === 'boolean') {
+      return this._convertToBoolean(mapping, field, descriptor, value, currentValue);
+    }
+    return {apply: true, convertedValue: value};
+  },
+
+  _convertToChoiceOption: function (mapping, field, descriptor, value, currentValue) {
+    // Options set on PD custom field are stored on the mapping options column. It includes PD Option ID, PD Value, SN Label and SN Value.
+    // The value received from PD correspond to the label, so we need to convert it to the value expected by SN.
+    if (mapping.options) {
+      var matchedOption = mapping.options.field_options.filter(function (field_option) {
+        return field_option.value === value;
+      })[0];
+      if (matchedOption &amp;&amp; matchedOption.snValue !== currentValue) {
+        return {apply: true, convertedValue: matchedOption.snValue};
+      }
+    } else {
+      // Fallback case for when the mapping options are not available.
+      var displayValue = field.getDisplayValue();
+      if (value !== displayValue) {
+        return {apply: true, convertedValue: value};
+      }
+    }
+    return {apply: false};
+  },
+
+  _convertToString: function (mapping, field, descriptor, value, currentValue) {
+    var maxLength = descriptor.getLength();
+    var maxPdLength = this.support.getPdLimits().maxValueLength;
+    var convertedValue = value;
+    var convertedCurrentValue = currentValue;
+
+    if (value.length &gt; maxLength) {
+      // value received from PD is longer than the max length allowed in SN
+      convertedValue = value.substring(0, maxLength - 1) + '…';
+      if (currentValue) {
+        convertedCurrentValue = currentValue.substring(0, maxLength - 1) + '…';
+      }
+    } else if (maxPdLength &lt; maxLength &amp;&amp; value.length === maxPdLength &amp;&amp; value[value.length - 1] === '…') {
+      // value received from PD may already be truncated
+      if (currentValue) {
+        convertedCurrentValue = currentValue.substring(0, maxPdLength - 1) + '…';
+      }
+    }
+
+    // if the value is truncated, either because it is longer than the max length allowed in SN or
+    // because it was already truncated when received from PD, we only update the field if the
+    // truncated value is different from the current value in SN also truncated
+    if (convertedValue !== convertedCurrentValue) {
+      if (value.length &gt; maxLength) {
+        gs.warn('Value for field "{0}" was truncated because it exceeds maximum length of {1}', field.getName(), maxLength);
+      }
+      return {apply: true, convertedValue: convertedValue};
+    }
+
+    return {apply: false};
+  },
+
+  _convertToUrl: function (mapping, field, descriptor, value, currentValue) {
+    var maxLength = descriptor.getLength();
+
+    if (currentValue === value.substring(this.baseUrl.length)) {
+      // values are equivalent
+      return {apply: false};
+    } else if (value.length &gt; maxLength) {
+      return {apply: false, error: true,
+        message: 'Field "' + mapping.snFieldDisplayName + '" was not updated because the value received exceeds the field\'s maximum length of ' + maxLength};
+    }
+
+    return {apply: true, convertedValue: value};
+  },
+
+  _convertToDate: function (mapping, field, descriptor, value, currentValue) {
+    // Convert from ISO 8601 to ServiceNow format. Example: 2018-07-16T15:00:00.000Z -&gt; 2018-07-16
+    var convertedValue = value.substring(0, 10);
+    if (convertedValue === currentValue) {
+      return {apply: false};
+    }
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  _convertToDatetime: function (mapping, field, descriptor, value, currentValue) {
+    // Convert from ISO 8601 to ServiceNow format. Example: 2018-07-16T15:00:00.000Z -&gt; 2018-07-16 15:00:00
+    var convertedValue = value.replace('T', ' ').substring(0, 19);
+    if (convertedValue === currentValue) {
+      return {apply: false};
+    }
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  _convertToBoolean: function (mapping, field, descriptor, value, currentValue) {
+    var convertedValue = value; // value is already a boolean
+    var convertedCurrentValue = (currentValue === 'true' || currentValue === '1' || currentValue === 'yes' || currentValue === 'on');
+    if (convertedValue === convertedCurrentValue) {
+      return {apply: false};
+    }
+    return {apply: true, convertedValue: convertedValue};
+  },
+
+  _getMappingByPdFieldName: function (mappings, pdFieldName) {
+    var result = mappings.filter(function (m) { return m.pdFieldName === pdFieldName; }); // eslint-disable-line
+    return (result.length === 1 ? result[0] : null);
+  },
+
+  _getCustomFieldByPdFieldName: function (customFields, pdFieldName) {
+    var result = customFields.filter(function (cf) { return cf.name === pdFieldName; }); // eslint-disable-line
+    return (result.length === 1 ? result[0] : null);
+  },
+
+  type: 'PagerDutyCustomFieldsInboundSync'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-12 22:15:19</sys_created_on>
+        <sys_id>84c4a8784759311047daf2e7536d43d9</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PagerDutyCustomFieldsInboundSync</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_84c4a8784759311047daf2e7536d43d9</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-07 19:44:05</sys_updated_on>
+    </sys_script_include>
+</record_update>

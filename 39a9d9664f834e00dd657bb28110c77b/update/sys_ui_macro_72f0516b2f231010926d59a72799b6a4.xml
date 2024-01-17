@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_macro">
+    <sys_ui_macro action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category>general</category>
+        <description/>
+        <media_type/>
+        <name>input_formgroup_default_user</name>
+        <scoped_name>x_pd_integration_input_formgroup_default_user</scoped_name>
+        <sys_class_name>sys_ui_macro</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-10-05 09:42:01</sys_created_on>
+        <sys_id>72f0516b2f231010926d59a72799b6a4</sys_id>
+        <sys_mod_count>59</sys_mod_count>
+        <sys_name>input_formgroup_default_user</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_macro_72f0516b2f231010926d59a72799b6a4</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-09 16:25:35</sys_updated_on>
+        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;style&gt;
+    #provision-user-btn {
+      display: none;
+      width: 170px;
+    }
+    .flex {
+      display: flex;
+    }
+    .linky-btn {
+      justify-content: center;
+      margin-left: 0.5rem;
+      min-width: 32px;
+    }
+  &lt;/style&gt;
+  &lt;div id="default-user-div"&gt;
+    &lt;label class="control-label" for="${HTML:jvar_name}"&gt;${HTML:jvar_label}&lt;/label&gt;
+    &lt;j2:set_if var="jvar_class" test="${HTML:jvar_value == ''}" true="input-group" false="" /&gt;
+    &lt;div class="${HTML:jvar_class} flex"&gt;
+
+      &lt;j:if test="${HTML:jvar_enabled == 'yes'}"&gt;
+        &lt;input type="${HTML:jvar_type}" class="form-control" id="${HTML:jvar_name}"
+          name="${HTML:jvar_name}" placeholder="${HTML:jvar_placeholder}"
+          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" mandatory="mandatory" /&gt;
+        &lt;span class="input-group-btn"&gt;
+          &lt;button class="btn btn-info" id="provision-user-btn" data-toggle="tooltip"
+            title="The logged-in user will be provisioned as a default integration user"&gt;Provision default user&lt;/button&gt;
+        &lt;/span&gt;
+      &lt;/j:if&gt;
+
+      &lt;j:if test="${HTML:jvar_enabled != 'yes'}"&gt;
+        &lt;input type="${HTML:jvar_type}" class="form-control" name="${HTML:jvar_name}"
+          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" disabled="disabled" /&gt;
+        &lt;span class="input-group-btn"&gt;
+          &lt;button class="btn btn-info" id="provision-user-btn" disabled="disabled"&gt;Provision default user&lt;/button&gt;
+        &lt;/span&gt;
+      &lt;/j:if&gt;
+
+      &lt;g:evaluate var="jvar_pd_base_url" expression="gs.getProperty('x_pd_integration.instance_url')" /&gt;
+      &lt;button type="button" class="btn btn-default icon-link linky-btn"
+        id="${HTML:jvar_name}-linky-btn"
+        onclick="openPagerDuty_${HTML:jvar_name}();"
+        title="${HTML:gs.getMessage('Open in PagerDuty')}"&gt;
+      &lt;/button&gt;
+      &lt;script&gt;
+        function openPagerDuty_${HTML:jvar_name}() {
+          var go = confirm("${HTML:gs.getMessage('PagerDuty will open in a new window')}");
+          if (!go) {
+            return;
+          }
+          var id = document.getElementById("${HTML:jvar_name}").value;
+          var pdUrl = "${HTML:jvar_pd_base_url}/users/" + id;
+          g_navigation.open(pdUrl, "_blank");
+        }
+      &lt;/script&gt;
+
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;span id="${HTML:jvar_name}_help" class="help-block"&gt;&lt;/span&gt;
+&lt;/j:jelly&gt;
+</xml>
+    </sys_ui_macro>
+</record_update>

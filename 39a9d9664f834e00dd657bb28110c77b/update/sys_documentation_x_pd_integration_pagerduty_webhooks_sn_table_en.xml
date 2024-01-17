@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="sn_table" label="SN table" language="en" table="x_pd_integration_pagerduty_webhooks">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>sn_table</element>
+            <help/>
+            <hint/>
+            <label>SN table</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_webhooks</name>
+            <plural>SN tables</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-06-11 15:56:20</sys_created_on>
+            <sys_id>7c23d47647dba11012a32646926d4312</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>SN table</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_pagerduty_webhooks_sn_table_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-06-11 15:56:20</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

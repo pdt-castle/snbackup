@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="x_pd_integration_pagerduty_id" label="PagerDuty ID" language="en" table="sys_user">
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>x_pd_integration_pagerduty_id</element>
+            <help/>
+            <hint/>
+            <label>PagerDuty ID</label>
+            <language>en</language>
+            <name>sys_user</name>
+            <plural>PagerDuty IDs</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2015-10-27 14:52:25</sys_created_on>
+            <sys_id>d06af22e4f130240dd657bb28110c71d</sys_id>
+            <sys_mod_count>1</sys_mod_count>
+            <sys_name>PagerDuty ID</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_sys_user_x_pd_integration_pagerduty_id_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2017-05-03 02:11:52</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

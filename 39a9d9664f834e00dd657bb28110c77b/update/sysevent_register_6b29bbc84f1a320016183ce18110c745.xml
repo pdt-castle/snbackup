@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysevent_register">
+    <sysevent_register action="INSERT_OR_UPDATE">
+        <description>Add an external reference to PagerDuty incident when ServiceNow incident is created from PagerDuty</description>
+        <event_name>x_pd_integration.add_inc_external_ref</event_name>
+        <fired_by>PagerDuty business rules</fired_by>
+        <queue/>
+        <suffix>add_inc_external_ref</suffix>
+        <sys_class_name>sysevent_register</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-04-18 20:33:05</sys_created_on>
+        <sys_id>6b29bbc84f1a320016183ce18110c745</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>x_pd_integration.add_inc_external_ref</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysevent_register_6b29bbc84f1a320016183ce18110c745</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-05-03 02:11:50</sys_updated_on>
+        <table/>
+    </sysevent_register>
+</record_update>

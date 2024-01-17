@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Assert that the text 'Create PagerDuty Team when provisioning Assignment Groups' is on the page.
+With a failure timeout of 5 Seconds</description>
+        <display_name>Assert Text on Page (Custom UI)</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes>New checkbox appearing when api_key and endpoint is correct and clicked Use PagerDuty teams checkbox</notes>
+        <order>8</order>
+        <snapshot/>
+        <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-22 15:53:37</sys_created_on>
+        <sys_id>8a4a6767473b19109cd45088c26d430d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Assert Text on Page (Custom UI)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_8a4a6767473b19109cd45088c26d430d</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-22 15:53:37</sys_updated_on>
+        <table/>
+        <test display_value="PD: Settings page - Use PagerDuty teams checkbox  (api_key is correct)">72a63ee747f319109cd45088c26d43eb</test>
+        <timeout>1970-01-01 00:00:05</timeout>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_element_mapping action="delete_multiple" query="id=8a4a6767473b19109cd45088c26d430d"/>
+    <sys_variable_value action="delete_multiple" query="document_key=8a4a6767473b19109cd45088c26d430d"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>8a4a6767473b19109cd45088c26d430d</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-22 15:53:37</sys_created_on>
+        <sys_id>21aa2f27473b19109cd45088c26d43eb</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-22 15:53:37</sys_updated_on>
+        <value>Create PagerDuty Team when provisioning Assignment Groups</value>
+        <variable display_value="Text">1c267c5cd703130089fca2285e61035b</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>8a4a6767473b19109cd45088c26d430d</document_key>
+        <order>300</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-22 15:53:37</sys_created_on>
+        <sys_id>6daa2f27473b19109cd45088c26d43ea</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-22 15:53:37</sys_updated_on>
+        <value>21.0</value>
+        <variable display_value="Custom UI version">4a49b1d3b700101044026848ee11a980</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>8a4a6767473b19109cd45088c26d430d</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-22 15:53:37</sys_created_on>
+        <sys_id>a9aa2f27473b19109cd45088c26d43ea</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-12-22 15:53:37</sys_updated_on>
+        <value>text_on_page</value>
+        <variable display_value="Assert Type">86e4f05cd703130089fca2285e610307</variable>
+    </sys_variable_value>
+</record_update>

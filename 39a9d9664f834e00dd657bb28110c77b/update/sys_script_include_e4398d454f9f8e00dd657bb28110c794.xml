@@ -1,0 +1,2135 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDuty</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>/*** Changes made to this script are not supported by PagerDuty ***/&#13;
+PagerDuty integration methods</description>
+        <name>PagerDuty</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+/* eslint no-underscore-dangle: 0 */
+var PagerDuty = Class.create();
+PagerDuty.prototype = {
+  initialize: function () {
+    this._errorMsg = '';
+    this._hasError = false;
+
+    this._autoProvisionUsers = gs.getProperty('x_pd_integration.auto_provision_users');
+    this.assignOnAckOnly = gs.getProperty('x_pd_integration.assign_on_ack_only');
+    this.closeOnUnknownUserGroup = gs.getProperty('x_pd_integration.close_incident_on_unknown');
+    this.defaultUserID = gs.getProperty('x_pd_integration.default_user');
+    this.sn2pdMappingCIAG = 'Configuration Items and Assignment Groups map to PagerDuty';
+    this.sn2pdMappingAG = 'Assignment Groups map to PagerDuty';
+    this.sn2pdMapping = gs.getProperty('x_pd_integration.sn2pd_mapping');
+    this.defaultServiceID = gs.getProperty('x_pd_integration.default_service');
+    this.triggerIncidentBodyTemplate = gs.getProperty('x_pd_integration.incident_body_template');
+    this.baseUrl = gs.getProperty('glide.servlet.uri');
+  },
+
+
+  /**
+   * Get PagerDuty ID for a user from PagerDuty if needed
+   * @param {String} user email address
+   * @return {String} PagerDuty user ID
+   */
+  getUserIdByEmail: function (email, sysid) {
+    var me = 'getUserIdByEmail';
+    if (gs.nil(email)) {
+      return;
+    }
+
+    var emailLowerCase = email.toLowerCase();
+    gs.debug('{0} for {1}', me, emailLowerCase);
+
+    var feature = 'users?query=' + gs.urlEncode(emailLowerCase);
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      var user;
+      for (var i = 0; i &lt; body.users.length; i++) {
+        if (body.users[i].email === emailLowerCase) {
+          user = body.users[i];
+          break;
+        }
+      }
+
+      if (gs.nil(user)) {
+        this._setError(me, 'PagerDuty could not find user for email ' + email);
+        return;
+      }
+      var userId = user.id;
+      if (!gs.nil(userId)) {
+        // add id to user so we don't have to ask again
+        this._updateUser(sysid, userId);
+        return userId;
+      }
+    }
+  },
+
+  /**
+   * Get Email for a user, either from database or PagerDuty if needed
+   * @param {String} user PD id
+   * @return {String} PagerDuty user email
+   */
+  getUserEmailByPDID: function (userID) {
+    var me = 'getUserEmailByPDID';
+    if (gs.nil(userID)) {
+      return;
+    }
+    gs.debug('{0} for {1}', me, userID);
+
+    var userEmail;
+    var user = new GlideRecordSecure('sys_user');
+    if (user.isValidField('x_pd_integration_pagerduty_id') &amp;&amp; user.isValidField('email')) {
+      user.addQuery('x_pd_integration_pagerduty_id', userID);
+      user.setLimit(1);
+      user.query();
+      if (user.next()) {
+        userEmail = user.getValue('email');
+      }
+    }
+
+    if (gs.nil(userEmail)) {
+      userEmail = this.getUserEmailFromPagerDuty(userID);
+    }
+    return userEmail;
+  },
+
+  getUserEmailFromPagerDuty: function (userID) {
+    var me = 'getUserEmailFromPagerDuty';
+    var feature = 'users/' + userID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature);
+    var status = response.getStatusCode();
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      if (gs.nil(body.user)) {
+        this._setError(me, 'PagerDuty could not find user ' + userID);
+        return;
+      }
+      return body.user.email;
+    }
+  },
+
+  /**
+   * Get user name given Pager user id
+   * @param (String) user id
+   * @return {String} user name
+   */
+  getUserNameByPDID: function (userID) {
+    var me = 'getUserNameByPDID';
+    if (gs.nil(userID)) {
+      return;
+    }
+    gs.debug('{0} for {1}', me, userID);
+
+    var userName;
+    var user = new GlideRecordSecure('sys_user');
+    if (user.isValidField('x_pd_integration_pagerduty_id') &amp;&amp; user.isValidField('email')) {
+      user.addQuery('x_pd_integration_pagerduty_id', userID);
+      user.setLimit(1);
+      user.query();
+      if (user.next()) {
+        userName = user.getValue('name');
+      }
+    }
+
+    if (gs.nil(userName)) {
+      var feature = 'users/' + userID;
+      var rest = new x_pd_integration.PagerDuty_REST();
+
+      var response = rest.getREST(feature);
+      var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+      var status = response.getStatusCode();
+      gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+      if (status === 200) {
+        var body = global.JSON.parse(response.getBody());
+        if (gs.nil(body.user)) {
+          this._setError(me, 'PagerDuty could not find user ' + userID);
+          return;
+        }
+        userName = body.user.name;
+      }
+    }
+    return userName;
+  },
+
+  /**
+   * Get the PagerDuty user's role
+   * @param (String) PagerDuty user ID
+   * @return {String} PagerDuty user's role
+   */
+  getUserRoleByPDID: function (userID) {
+    var me = 'getUserRoleByPDID';
+    var feature = 'users/' + userID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature);
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      if (gs.nil(body.user)) {
+        this._setError(me, 'PagerDuty could not find user ' + userID);
+        return null;
+      }
+      return body.user.role;
+    }
+    return null;
+  },
+
+  /**
+   * Call PagerDuty API to get incident assignees' IDs
+   * @param {String} PagerDuty user's email to send in a "From" header
+   * @param {String} PagerDuty incident ID
+   * @return {Array} Objects with assignments data
+   */
+  getIncidentAssignments: function (requester, incidentId) {
+    var me = 'getIncidentAssignments';
+    gs.debug('{0} for {1}', me, incidentId);
+    var feature = 'incidents/' + incidentId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.getREST(feature, {}, requester);
+
+    var responseBody = response.haveError() ? this.extractPDIncidentError(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('Get incident assignments response: {1}:{2}', status, responseBody);
+
+
+    if (status !== 200) {
+      gs.warn('GET incident assignments failed. Status: ' + status + '; Message: ' +
+        responseBody + '; Query: ' + feature);
+      throw new Error(responseBody);
+    }
+
+    var body = global.JSON.parse(responseBody);
+    gs.debug('body.incident.assignments : ' + global.JSON.stringify(body.incident.assignments));
+
+    return body.incident.assignments;
+  },
+
+  /**
+   * Get PagerDuty Team members
+   * @param {String} PagerDuty user's email to send in a "From" header
+   * @param {String} PagerDuty Team ID
+   * @return {Array} Objects with data about the PagerDuty Team members
+   */
+  getIncidentTeamUsers: function (requester, pdTeamId) {
+    var teamMembers;
+    var me = 'getIncidentTeamUsers';
+    if (gs.nil(pdTeamId)) {
+      return null;
+    }
+
+    var feature = 'teams/' + pdTeamId + '/members';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {}, requester);
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      if (gs.nil(body.members)) {
+        this._setError(me, 'PagerDuty could not find team members ' + pdTeamId);
+        return null;
+      }
+      teamMembers = body.members;
+    }
+    return teamMembers;
+  },
+
+  /**
+   * Get team name given Pager team id
+   * @param (String) team id
+   * @return {String} team name
+   */
+  getTeamNameByPDID: function (teamID) {
+    var me = 'getTeamNameByPDID';
+    if (gs.nil(teamID)) {
+      return;
+    }
+    gs.debug('{0} for {1}', me, teamID);
+
+    var teamName;
+    var feature = 'teams/' + teamID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature);
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      if (gs.nil(body.team)) {
+        this._setError(me, 'PagerDuty could not find team ' + teamID);
+        return;
+      }
+      teamName = body.team.name;
+    }
+    return teamName;
+  },
+
+  /**
+   * Get valid PD email address of current user or default user
+   * @param (String) current system user id
+   * @return {String} email address
+   */
+  getValidEmail: function (currentUserSysid) {
+    var me = 'getValidEmail';
+    var currentUserEmail;
+
+    if (gs.nil(currentUserSysid) || currentUserSysid === 'system' || currentUserSysid === 'guest') {
+      this._setError(me, 'Invalid current user sysid, fallback to default user');
+      currentUserEmail = this.getUserEmailByPDID(this.defaultUserID);
+    } else {
+      var currentUser = new GlideRecordSecure('sys_user');
+      if (!currentUser.get(currentUserSysid)) {
+        this._setError(me, 'Invalid current user sysid, fallback to default user');
+        currentUserEmail = this.getUserEmailByPDID(this.defaultUserID);
+      } else {
+        // get user info from sys_userv
+        currentUserEmail = currentUser.getValue('email');
+        var currentUserID = currentUser.getValue('x_pd_integration_pagerduty_id');
+        if (gs.nil(currentUserID)) {
+          this._setError(me, 'Current user sysid is not mapped to PagerDuty user, fallback to default user');
+          currentUserEmail = this.getUserEmailByPDID(this.defaultUserID);
+        } else if (gs.nil(currentUserEmail)) {
+          currentUserEmail = this.getUserEmailByPDID(currentUserID);
+        }
+      }
+    }
+    gs.debug('{0} Local user "{1}" -&gt; PD email "{2}"', me, currentUserSysid, currentUserEmail);
+    return currentUserEmail;
+  },
+
+  /**
+   * Get a user's PagerDuty ID
+   * if not in user record, either auto-provision or use default user property
+   * @param {String} value to query for
+   * @param {String} field on sys_user table to query
+   * @return {String} PagerDuty ID for the user
+   */
+  getUserIDFromFieldData: function (userData, userField, useDefault) {
+    var me = 'getUserIDFromFieldData';
+    if (gs.nil(userData) || gs.nil(userField)) {
+      gs.error(
+        '{0} error, missing user data:{1} or field:{2} to query, using default user ID {3}',
+        me, userData, userField, this.defaultUserID
+      );
+      if (!gs.nil(this.defaultUserID)) {
+        return this.defaultUserID;
+      }
+      gs.error('{0} could not find user {1} and useDefault user property was empty', me, userData);
+    }
+
+    // check the sys_user record for id
+    var user = new GlideRecordSecure('sys_user');
+    if (!user.isValidField(userField)) {
+      gs.error('{0} error querying for {1}={2}, invalid field', me, userField, userData);
+      return;
+    }
+    user.addQuery(userField, userData);
+    user.setLimit(1);
+    user.query();
+    if (!user.next()) {
+      gs.error('{0}: user record for {1}={2} could not be found', me, userField, userData);
+      return;
+    }
+
+    gs.debug('{0} found user {1}, PagerDuty_id={2}', me, user.getDisplayValue(), user.getValue('x_pd_integration_pagerduty_id'));
+    var userID = user.getValue('x_pd_integration_pagerduty_id');
+    if (!gs.nil(userID)) {
+      gs.debug('{0} found current userID {1} in user record for {2}', me, userID, user.getDisplayValue());
+      return userID;
+    }
+
+    // query PagerDuty for user based on email
+    var email = user.getValue('email');
+    userID = this.getUserIdByEmail(email, user.getUniqueValue());
+    if (!gs.nil(userID)) {
+      gs.debug('{0} found current userID {1} in PagerDuty based on email {2}', me, userID, email);
+      return userID;
+    }
+
+    // auto provision user if enabled
+    if (this._autoProvisionUsers === 'true') {
+      gs.info(
+        '{0} user {1} does not have a PagerDuty ID, auto-provisioning enabled, attempting to create it',
+        me, user.getDisplayValue()
+      );
+      var pdp = new x_pd_integration.PagerDutyProvisioning();
+      userID = pdp.provisionUser(user);
+
+      gs.debug('{0} provisioned new user {1}:{2}', me, user.getDisplayValue(), userID);
+      return userID;
+    }
+
+    // attempt to use default user from property
+    if (!useDefault) {
+      gs.info('{0} could not find user {1} and useDefault parameter was set to false', me, userField);
+      return;
+    }
+
+    if (!gs.nil(this.defaultUserID)) {
+      gs.debug('{0} using default user property {1}', me, this.defaultUserID);
+      return this.defaultUserID;
+    }
+    gs.error('{0} could not find user {1} and useDefault user property was empty', me, userData);
+  },
+
+  /**
+   * Creates PagerDuty incident
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} workNotes - ServiceNow incident work notes
+   * @param {String} params - comma-separated params:
+   * 0 - current user sys_id
+   * 1 - operation (insert or update)
+   * 2 - indicator ("true" or "false") of fields changes (assignment group, assignee, or configuration item)
+   */
+  triggerIncident: function (grIncident, workNotes, params) {
+    var me = 'triggerIncident';
+    if (!grIncident.isValidRecord()) {
+      gs.error('Invalid GlideRecordSecure passed to triggerIncident()');
+      return;
+    }
+    var display = this.displayIncidentTriggeringNote();
+
+    var paramsArray = params.split(',');
+    var currentUserSysId = paramsArray[0];
+    var operation = paramsArray[1];
+    var changeValue = (paramsArray[2] === 'true');
+    gs.debug(
+      '{0} | mapping option: {1}, currentUserSysId: {2}, current operation: {3}, changeValue: {4}',
+      me, this.sn2pdMapping, currentUserSysId, operation, changeValue
+    );
+
+    var notes = '';
+    var serviceId = '';
+    var webhookId = '';
+    var isServiceMapped = false;
+    var isEscalationPolicyMapped = false;
+    var isAssignedToMapped = false;
+    var isAssignedToEmpty = gs.nil(grIncident.getValue('assigned_to'));
+    var serviceType = '';
+    var serviceName = '';
+    var serviceTableName = '';
+    var grObj;
+
+    if (this.sn2pdMapping === this.sn2pdMappingCIAG) {
+      serviceType = 'configuration item';
+      serviceTableName = 'cmdb_ci';
+      if (!gs.nil(grIncident.getValue('cmdb_ci'))) {
+        grObj = grIncident.cmdb_ci.getRefRecord();
+        serviceId = String(grIncident.cmdb_ci.x_pd_integration_pagerduty_service);
+        webhookId = String(grIncident.cmdb_ci.x_pd_integration_pagerduty_webhook);
+        serviceName = grIncident.getDisplayValue('cmdb_ci');
+      }
+      // fallback for PagerDuty service ID: Configuration item &gt; Assignment group
+      if (gs.nil(serviceId)) {
+        if (!gs.nil(grIncident.assignment_group.x_pd_integration_pagerduty_service)) {
+          grObj = grIncident.assignment_group.getRefRecord();
+          serviceId = String(grIncident.assignment_group.x_pd_integration_pagerduty_service);
+          webhookId = String(grIncident.assignment_group.x_pd_integration_pagerduty_webhook);
+          serviceName = grIncident.getDisplayValue('assignment_group');
+        } else {
+          // use Default Service ID set on the PagerDuty Settings page
+          serviceId = this.defaultServiceID;
+          if (!gs.nil(serviceId)) {
+            // get the service name for the default service
+            serviceName = this.getPdServiceName(serviceId);
+            if (gs.nil(serviceName)) {
+              if (changeValue) {
+                gs.debug('{0} Default PagerDuty service {0} is not valid', me, serviceId);
+                notes = gs.getMessage('Default PagerDuty service {0} is not valid', [serviceId]);
+                this._setError(me, notes);
+                this._addIncidentWorkNote(grIncident, notes);
+              }
+              this._clearPDIncident(grIncident);
+              return;
+            }
+          }
+        }
+      }
+    } else {
+      serviceType = 'assignment group';
+      serviceTableName = 'sys_user_group';
+      if (!gs.nil(grIncident.getValue('assignment_group'))) {
+        grObj = grIncident.assignment_group.getRefRecord();
+        serviceId = String(grIncident.assignment_group.x_pd_integration_pagerduty_service);
+        webhookId = String(grIncident.assignment_group.x_pd_integration_pagerduty_webhook);
+        serviceName = grIncident.getDisplayValue('assignment_group');
+      } else {
+        // Skip if the mapping is AG and the assignment_group is empty
+        this._clearPDIncident(grIncident);
+        return;
+      }
+    }
+
+    if (!gs.nil(serviceId)) {
+      isServiceMapped = true;
+    }
+
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    epHelper.setIncidentId(grIncident.sys_id);
+    var snPriorityId = epHelper.getIncidentSnPriorityId();
+    var escalationPolicyId = epHelper.getPDEscalationPolicyIdWithPriority(grIncident.getValue('assignment_group'), snPriorityId);
+
+    if (!gs.nil(escalationPolicyId)) {
+      isEscalationPolicyMapped = true;
+    }
+
+    var assignedToUserId;
+    var assignedToUserSysId = grIncident.getValue('assigned_to');
+    var assignedToUserDisplay = grIncident.getDisplayValue('assigned_to');
+    if (!gs.nil(assignedToUserSysId)) {
+      var assignedToUser = new GlideRecordSecure('sys_user');
+      if (!assignedToUser.get(assignedToUserSysId)) {
+        this._setError(me, 'Invalid assigned to user sys_id passed, aborting');
+        this._clearPDIncident(grIncident);
+        return;
+      }
+      var assignedToUserEmail = assignedToUser.getValue('email');
+      assignedToUserId = assignedToUser.getValue('x_pd_integration_pagerduty_id');
+      if (gs.nil(assignedToUserId)) {
+        if (!gs.nil(assignedToUserEmail)) {
+          assignedToUserId = this.getUserIDFromFieldData(assignedToUserEmail, 'email', false);
+        }
+      }
+      if (!gs.nil(assignedToUserId)) {
+        isAssignedToMapped = true;
+      }
+    }
+    gs.debug(
+      '{0} | isAssignedToMapped: {1}, isAssignedToEmpty: {2}, isServiceMapped: {3}, isEscalationPolicyMapped: {4}',
+      me, isAssignedToMapped, isAssignedToEmpty, isServiceMapped, isEscalationPolicyMapped
+    );
+    if (this.sn2pdMapping === this.sn2pdMappingCIAG) {
+      if ((!isAssignedToMapped &amp;&amp; !isAssignedToEmpty) || (!isServiceMapped) || (!isEscalationPolicyMapped)) {
+        if (changeValue) {
+          notes += 'PagerDuty incident was not created as the following items are not mapped to PagerDuty:';
+          if (!isServiceMapped) {
+            notes = notes + '\nConfiguration Item: ' + grIncident.cmdb_ci.getDisplayValue();
+          }
+          if (!isEscalationPolicyMapped) {
+            notes = notes + '\nGroup: ' + grIncident.assignment_group.getDisplayValue();
+          }
+          if (!isAssignedToMapped &amp;&amp; !isAssignedToEmpty) {
+            notes = notes + '\nAssigned To User: ' + assignedToUserDisplay;
+          }
+          this._setError(me, notes);
+          this._addIncidentWorkNote(grIncident, notes);
+        }
+        this._clearPDIncident(grIncident);
+        return;
+      }
+    }
+    if (this.sn2pdMapping === this.sn2pdMappingAG) {
+      if ((!isAssignedToMapped &amp;&amp; !isAssignedToEmpty) || (!isServiceMapped)) {
+        if (changeValue) {
+          notes = 'PagerDuty incident was not created as the following items are not mapped to PagerDuty:';
+          if (!isServiceMapped) {
+            notes = notes + '\nGroup: ' + grIncident.assignment_group.getDisplayValue();
+          }
+          if (!isAssignedToMapped &amp;&amp; !isAssignedToEmpty) {
+            notes = notes + '\nAssigned To User: ' + assignedToUserDisplay;
+          }
+          this._setError(me, notes);
+          this._addIncidentWorkNote(grIncident, notes);
+        }
+        this._clearPDIncident(grIncident);
+        return;
+      }
+    }
+
+    // If CI/Group (depending on mapping type) set in the incident form doesn't contain Webhook ID,
+    // at first initiated webhook subscription search in PagerDuty by service ID.
+    // If not found, the webhook gets automatically provisioned.
+    if (gs.nil(webhookId) &amp;&amp; !gs.nil(grObj)) {
+      webhookId = this.searchWebhookByServiceId(serviceId);
+      if (gs.nil(webhookId)) {
+        webhookId = this.provisionWebhook(grObj, serviceId);
+        if (gs.nil(webhookId) &amp;&amp; (changeValue)) {
+          notes = gs.getMessage(
+            'Incident {0} {1} {2} does not have a PagerDuty Webhook ID value',
+            [grIncident.getDisplayValue(), serviceType, serviceName]
+          );
+          this._setError(me, notes);
+          this._addIncidentWorkNote(grIncident, notes);
+          this._clearPDIncident(grIncident);
+          return;
+        }
+        // continue
+      }
+      if (webhookId) {
+        this.updateWebhookId(grObj, serviceId, webhookId);
+      }
+    }
+    gs.debug(
+      '{0} | serviceType: {1}, serviceName: {2}, serviceTableName: {3}',
+      me, serviceType, serviceName, serviceTableName
+    );
+
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+    var url = this.baseUrl + grIncident.getLink();
+
+    var description = grIncident.getValue('number') + ':' + grIncident.getValue('short_description');
+
+    var details =
+      this.triggerIncidentBodyTemplate
+        .replace(/{.*?}/g, function (name) {
+          try {
+            name = name.slice(1, -1);
+            var val = null;
+            if (name === 'workNote') {
+              val = workNotes;
+            } else {
+              val = grIncident.getDisplayValue(name);
+            }
+            return val;
+          } catch (e) {
+            return 'Failed to evaluate template {' + name + '}';
+          }
+        });
+
+    var pdPriorityId = '';
+    var pdUrgency = '';
+    var grPdPriority = new GlideRecordSecure('x_pd_integration_pagerduty_priority');
+    grPdPriority.addQuery('priority', grIncident.priority);
+    grPdPriority.addNotNullQuery('pagerduty_priority_id');
+    grPdPriority.query();
+    if (grPdPriority.next()) {
+      pdPriorityId = String(grPdPriority.pagerduty_priority_id);
+      pdUrgency = String(grPdPriority.pagerduty_urgency);
+    }
+    gs.debug(
+      'ServiceNow incident priority: {0}, pdPriorityId: {1}, pdUrgency: {2}',
+      grIncident.priority, pdPriorityId, pdUrgency
+    );
+
+    var incidentBody = {
+      type: 'incident',
+      title: description,
+      service: {
+        id: serviceId,
+        type: 'service_reference'
+      },
+      body: {
+        type: 'incident_body',
+        details: details
+      }
+    };
+
+    if (!gs.nil(assignedToUserId)) {
+      incidentBody.assignments = [{
+        assignee: {
+          id: assignedToUserId,
+          type: 'user_reference'
+        }
+      }];
+    } else if (escalationPolicyId) {
+      incidentBody.escalation_policy = {
+        id: escalationPolicyId,
+        type: 'escalation_policy_reference'
+      };
+    }
+
+    if (!gs.nil(pdPriorityId)) {
+      pdPriorityId = String(pdPriorityId);
+      incidentBody.priority = {
+        id: pdPriorityId,
+        type: 'priority'
+      };
+    }
+
+    if (!gs.nil(pdUrgency)) {
+      pdUrgency = String(pdUrgency);
+      incidentBody.urgency = pdUrgency;
+    }
+
+    var postBody = {
+      incident: incidentBody
+    };
+
+    var feature = 'incidents';
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.postREST(feature, postBody, currentUserEmail, url);
+    var responseBody = response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', me, status, responseBody);
+
+    if (rest.hasError()) {
+      notes = gs.getMessage('PagerDuty REST failed to trigger an incident ({0})', rest.getError());
+      this._setError(me, notes);
+      this._addIncidentWorkNote(grIncident, notes);
+      this._clearPDIncident(grIncident);
+      return;
+    }
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty REST failed to trigger an incident: ', rest.extractPagerDutyErrorResponse(response)));
+      this._clearPDIncident(grIncident);
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      gs.debug('{0} | for {1}, response body: {2}', me, grIncident.getDisplayValue(), response.getBody());
+
+      var body = global.JSON.parse(response.getBody());
+      var incidentKey = body.incident.incident_key;
+      var incidentId = body.incident.id;
+      var incidentAssignments = body.incident.assignments;
+      gs.debug('{0} | incidentKey: {1}, incidentId: {2}', me, incidentKey, incidentId);
+
+      // app v3.1: incident_key for webhook import coalescing
+      grIncident.x_pd_integration_incident_key = incidentKey;
+      x_pd_integration.TaskEntityHelper.setPdId(grIncident, incidentId);
+
+      var workNoteText = '';
+      var assignedPagerDutyUsers = [];
+      incidentAssignments.forEach(function (item) {
+        assignedPagerDutyUsers.push(item.assignee.summary);
+      });
+
+      var cfProcessor = new x_pd_integration.PagerDutyCustomFieldsOutboundSync();
+      cfProcessor.registerIgnoreOfNextCustomFieldValuesUpdatedEvent(incidentId);
+
+      // Set incident metadata to link ServiceNow incident on PD Incident view
+      this.addIncidentMetadataReference(grIncident, incidentId, currentUserEmail);
+      if (this.sn2pdMapping === this.sn2pdMappingCIAG) {
+        if (incidentAssignments.length &gt; 0) {
+          workNoteText = gs.getMessage(
+            'PagerDuty created incident for the configuration item {0} and group {1} and assigned it to {2}',
+            [serviceName, grIncident.getDisplayValue('assignment_group'), assignedPagerDutyUsers.join(', ')]
+          );
+        } else {
+          // redundant condition since PagerDuty escalation policy should have at least 1 target
+          workNoteText = gs.getMessage(
+            'PagerDuty created incident for the configuration item {0} and group {1}',
+            [serviceName, grIncident.getDisplayValue('assignment_group')]
+          );
+        }
+      }
+      if (this.sn2pdMapping === this.sn2pdMappingAG) {
+        if (incidentAssignments.length &gt; 0) {
+          workNoteText = gs.getMessage(
+            'PagerDuty created incident for group {0} and assigned it to {1}',
+            [grIncident.getDisplayValue('assignment_group'), assignedPagerDutyUsers.join(', ')]
+          );
+        } else {
+          // redundant condition since PagerDuty escalation policy should have at least 1 target
+          workNoteText = gs.getMessage(
+            'PagerDuty created incident for group {0}',
+            grIncident.getDisplayValue('assignment_group')
+          );
+        }
+      }
+      if (display !== 'false') {
+        grIncident.work_notes = x_pd_integration.WorkNotesHelper.build(workNoteText);
+      }
+      if (x_pd_integration.TaskEntityHelper.isTaskHasResolvedState(grIncident.sys_class_name, grIncident.state)) {
+        this.resolveIncident(grIncident, currentUserSysId);
+      }
+      grIncident.update();
+
+      // update PagerDuty custom fields
+      cfProcessor.updateAllPdCustomFieldsOnIncidentTrigger(grIncident, incidentId);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty REST failed to trigger an incident: ', rest.extractPagerDutyErrorResponse(response)));
+      this._errorPDIncident(grIncident);
+    }
+  },
+
+  /**
+   * Resolves linked PagerDuty incident
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} currentUserSysId - current user sys_id
+   */
+  resolveIncident: function (grIncident, currentUserSysId) {
+    var me = 'resolveIncident';
+    var notes = '';
+
+    gs.debug('{0} | {1}', me, grIncident.getDisplayValue());
+
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+
+    var incidentId = x_pd_integration.TaskEntityHelper.getPdId(grIncident);
+    var feature = 'incidents/' + incidentId;
+
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        status: 'resolved'
+      }
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, currentUserEmail, clientUrl);
+
+    var responseBody = response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', me, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during resolve: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200) {
+      notes = gs.getMessage('Resolving PagerDuty incident');
+      this._addIncidentWorkNote(grIncident, notes);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during resolve: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Acknowledges PagerDuty incident
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} assignedUserSysId - assignee's sys_id
+   */
+  acknowledgeIncident: function (grIncident, assignedUserSysId) {
+    var me = 'acknowledgeIncident';
+    var notes = '';
+
+    gs.debug('{0} | {1}', me, grIncident.getDisplayValue());
+
+    var assignedUserEmail = this.getValidEmail(assignedUserSysId);
+
+    var incidentId = x_pd_integration.TaskEntityHelper.getPdId(grIncident);
+    var feature = 'incidents/' + incidentId;
+
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        status: 'acknowledged'
+      }
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, assignedUserEmail, clientUrl);
+
+    var responseBody = response.getBody();
+
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', me, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateInternalErrorMessage('PagerDuty error during acknowledgement: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200) {
+      notes = gs.getMessage('Acknowledging PagerDuty incident');
+      this._addIncidentWorkNote(grIncident, notes);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during acknowledgement: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Resolves the PagerDuty incident on unlink
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} currentUserSysId - current user sys_id
+   * @param {String} pdIncidentId - PagerDuty incident ID to resolve on unlink
+   */
+  resolveOnUnreference: function (grIncident, currentUserSysId, pdIncidentId) {
+    var fn = 'resolveOnUnreference';
+    var snIncidentNumber = grIncident.getDisplayValue();
+    var snIncidentId = grIncident.getValue('sys_id');
+    var agName = grIncident.getDisplayValue('assignment_group');
+
+    gs.debug('{0} {1}', fn, snIncidentNumber);
+
+    var notes = 'Incident has been reassigned to the ' +
+      'Assignment group "' + agName + '" not mapped with PagerDuty.\n' +
+      '\nResolving PagerDuty incident ' + pdIncidentId + ' according to integration settings';
+    this._addIncidentWorkNote(grIncident, notes);
+
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+
+    var grUser = new GlideRecordSecure('sys_user');
+    var currentUserName;
+    if (grUser.get(currentUserSysId)) {
+      currentUserName = grUser.getValue('user_name');
+    } else {
+      currentUserName = currentUserSysId;
+    }
+
+    var pdNote = 'Resolved by ServiceNow since the linked incident has been reassigned to a non-mapped Assignment group.';
+    this.postIncidentNote(pdIncidentId, pdNote, currentUserName, false, snIncidentId);
+
+    var feature = 'incidents/' + pdIncidentId;
+
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        status: 'resolved'
+      }
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, currentUserEmail, clientUrl);
+
+    var responseBody = response.getBody();
+
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', fn, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(fn, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during resolve: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200) {
+      gs.info('{0}: PagerDuty incident {1} has been resolved since the linked ServiceNow incident was reassigned to a non-mapped group', fn, pdIncidentId);
+    } else {
+      this._setError(this._generateInternalErrorMessage(fn, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during resolve: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Reassigns PagerDuty escalation policy
+   * @param {GlideRecord} incident - incident record
+   * @param {String} currentUserSysid
+   */
+  assignIncidentToPolicy: function (grIncident, currentUserSysId) {
+    var display = this.displayIncidentReassignmentNote();
+    var me = 'assignIncidentToPolicy';
+    gs.debug('{0} | incident: {1}, currentUserSysId: {2}', me, grIncident.getDisplayValue(), currentUserSysId);
+
+    var taskHelper = new x_pd_integration.TaskEntityHelper(grIncident);
+    var userEmail = this.getValidEmail(currentUserSysId);
+
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    epHelper.setIncidentId(grIncident.sys_id);
+    var snPriorityId = epHelper.getIncidentSnPriorityId();
+    var escalationPolicyId = epHelper.getPDEscalationPolicyIdWithPriority(grIncident.getValue('assignment_group'), snPriorityId);
+
+    var notes;
+    if (gs.nil(escalationPolicyId)) {
+      if (this.closeOnUnknownUserGroup === 'true') {
+        notes = grIncident.getDisplayValue() + ' assignment group \'' + grIncident.getDisplayValue('assignment_group') +
+          '\' does not have a PagerDuty policy, closing PagerDuty incident, and removing reference';
+        taskHelper.setPdId('---unlinked---');
+        this._addIncidentWorkNote(grIncident, notes, display);
+      } else {
+        notes = grIncident.getDisplayValue() + ' assignment group \'' + grIncident.getDisplayValue('assignment_group') +
+          '\' does not have a PagerDuty policy, could not reassign policy';
+        this._setError(me, notes);
+        this._addIncidentWorkNote(grIncident, notes, display);
+      }
+      return;
+    }
+
+    // useless code due to filter condition in the `PD Group Policy Assign` business rule
+    var incidentId = taskHelper.getPdId();
+    if (gs.nil(incidentId)) {
+      notes = grIncident.getDisplayValue() + ' does not have a PagerDuty ID so it could not re-assign the escalation_policy';
+      this._setError(me, notes);
+      this._addIncidentWorkNote(grIncident, notes, display);
+      return;
+    }
+
+    var feature = 'incidents/' + incidentId;
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        escalation_policy: {
+          id: escalationPolicyId,
+          type: 'escalation_policy_reference'
+        }
+      }
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, userEmail, clientUrl);
+    var responseBody = response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', me, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during group assignment: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 201 || status === 200) {
+      notes = gs.getMessage(
+        'PagerDuty incident was reassigned to the {0} group escalation policy',
+        grIncident.getDisplayValue('assignment_group')
+      );
+      this._addIncidentWorkNote(grIncident, notes, display);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during group assignment: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Sets assignee for the PagerDuty incident
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} assigneeSysId - assignee sys_id
+   * @param {String} currentUserSysId - current user sys_id
+   */
+  assignIncidentToUser: function (grIncident, assigneeSysId, currentUserSysId) {
+    var me = 'assignIncidentToUser';
+    var notes = '';
+    var display = this.displayIncidentReassignmentNote();
+
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+
+    var grUser = new GlideRecordSecure('sys_user');
+    if (!grUser.get(assigneeSysId)) {
+      this._setError(me, 'User with sys_id ' + assigneeSysId + ' not found');
+      return;
+    }
+    var assigneeEmail = grUser.getValue('email');
+    var assigneePdId = grUser.getValue('x_pd_integration_pagerduty_id');
+
+    if (gs.nil(assigneePdId)) {
+      if (assigneeEmail) {
+        assigneePdId = this.getUserIDFromFieldData(assigneeEmail, 'email', false);
+      }
+    }
+
+    if (gs.nil(assigneePdId)) {
+      notes =
+        gs.getMessage('Could not find valid PagerDuty user for assignment user \'{0}\', will not assign incident to user in PagerDuty', grUser.getDisplayValue());
+      this._setError(me, notes);
+      this._addIncidentWorkNote(grIncident, notes, display);
+      return;
+    }
+
+    var incidentId = x_pd_integration.TaskEntityHelper.getPdId(grIncident);
+    var feature = 'incidents/' + incidentId;
+
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        assignments: [{
+          assignee: {
+            id: assigneePdId,
+            type: 'user_reference'
+          }
+        }]
+      }
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, currentUserEmail, clientUrl);
+
+    var responseBody = response.getBody();
+
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {0}:{1}', me, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during user assignment: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      notes = gs.getMessage('PagerDuty incident was reassigned to {0}', grUser.getDisplayValue());
+      this._addIncidentWorkNote(grIncident, notes, display);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during user assignment: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Updates PagerDuty incident priority
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} currentUserSysId - current user sys_id
+   * @param {String} previousPriorityParams - stringified JSON with the previous values of
+   *                                          impact, urgency, and priority fields
+   */
+  updatePriority: function (grIncident, currentUserSysId, previousPriorityParams) {
+    var me = 'updatePriority';
+    var notes = '';
+
+    gs.debug('{0} | {1}', me, grIncident.getDisplayValue());
+
+    var pdPriorityId = '';
+    var pdUrgency = '';
+    var grPdPriority = new GlideRecordSecure('x_pd_integration_pagerduty_priority');
+    grPdPriority.addQuery('priority', grIncident.priority);
+    grPdPriority.addNotNullQuery('pagerduty_priority_id');
+    grPdPriority.query();
+    if (grPdPriority.next()) {
+      pdPriorityId = String(grPdPriority.pagerduty_priority_id);
+      pdUrgency = String(grPdPriority.pagerduty_urgency);
+    }
+
+    var incidentBody = {
+      type: 'incident_reference',
+      priority: {
+        id: pdPriorityId,
+        type: 'priority'
+      }
+    };
+
+    if (pdUrgency) {
+      incidentBody.urgency = pdUrgency;
+    }
+
+    var incidentHelper = new x_pd_integration.IncidentHelper(grIncident.sys_id);
+    previousPriorityParams = global.JSON.parse(previousPriorityParams);
+    var snPriorityId1 = incidentHelper.getSnPriorityId(previousPriorityParams);
+    var snPriorityId2 = incidentHelper.getSnPriorityId();
+
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    var assignmentGroupSysId = grIncident.getValue('assignment_group');
+    var epId1 = epHelper.getPDEscalationPolicyIdWithPriority(assignmentGroupSysId, snPriorityId1);
+    var epId2 = epHelper.getPDEscalationPolicyIdWithPriority(assignmentGroupSysId, snPriorityId2);
+
+    var isPriorityChanged = previousPriorityParams.priority !== grIncident.getValue('priority');
+    var isEpChanged = epId1 !== epId2;
+
+    if (isPriorityChanged &amp;&amp; isEpChanged &amp;&amp; !gs.nil(epId2) &amp;&amp; !gs.nil(snPriorityId1)) {
+      incidentBody.escalation_policy = {
+        id: String(epId2),
+        type: 'escalation_policy_reference'
+      };
+    }
+
+    var body = {
+      incident: incidentBody
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+    var incidentId = x_pd_integration.TaskEntityHelper.getPdId(grIncident);
+    var feature = 'incidents/' + incidentId;
+    var clientUrl = this.baseUrl + grIncident.getLink();
+    var response = rest.putREST(feature, body, currentUserEmail, clientUrl);
+
+    var responseBody = response.getBody();
+
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', me, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during priority update: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200) {
+      notes = gs.getMessage('Updating PagerDuty incident priority');
+      this._addIncidentWorkNote(grIncident, notes);
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during priority update: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Updates PagerDuty incident priority and assignment (including self-assignment case)
+   * when changed by one action in the linked ServiceNow incident
+   * @param {GlideRecord} grIncident - incident record
+   * @param {String} currentUserSysId - current user sys_id
+   * @param {String} assignment - strring 'assignment_group' or 'assigne'
+   */
+  updatePriorityAndAssignment: function (grIncident, currentUserSysId, assignment) {
+    var fn = 'updatePriorityAndAssignment';
+    var display = this.displayIncidentReassignmentNote();
+
+    var pdPriorityId;
+    var pdUrgency;
+    var grPdPriority = new GlideRecordSecure('x_pd_integration_pagerduty_priority');
+    grPdPriority.addQuery('priority', grIncident.priority);
+    grPdPriority.addNotNullQuery('pagerduty_priority_id');
+    grPdPriority.query();
+    if (grPdPriority.next()) {
+      pdPriorityId = String(grPdPriority.pagerduty_priority_id);
+      pdUrgency = String(grPdPriority.pagerduty_urgency);
+    }
+
+    var body = {
+      incident: {
+        type: 'incident_reference',
+        priority: {
+          id: pdPriorityId,
+          type: 'priority'
+        }
+      }
+    };
+
+    if (pdUrgency) {
+      body.incident.urgency = pdUrgency;
+    }
+
+    if (assignment === 'assignment_group') {
+      var escalationPolicyPdId = this.getEscalationPolicyPdId(grIncident);
+
+      if (gs.nil(escalationPolicyPdId)) {
+        this.handleUnsetEscalationPolicy(fn, grIncident);
+      }
+
+      body.incident.escalation_policy = {
+        id: escalationPolicyPdId,
+        type: 'escalation_policy_reference'
+      };
+    } else if (assignment === 'assignee') {
+      var assignToSysId = grIncident.getValue('assigned_to');
+
+      if (assignToSysId === currentUserSysId) {
+        body.incident.status = 'acknowledged';
+      } else {
+        var assigneeSysId = assignToSysId;
+
+        var assigneePdId;
+        var assigneeEmail;
+        var grUser = new GlideRecordSecure('sys_user');
+        grUser.addQuery('sys_id', assigneeSysId);
+        grUser.query();
+        if (grUser.next()) {
+          assigneePdId = String(grUser.x_pd_integration_pagerduty_id);
+          assigneeEmail = String(grUser.email);
+        }
+        if (gs.nil(assigneePdId) &amp;&amp; !gs.nil(assigneeEmail)) {
+          assigneePdId = this.getUserIDFromFieldData(assigneeEmail, 'email', false);
+        }
+        if (gs.nil(assigneePdId)) {
+          this.handleNilAssigneePdId(fn, grIncident);
+        }
+
+        body.incident.assignments = [
+          {
+            assignee: {
+              id: assigneePdId,
+              type: 'user_reference'
+            }
+          }
+        ];
+      }
+    } else {
+      gs.error('{0} | The assignment type should be either "assignment_group" or "assignee". ' +
+        'The actual value is: {1}', fn, assignment);
+      return;
+    }
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var currentUserEmail = this.getValidEmail(currentUserSysId);
+    var incidentId = x_pd_integration.TaskEntityHelper.getPdId(grIncident);
+    var feature = 'incidents/' + incidentId;
+    var clientUrl = this.baseUrl + grIncident.getLink();
+
+    var response = rest.putREST(feature, body, currentUserEmail, clientUrl);
+    var responseBody = response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} | response: {1}:{2}', fn, status, responseBody);
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(fn, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during update request: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200) {
+      var note = 'PagerDuty incident priority has been changed, and it was reassigned to ';
+      note += assignment === 'assignment_group'
+        ? gs.getMessage('"{0}" group escalation policy', grIncident.getDisplayValue('assignment_group'))
+        : gs.getMessage('{0}', grIncident.getDisplayValue('assigned_to'));
+      this._addIncidentWorkNote(grIncident, note, display);
+    } else {
+      this._setError(this._generateInternalErrorMessage(fn, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(grIncident, this._generateNoteErrorMessage('PagerDuty error during update request: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Initiates webhook provisioning and form update upon completion
+   * @param {GlideRecordSecure} grRec - record from a table (e.g., cmdb_ci, sys_user_group)
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @returns {String} PagerDuty webhook ID
+   */
+  provisionWebhook: function (grRec, pdServiceId) {
+    var pdp = new PagerDutyProvisioning();
+    var webhookId = pdp.createServiceWebhook(pdServiceId, grRec);
+    if (!gs.nil(webhookId)) {
+      this.updateWebhookId(grRec, pdServiceId, webhookId);
+      return webhookId;
+    }
+  },
+
+  /**
+   * Updates PagerDuty webhook field in the form
+   * @param {GlideRecordSecure} grRec - record from a table (e.g., cmdb_ci, sys_user_group)
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @param {String} webhookId - PagerDuty webhook ID
+   */
+  updateWebhookId: function (grRec, pdServiceId, webhookId) {
+    var me = 'updateWebhookId';
+    if (gs.nil(webhookId)) {
+      return;
+    }
+
+    if (!grRec.get('x_pd_integration_pagerduty_service', pdServiceId)) {
+      gs.error('{0}: Webhook ID wasn\'t updated. PagerDuty service with ID {0} doesn\'t exist', me, pdServiceId);
+      return;
+    }
+
+    grRec.setValue('x_pd_integration_pagerduty_webhook', webhookId);
+    grRec.update();
+  },
+
+  /**
+   * Searches for PagerDuty webhook subscription by service ID
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @returns {String|undefined} PagerDuty webhook subscription ID
+   */
+  searchWebhookByServiceId: function (pdServiceId) {
+    var me = 'searchWebhookByServiceId';
+    if (gs.nil(pdServiceId)) {
+      return;
+    }
+
+    var feature = 'webhook_subscriptions?filter_type=service&amp;filter_id=' + pdServiceId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError()
+      ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      var webhookSubscriptions = body.webhook_subscriptions;
+      if (!webhookSubscriptions.length) {
+        this._setError(me, 'There are no webhook subscriptions for the PagerDuty service with ID ' + pdServiceId);
+        return;
+      }
+
+      var snEndpoint = gs.getProperty('x_pd_integration.webhook_restapi');
+      for (var i = 0; i &lt; webhookSubscriptions.length; i++) {
+        if (webhookSubscriptions[i].delivery_method.url.indexOf(this.baseUrl + snEndpoint) === 0) {
+          return webhookSubscriptions[i].id;
+        }
+      }
+    }
+  },
+
+  /**
+   * Searches for PagerDuty webhook extension by service ID
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @returns {String|undefined} PagerDuty webhook extension ID
+   */
+  searchWebhookV2ByServiceId: function (pdServiceId) {
+    var me = 'searchWebhookV2ByServiceId';
+    if (gs.nil(pdServiceId)) {
+      return;
+    }
+
+    var feature = 'extensions?extension_object_id=' + pdServiceId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError()
+      ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      var webhookExtensions = body.extensions;
+      if (!webhookExtensions.length) {
+        this._setError(me, 'There are no webhook Extensions for the PagerDuty service with ID ' + pdServiceId);
+        return;
+      }
+
+      return webhookExtensions[0].id;
+    }
+  },
+
+  /**
+   * Enables PagerDuty webhook subscription
+   * @param {String} id - PagerDuty webhook subscription ID
+   * @returns {Boolean} true if webhook subscription was enabled successfully
+   */
+  enableWebhook: function (id) {
+    var me = 'enableWebhook';
+    if (gs.nil(id)) {
+      return;
+    }
+
+    var feature = 'webhook_subscriptions/' + id + '/enable';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.postREST(feature, null);
+    var responseBody = response.haveError()
+      ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Enables PagerDuty webhook extension
+   * @param {String} id - PagerDuty webhook extension ID
+   * @returns {Boolean} true if webhook extension was enabled successfully
+   */
+  enableWebhookV2: function (id) {
+    var me = 'enableWebhookV2';
+    if (gs.nil(id)) {
+      return;
+    }
+
+    var feature = 'extensions/' + id + '/enable';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.postREST(feature, null);
+    var responseBody = response.haveError()
+      ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 201) {
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Retrieves PagerDuty service name by ID
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @returns {String} PagerDuty service name
+   */
+  getPdServiceName: function (pdServiceId) {
+    var me = 'getPdServiceName';
+    if (gs.nil(pdServiceId)) {
+      return;
+    }
+
+    var feature = 'services/' + pdServiceId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError()
+      ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      return body.service.name;
+    }
+  },
+
+  /**
+   * DEPRECATE in v4.0: No longer use this for API v2.0
+   * query PagerDuty for service key given a service ID
+   * @param {String} service id
+   * @return {String} service key
+   */
+  getServiceKeyFromID: function (serviceID) {
+    gs.debug('getServiceKeyFromID for {0}', serviceID);
+    var feature = 'services/' + serviceID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('getServiceKeyFromID response: {0}:{1}', status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      var key = body.service.service_key;
+      gs.debug('getServiceKeyFromID ID:{0} returned Key:{1}', serviceID, key);
+      return key;
+    }
+  },
+
+  /**
+   * query PagerDuty for an incident
+   * @param {String} incident id
+   * @return {Object} incident
+   */
+  getIncidentByID: function (incidentID) {
+    var me = 'getIncidentByID';
+    gs.debug('{0} for {1}', me, incidentID);
+    var feature = 'incidents/' + incidentID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      gs.debug('{0} ID={1} returned ID:{2}', me, incidentID, body.incident);
+      return body.incident;
+    }
+  },
+
+  /**
+   * Fetches the first_trigger_log_entry from the incident
+   * @param {String} pdIncidentId PagerDuty incident id
+   * @returns {(Object|undefined)} the object of [trigger_log_entry] type or nothing
+   */
+  getFirstTriggerLogEntry: function (pdIncidentId) {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = 'incidents/' + pdIncidentId;
+    var response = rest.getREST(feature, {'include%5B%5D': 'first_trigger_log_entries'});
+    if (rest.hasError()) {
+      gs.error('Error in getFirstTriggerLogEntry: ' + rest.getError());
+    }
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    if (status === 200) {
+      var body = global.JSON.parse(responseBody);
+      return body.incident.first_trigger_log_entry;
+    }
+    gs.error('Error in getFirstTriggerLogEntry: ' + responseBody);
+  },
+
+  /**
+   * query PagerDuty for an incident with a metadata inside
+   * @param {String} obfuscated PagerDuty incident id
+   * @return {Object} incident with metadata or empty object
+   */
+  getIncidentWithMetadata: function (incidentId) {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = 'incidents/' + incidentId + '?include%5B%5D=metadata';
+    var response = rest.getREST(feature, {});
+    if (rest.hasError()) {
+      gs.error('Error in getIncidentWithMetadata: ' + rest.getError());
+    }
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response)
+      : response.getBody();
+    var status = response.getStatusCode();
+    if (status === 200) {
+      var body = global.JSON.parse(responseBody);
+      return body.incident;
+    }
+    return {};
+  },
+
+  /**
+   * query PagerDuty for impacted services IDs given an incident ID
+   * @param {String} incident id
+   * @return {Array} services [ids]
+   */
+  getServicesIDsFromIncidentID: function (incidentID) {
+    var me = 'getServicesIDsFromIncidentID';
+    gs.debug('{0} for {1}', me, incidentID);
+    var feature = 'incidents/' + incidentID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature, {});
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      var ids = [];
+      body.incident.impacted_services.forEach(function (impacted_service) {
+        ids.push(impacted_service.id);
+      });
+      gs.debug('{0} incidentID={1} returned services IDs:{2}', me, incidentID, ids);
+      return ids;
+    }
+  },
+
+  /**
+   * Query PagerDuty to get Response Plays for a user
+   * @param {String} requester a "from" field sent to PagerDuty in a header, should contain an email
+   * @return {Array} response_plays
+   * @deprecated 2023/09/28
+   * https://pagerduty.atlassian.net/browse/ITS-7486
+   */
+  getResponsePlays: function (requester) {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = 'response_plays?filter_for_manual_run=true';
+    var response = rest.getREST(feature, {}, requester);
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('getResponsePlays response: {1}:{2}', status, responseBody);
+
+    if (status === 301) {
+      throw new Error('Response plays are unavailable because your account has upgraded from Response Plays to Incident Workflows. ' +
+        '&lt;a href="https://support.pagerduty.com/docs/incident-workflows?utm_source=servicenow_itsm&amp;utm_content=run_response_play_dialog"' +
+        ' target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;');
+    }
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+      return body.response_plays;
+    }
+
+    return [];
+  },
+
+  /**
+   * Get incident notes from PagerDuty incident to import
+   * @param {String} incident ID
+   * @return {Array} collection of note objects
+   */
+  getIncidentNotes: function (incidentID) {
+    var me = 'getIncidentNotes';
+    gs.debug('{0} for {1}', me, incidentID);
+    var feature = 'incidents/' + incidentID + '/notes?time_zone=UTC';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var params = {};
+    var response = rest.getREST(feature, params);
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    if (status === 200) {
+      var body = global.JSON.parse(response.getBody());
+
+      if (gs.nil(body.notes)) {
+        gs.error('{0} could not find notes for incident ID {1}', me, incidentID);
+        return;
+      }
+
+      var notes = body.notes;
+      return notes;
+    }
+  },
+
+  /**
+   * Creates a note on the PagerDuty incident
+   * @param {String} pdIncidentId - PagerDuty incident ID
+   * @param {String} content - note content
+   * @param {String} createdBy - ServiceNow user ID or sys_id
+   * @param {Boolean} updateIncident - whether to update x_pd_integration_notes_ids incident column (deprecated)
+   * @param {String} snIncidentId - ServiceNow incident sys_id
+   */
+  postIncidentNote: function (pdIncidentId, content, createdBy, updateIncident, snIncidentId) {
+    var me = 'postIncidentNote';
+    gs.debug('{0} | {1}:{2} created by {3}', me, pdIncidentId, content, createdBy);
+
+    if (gs.nil(pdIncidentId) || gs.nil(content)) {
+      return;
+    }
+
+    var worknote = {};
+    worknote.content = content;
+
+    var requesterId;
+    if (gs.nil(createdBy)) {
+      requesterId = this.defaultUserID;
+    } else {
+      requesterId = this.getUserIDFromFieldData(createdBy, 'user_name', true);
+    }
+    var requesterEmail = this.getUserEmailByPDID(requesterId);
+
+    var feature = 'incidents/' + pdIncidentId + '/notes';
+
+    var body = {
+      note: worknote
+    };
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.postREST(feature, body, requesterEmail);
+    var status = response.getStatusCode();
+
+    var ih = new x_pd_integration.IncidentHelper(snIncidentId);
+    var incident = ih.getIncident();
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(incident, this._generateNoteErrorMessage('PagerDuty error during post work note: ', rest.extractPagerDutyErrorResponse(response)));
+      return;
+    }
+
+    if (status === 200 || status === 201) {
+      var responseBody = global.JSON.parse(response.getBody());
+      var noteId = responseBody.note.id;
+      gs.debug('{0} successfully created note {1} in PagerDuty incident {2}', me, noteId, pdIncidentId);
+
+      if (updateIncident) {
+        this.updateIncidentNoteIDs(pdIncidentId, noteId);
+      }
+    } else {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(incident, this._generateNoteErrorMessage('PagerDuty error during post work note: ', rest.extractPagerDutyErrorResponse(response)));
+    }
+  },
+
+  /**
+   * Update the incident PagerDuty notes datestamp
+   * @param {String} PagerDuty incidentID
+   * @param {GlideDateTime} date stamp (optional)
+   * @return void
+   * @deprecated
+   */
+  updateIncidentNoteIDs: function (incidentID, noteID) {
+    var me = 'updateIncidentNoteIDs';
+    gs.debug('{0} updating note ID list on incident ID {1} with {2}', me, incidentID, noteID);
+    if (gs.nil(incidentID) || gs.nil(noteID)) {
+      return;
+    }
+
+    var gr = new GlideRecordSecure('incident');
+    gr.addQuery('x_pd_integration_incident', incidentID);
+    gr.query();
+    if (!gr.next()) {
+      gs.debug('{0} incidentID {1} not found for note {2}', me, incidentID, noteID);
+    }
+
+    var currentNoteIDs = gr.getValue('x_pd_integration_notes_ids');
+    if (gs.nil(currentNoteIDs)) {
+      gr.setValue('x_pd_integration_notes_ids', noteID);
+    } else {
+      gr.setValue('x_pd_integration_notes_ids', currentNoteIDs + ',' + noteID);
+    }
+
+    gr.update();
+    gs.debug('{0} incidentID {1} updated note {2}, now has \'{3}\'', me, incidentID, noteID, gr.getValue('x_pd_integration_notes_ids'));
+  },
+
+  /**
+   * Create PagerDuty notes improt records
+   * @param {Array} collection of note objects
+   * @return void
+   */
+  createNoteImports: function (incidentID, notes) {
+    var me = 'createNoteImports';
+    gs.debug('{0} starting import of \'{1}\' notes for incidentID:{2}', me, notes.length, incidentID);
+    if (gs.nil(notes)) {
+      return;
+    }
+
+    for (var i = notes.length - 1; i &gt;= 0; i--) {
+      var note = notes[i];
+      if (!gs.nil(note)) {
+        var user = note.user;
+        gs.debug('{0} content: {1}', me, note.content);
+
+        var gr = new GlideRecordSecure('x_pd_integration_inc_note_import');
+        gr.setValue('note_created_at', note.created_at);
+        gr.setValue('incident_id', incidentID);
+        gr.setValue('note_id', note.id);
+        gr.setValue('user_id', user.id);
+        gr.setValue('user_email', user.email);
+        gr.setValue('user_name', user.name);
+        gr.setValue('content', note.content);
+        gr.insert();
+        gs.debug('{0} created import row, incidentID:{1}, noteID:{2}', me, incidentID, note.id);
+      }
+    }
+  },
+
+  /**
+   * Get the last work notes journal entry record for an incident_id
+   * @param {String} incident sysid
+   * @param {String} sys_user.user_name
+   * @return {GlideRecordSecure} sys_journal_field record
+   */
+  getLastIncidentWorknote: function (incidentSysId, createdBy) {
+    var me = 'getLastIncidentWorknote';
+    gs.debug('{0} query for last worknote on {1} by {2}', me, incidentSysId, createdBy);
+    if (gs.nil(incidentSysId)) {
+      return;
+    }
+
+    var gr = new GlideRecordSecure('sys_journal_field');
+    gr.addQuery('element', 'work_notes');
+    gr.addQuery('element_id', incidentSysId);
+    gr.addQuery('sys_created_by', createdBy);
+    gr.setLimit(1);
+    gr.orderByDesc('sys_created_on');
+    gr.query();
+    gr.next();
+    return gr;
+  },
+
+  /**
+   * Get work notes journal entries for an incident_id
+   * @param {String} incident sysid
+   * @param {String} sys_user.user_name
+   * @return {String} sys_journal_field values
+   */
+  getSNWorknotes: function (incidentSysId, createdBy) {
+    var workNotes = [];
+    var me = 'getSNWorknotes';
+    gs.debug('{0} query for worknotes on {1} by {2}', me, incidentSysId, createdBy);
+    if (gs.nil(incidentSysId)) {
+      return;
+    }
+
+    var gr = new GlideRecordSecure('sys_journal_field');
+    gr.addQuery('element', 'work_notes');
+    gr.addQuery('element_id', incidentSysId);
+    gr.addQuery('sys_created_by', createdBy);
+    gr.orderByDesc('sys_created_on');
+    gr.query();
+    while (gr.next()) {
+      workNotes.push(gr.getValue('value'));
+    }
+    return workNotes;
+  },
+
+  /**
+   * Add Incident Metadata reference to SNow Incident
+   * @param (GlideRecordSecure) grIncident
+   * @param (String) PagerDuty Incident ID
+   * @param (String) current user email
+   */
+  addIncidentMetadataReference: function (grIncident, pdIncidentID, currentUserEmail) {
+    var me = 'addIncidentMetadataReference';
+    gs.debug('{0} - Add metadata reference to incident {1}', me, grIncident.getDisplayValue());
+
+    var link = grIncident.getLink();
+    var url = gs.getProperty('glide.servlet.uri') + link;
+    var instanceName = gs.getProperty('instance_name');
+    var incidentNumber = grIncident.getValue('number');
+    var metadataKey = 'servicenow_itsm_' + instanceName + '_' + incidentNumber;
+    var metadataValue = {
+      external_name: incidentNumber + ' (' + instanceName + ')',
+      external_url: url
+    };
+    // Payload for the PUT /incidents/:id
+    var payload = {
+      incident: {
+        type: 'incident',
+        metadata: {}
+      }
+    };
+    payload.incident.metadata[metadataKey] = global.JSON.stringify(metadataValue);
+
+    var feature = 'incidents/' + pdIncidentID;
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.putREST(feature, payload, currentUserEmail, url);
+    var status = response.getStatusCode();
+
+    if (rest.hasError()) {
+      var notes = gs.getMessage('PagerDuty REST failed to add/update metadata reference to PagerDuty incident ({0})', rest.getError());
+      this._setError(me, notes);
+      this._addIncidentWorkNote(grIncident, notes);
+      return status;
+    }
+
+    if (response.haveError()) {
+      this._setError(this._generateInternalErrorMessage(me, status, rest.extractPagerDutyErrorResponse(response)));
+      this._addIncidentWorkNote(
+        grIncident,
+        this._generateNoteErrorMessage('PagerDuty REST failed to add/update metadata reference to PagerDuty incident: ', rest.extractPagerDutyErrorResponse(response))
+      );
+      return status;
+    }
+
+    if (status === 200 || status === 201) {
+      gs.debug('{0} - Successfully added metadata reference for {1}', me, grIncident.getDisplayValue());
+    }
+    return status;
+  },
+
+  /**
+   * Updates v2 webhook (extension) in PagerDuty
+   * @param {String} webhookId
+   * @param {Object} requestBody
+   */
+  updatePdExtension: function (webhookId, requestBody) {
+    var me = 'updatePdExtension';
+    gs.debug('{0} - Update PagerDuty extension with ID {1}', me, webhookId);
+
+    var feature = 'extensions/' + webhookId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.putREST(feature, requestBody);
+    var status = response.getStatusCode();
+
+    if (rest.hasError()) {
+      gs.error('{0} - Update PagerDuty Extension error : {1}', me, rest.getError());
+      return status;
+    }
+
+    if (status === 200) {
+      gs.debug('{0} - Successfully Update PagerDuty Extension with ID {1}', me, webhookId);
+    }
+  },
+
+  /**
+   * Delete v2 webhook (extension) in PagerDuty
+   * @param {String} webhookId
+   * @param {Object} requestBody
+   */
+  deletePdExtension: function (webhookId) {
+    var me = 'deletePdExtension';
+    gs.debug('{0} - Delete PagerDuty extension with ID {1}', me, webhookId);
+
+    var feature = 'extensions/' + webhookId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.deleteREST(feature);
+    var status = response.getStatusCode();
+
+    if (rest.hasError()) {
+      gs.error('{0} - Delete PagerDuty Extension error : {1}', me, rest.getError());
+    }
+
+    if (status === 204) {
+      gs.debug('{0} - Successfully Delete PagerDuty Extension with ID {1}', me, webhookId);
+    }
+    return status;
+  },
+
+  /**
+   * Add work notes to an incident
+   * @param {GlideRecordSecure} incident
+   * @param {String} notes
+   * @return void
+   */
+  _addIncidentWorkNote: function (incident, notes, display) {
+    if (display !== 'false') {
+      try {
+        incident.work_notes = x_pd_integration.WorkNotesHelper.build(notes);
+        incident.update();
+      } catch (ex) {
+        gs.error('_addIncidentWorkNote error ' + ex);
+      }
+    }
+  },
+
+  /**
+   * Create a PagerDuty user
+   * @param {String} sys_user sysid
+   * @return {String} PagerDuty user id
+   */
+  _createPDUser: function (userSysid) {
+    var user = new GlideRecordSecure('sys_user');
+    if (user.get(userSysid)) {
+      gs.info('Creating new user for {0} since auto-provisioning is enabled', user.getDisplayValue());
+      var pdp = new x_pd_integration.PagerDutyProvisioning();
+      return pdp.provisionUser(user);
+    }
+  },
+
+  /**
+   * Update ServiceNow user record with PagerDuty ID, using import table
+   * @param {GlideRecordSecure} user record
+   * @param {String} PagerDuty ID for user
+   * @return void
+   */
+  _updateUser: function (userSysId, id) {
+    var me = '_updateUser';
+    // update user through import set for tracking purposes
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_user_import');
+    gr.setValue('user_sysid', userSysId);
+    gr.setValue('id', id);
+    gr.insert();
+    gs.debug('{0} added import for for user {1} with id:{2}', me, userSysId, id);
+  },
+
+  /**
+   * Get PagerDuty URL
+   * @param {String} PagerDuty endpoint feature
+   * @param {String} PagerDuty ID for feature record
+   * @return {String} url
+   **/
+  getPdIncidentUrl: function (feature, id) {
+    var baseUrl = gs.getProperty('x_pd_integration.instance_url');
+    var url = baseUrl + '/' + feature + '/' + id;
+    return url;
+  },
+
+  /**
+   * Track error
+   * @param {String} method reporting error
+   * @param {String} error message
+   * @return void
+   */
+  _setError: function (method, msg) {
+    this._errorMsg = method + ' error: ' + msg;
+    this._hasError = true;
+    gs.error('{0} error: {1}', method, msg);
+  },
+
+  /**
+   * Does class have an error
+   * @return {Boolean} has error
+   */
+  hasError: function () {
+    return this._hasError;
+  },
+
+  /**
+   * Get last error message
+   * @return {String} error message
+   */
+  getError: function () {
+    if (!gs.nil(this._errorMsg)) {
+      return this._errorMsg;
+    }
+  },
+
+  /**
+   * Get Impact and Urgency via PagerDuty Priority Id
+   * @param {String} priority id
+   * @return {Object} impact and urgency and priority
+   */
+  getImpactUrgencyById: function (priorityId) {
+    var me = 'getImpactUrgencyById';
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_priority');
+    gr.addQuery('pagerduty_priority_id', priorityId);
+    gr.query();
+    if (gr.next()) {
+      var impact = gr.impact;
+      var urgency = gr.urgency;
+      var priority = gr.priority;
+      var priority_display = gr.priority.getDisplayValue();
+      return {
+        impact: impact,
+        urgency: urgency,
+        priority: priority,
+        priority_display: priority_display
+      };
+    }
+  },
+
+  /**
+   * get Escalation Policy PagerDuty ID
+   * @param {GlideRecord} incident
+   */
+  getEscalationPolicyPdId: function (incident) {
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    epHelper.setIncidentId(incident.sys_id);
+    var snPriorityId = epHelper.getIncidentSnPriorityId();
+    return epHelper.getPDEscalationPolicyIdWithPriority(incident.getValue('assignment_group'), snPriorityId);
+  },
+
+  handleUnsetEscalationPolicy: function (fn, incident) {
+    var display = this.displayIncidentReassignmentNote();
+    var notes;
+    var taskHelper = new x_pd_integration.TaskEntityHelper(incident);
+    if (this.closeOnUnknownUserGroup === 'true') {
+      notes = incident.getDisplayValue() + ' assignment group \'' + incident.getDisplayValue('assignment_group') +
+        '\' does not have a PagerDuty policy. PagerDuty incident will be closed and the reference removed.';
+      // remove reference to the PagerDuty incident. This will also resolve the PagerDuty incident
+      taskHelper.setPdId('---unlinked---');
+      this._addIncidentWorkNote(incident, notes, display);
+    } else {
+      notes = incident.getDisplayValue() + ' assignment group \'' + incident.getDisplayValue('assignment_group') +
+        '\' does not have a PagerDuty policy. Failed to reassign policy.';
+      this._setError(fn, notes);
+      this._addIncidentWorkNote(incident, notes, display);
+    }
+  },
+
+  handleNilAssigneePdId: function (fn, incident) {
+    var display = this.displayIncidentReassignmentNote();
+    var notes = 'Could not find a PagerDuty user for the assignee "' +
+      incident.assigned_to.name + '". The incident will not be assigned to the user in PagerDuty,';
+
+    this._setError(fn, notes);
+    this._addIncidentWorkNote(incident, notes, display);
+  },
+
+  /**
+   * Clear the PagerDuty incident field
+   * @param {GlideRecordSecure} incident
+   */
+  _clearPDIncident: function (entry) {
+    x_pd_integration.TaskEntityHelper.setPdId(entry, '');
+    entry.update();
+  },
+
+  /**
+   * Set the PagerDuty incident field to ---error---
+   * @param {GlideRecordSecure} incident
+   */
+  _errorPDIncident: function (entry) {
+    x_pd_integration.TaskEntityHelper.setPdId(entry, '---error---');
+    entry.update();
+  },
+
+  /**
+   * Generate internal error message
+   * @param {String} source function name
+   * @param (String) status code
+   * @param (String) error message
+   * @return (String) conmposed message
+   */
+  _generateInternalErrorMessage: function (source, status, errorMessage) {
+    return gs.getMessage('{0} response status:{1}, error:{2}', [source, status, errorMessage]);
+  },
+
+  /**
+   * Generate work note error message
+   * @param (String) custom note
+   * @param (String) error message
+   * @return (String) conmposed message
+   */
+  _generateNoteErrorMessage: function (note, errorMessage) {
+    if (note === '') {
+      note = 'PagerDuty REST failed: ';
+    }
+    return gs.getMessage(note + errorMessage);
+  },
+
+  displayIncidentTriggeringNote: function () {
+    return gs.getProperty('x_pd_integration.show_incident_triggering_note');
+  },
+
+  displayIncidentAssignmentNote: function () {
+    return gs.getProperty('x_pd_integration.show_incident_assignment_note');
+  },
+
+  displayIncidentReassignmentNote: function () {
+    return gs.getProperty('x_pd_integration.show_incident_reassignment_note');
+  },
+
+  type: 'PagerDuty'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-22 14:47:01</sys_created_on>
+        <sys_id>e4398d454f9f8e00dd657bb28110c794</sys_id>
+        <sys_mod_count>793</sys_mod_count>
+        <sys_name>PagerDuty</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_e4398d454f9f8e00dd657bb28110c794</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-11 13:44:37</sys_updated_on>
+    </sys_script_include>
+</record_update>

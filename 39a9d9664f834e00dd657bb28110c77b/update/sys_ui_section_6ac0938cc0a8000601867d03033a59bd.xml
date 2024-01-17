@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_section caption="" section_id="6ac0938cc0a8000601867d03033a59bd" sys_domain="global" table="sysauto_script" version="3" view="">
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:00</sys_created_on>
+            <sys_id>9b44a56edb4f9010a8621120399619fc</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:00</sys_updated_on>
+            <text>${gs.getMessage("sysauto_form.timezone")}</text>
+            <type display_value="Info Box Blue">753f88a80f930000b12e6903cfe01206</type>
+        </sys_ui_annotation>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>name</element>
+            <position>0</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>1344e56edb4f9010a862112039961906</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>active</element>
+            <position>1</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>df44296edb4f9010a8621120399619f7</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>sys_scope</element>
+            <position>2</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5344296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>conditional</element>
+            <position>3</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>d344296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>9b44a56edb4f9010a8621120399619fc</element>
+            <position>4</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5744296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_type</element>
+            <position>5</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>d744296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_dayofmonth</element>
+            <position>6</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5b44296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_dayofweek</element>
+            <position>7</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>db44296edb4f9010a8621120399619f8</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_time</element>
+            <position>8</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5344296edb4f9010a8621120399619f9</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_period</element>
+            <position>9</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5744296edb4f9010a8621120399619f9</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_start</element>
+            <position>10</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>d744296edb4f9010a8621120399619f9</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>condition</element>
+            <position>11</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5b44296edb4f9010a8621120399619f9</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>script</element>
+            <position>12</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>df44296edb4f9010a8621120399619f9</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>run_as</element>
+            <position>13</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-09-07 12:01:01</sys_created_on>
+            <sys_id>5344296edb4f9010a8621120399619fa</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="sysauto_script" sys_domain="global" view="Default view">6ac0938cc0a8000601867d03033a59bd</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-09-07 12:01:01</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_section action="INSERT_OR_UPDATE">
+            <caption/>
+            <header>false</header>
+            <name>sysauto_script</name>
+            <roles/>
+            <sys_class_name>sys_ui_section</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2006-12-10 05:05:42</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>6ac0938cc0a8000601867d03033a59bd</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>sysauto_script</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="Automated Action Interface" source="com.snc.automation">c9f816a1db031010a86211203996198b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="Global">global</sys_scope>
+            <sys_update_name>sys_ui_section_6ac0938cc0a8000601867d03033a59bd</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2006-12-10 05:05:42</sys_updated_on>
+            <sys_user/>
+            <title>true</title>
+            <view display_value="Default view" name="NULL">Default view</view>
+            <view_name/>
+        </sys_ui_section>
+    </sys_ui_section>
+</record_update>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+var loading = false;
+
+function cancelProvisioning() {
+  GlideModal.get().destroy();
+}
+
+function provisionServices() {
+  if (loading) return;
+  loading = true;
+  $J('#confirm-provisioning').attr('disabled', 'disabled');
+  $J('#confirm-provisioning').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Provisioning...');
+  provision();
+}
+
+function provision() {
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'triggerProvisioning');
+  ga.getXML(function (response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    loading = false;
+    GlideModal.get().destroy();
+    $J('#provision-services').html('Provision Services');
+    // eslint-disable-next-line no-undef
+    goToTop();
+    if (answer) {
+      if (answer.error) {
+        showError(answer.error);
+      } else {
+        clearError();
+      }
+      if (answer.result) {
+        $J('#sticky-banner #provisioned').html(verbalise(answer.result.provisioned));
+        $J('#sticky-banner #skipped').html(verbalise(answer.result.skipped));
+        resetStatus();
+        queryAssociationStatus();
+      }
+    }
+    showStickyBanner();
+  });
+}
+
+function showError(error) {
+  $J('#sticky-banner-error').addClass('error');
+  $J('#sticky-banner-error').html('Errors during provisioning: ' + error);
+}
+
+function clearError() {
+  $J('#sticky-banner-error').removeClass('error');
+  $J('#sticky-banner-error').html('');
+}
+
+function verbalise(num) {
+  var hasHave = 's have';
+  var none = 'None of the';
+  var services = ' service';
+  var total = num || none;
+  if (isSingular(num)) {
+    hasHave = ' has';
+  }
+  return total + services + hasHave;
+}
+
+function isSingular(num) {
+  return num === 1;
+}
+
+function isPlural(num) {
+  return !isSingular(num);
+}
+
+function showStickyBanner() {
+  $J('#sticky-banner').removeClass('closed');
+  $J('#sticky-banner').addClass('opened');
+}
+
+function resetStatus() {
+  $J('#sticky-banner-progress .icon').show();
+  $J('#sticky-banner-progress .relation').html('');
+  $J('#sticky-banner-progress .services-text').html('');
+  $J('#sticky-banner-progress #progress-bar').attr('max', 1);
+  $J('#sticky-banner-progress #progress-bar').attr('value', 0);
+}
+
+function queryAssociationStatus() {
+  var queryPeriod = 900; // milliseconds
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'queryAssociationStatus');
+  ga.getXML(function (response) {
+    var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
+    if (answer) {
+      if (answer.error) {
+        jslog('Error when querying association status: ' + answer.error);
+      }
+      if (answer.result) {
+        var max = Number(answer.result.max);
+        var value = Number(answer.result.value);
+        var services = answer.result.services;
+        var timeleft = getTimeleft(value, max);
+        var opts = {
+          max: max,
+          value: value,
+          services: services,
+          timeleft: timeleft
+        };
+        setProgress(opts);
+        if (value === max) {
+          uiDone(opts);
+          return;
+        }
+        setTimeout(function() {
+          queryAssociationStatus();
+        }, queryPeriod);
+      }
+    }
+  });
+}
+
+function setProgress(opts) {
+  var max = opts.max;
+  var outOf = ' out of ';
+  var services = opts.services;
+  var timeleft = opts.timeleft;
+  var value = opts.value;
+  $J('#sticky-banner-progress .relation').html(value + outOf + max);
+  $J('#progress-bar').attr('max', max);
+  $J('#progress-bar').attr('value', value);
+  setTimeleft(timeleft);
+  if (services.length === 2) {
+    $J('#sticky-banner-progress .services-text').html('[' + services[0] + '] and [' + services[1] + ']');
+  }
+}
+
+function getTimeleft(value, max) {
+  var timeleft = '';
+  var itemsLeft = max - value;
+  var startProcessingDelay = 3; // seconds, varies from 3s to 10s depending on unknown factor
+  var requestTimeMs = 200;
+  var seconds = itemsLeft * (requestTimeMs / 1000) + startProcessingDelay * (Math.pow(itemsLeft / max, 2));
+  if (seconds &lt; 10) {
+    return '[ few seconds left ]';
+  }
+  var mins = Math.floor(seconds / 60);
+  var secs = Math.floor(seconds % 60);
+  if (secs) {
+    timeleft = secs + ' second' + (isPlural(secs) ? 's' : '');
+  }
+  if (mins) {
+    timeleft = mins + ' minute' + (isPlural(mins) ? 's' : '') + ' ' + timeleft;
+  }
+  if (timeleft.length) {
+    timeleft = '[ ' + timeleft + ' left ]';
+  }
+
+  return timeleft;
+}
+
+function setTimeleft(timeleft) {
+  // eslint-disable-next-line es5/no-es6-methods
+  $J('#sticky-banner-progress .timeleft').html(timeleft + '$[SP]'.repeat(9));
+}
+
+function uiDone(opts) {
+  var ga = new GlideAjax('ServiceProvisioningController');
+  ga.addParam('sysparm_name', 'clearAssociatingFlag');
+  ga.getXML(function () {});
+
+  $J('#sticky-banner-progress .icon').hide();
+  setProgress(opts);
+  setTimeleft('');
+  $J('#sticky-banner-progress .services-text').html('done.');
+}
+</client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_services_provisioning_confirmation.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;style&gt;
+    .confirmation-message {
+      margin: 10px;
+    }
+    .buttons {
+      float: right;
+      margin-right: 1rem;
+    }
+    .btn-confirm, .btn-cancel {
+      padding: 6px 30px;
+      margin-left: 2rem;
+    }
+  &lt;/style&gt;
+
+  &lt;div class="confirmation-message"&gt;
+    &lt;p&gt;
+       The services will be provisioned along with their dependencies. The services and escalation policies will be created with you as the initial contact for those services which don't have escalation policies mapped.
+    &lt;/p&gt;
+    &lt;p&gt;Are you sure you want to proceed?&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div class="buttons"&gt;
+    &lt;button id="cancel-provisioning" class="btn btn-confirm" onclick="cancelProvisioning()"&gt;No&lt;/button&gt;
+    &lt;button id="confirm-provisioning" class="btn btn-primary btn-cancel" onclick="provisionServices()"&gt;Yes&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>services_provisioning_confirmation</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-11-25 19:38:07</sys_created_on>
+        <sys_id>ee62c24cdb702010c2bfb080399619dd</sys_id>
+        <sys_mod_count>166</sys_mod_count>
+        <sys_name>services_provisioning_confirmation</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_ee62c24cdb702010c2bfb080399619dd</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-18 03:32:10</sys_updated_on>
+    </sys_ui_page>
+</record_update>

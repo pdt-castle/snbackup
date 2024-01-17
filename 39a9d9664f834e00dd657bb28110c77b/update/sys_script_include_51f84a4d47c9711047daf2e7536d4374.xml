@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyCustomFieldsSupport</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script to support custom fields</description>
+        <name>PagerDutyCustomFieldsSupport</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyCustomFieldsSupport = Class.create();
+
+PagerDutyCustomFieldsSupport.prototype = {
+  initialize: function () {
+    this.defaultSystemLanguage = gs.getProperty('glide.sys.language') || 'en';
+  },
+
+  /**
+   * Create a new custom field mapping.
+   * @param {Object} mapping - The mapping object with schema:
+   * {
+   *  "snFieldId": "string",
+   *  "pdFieldDisplayName": "string",
+   *  "pdFieldName": "string",
+   *  "pdFieldDescription": "string",
+   *  "snFieldLanguage": "string",
+   * }
+   * @returns {GlideRecord} - The new custom field mapping.
+   */
+  createMapping: function (mapping) {
+    gs.debug('Creating new custom field mapping: ' + global.JSON.stringify(mapping));
+    mapping.snFieldLanguage = mapping.snFieldLanguage || this.defaultSystemLanguage;
+
+    var snField = this._getEligibleFieldById(mapping.snFieldId);
+    if (!snField) {
+      throw new Error('ServiceNow field not found or not eligible for mapping');
+    }
+    gs.debug('Found eligible field: ' + global.JSON.stringify(snField));
+
+    var grMapping = this.getMappingByFieldNameAndTableName(snField.name, snField.tableName);
+    if (grMapping !== null) {
+      throw new Error('Custom field mapping already exists');
+    }
+
+    var snFieldChoiceOptions = [];
+    if (snField.type === 'single_value_fixed') {
+      snFieldChoiceOptions = this.getSysChoiceOptions(snField.tableName, snField.name, mapping.snFieldLanguage);
+      gs.debug('Found eligible field choice options: ' + global.JSON.stringify(snFieldChoiceOptions));
+    }
+    // Create payload for PagerDuty custom field from ServiceNow field
+    var newCustomField = this._mapPDFieldFromSNField(snField, snFieldChoiceOptions, mapping);
+    gs.debug('New CF Payload: ' + global.JSON.stringify(newCustomField));
+
+    // Create custom field in PagerDuty
+    var createdCustomField = this._createCustomField(newCustomField);
+
+    // Create custom field mapping in mapping table
+    var grMappings = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMappings.initialize();
+    grMappings.setValue('sn_table_name', snField.tableName);
+    grMappings.setValue('sn_field_id', snField.sysId);
+    grMappings.setValue('sn_field_name', snField.name);
+    grMappings.setValue('sn_field_display_name', snField.displayName);
+    grMappings.setValue('sn_field_type', snField.type);
+    grMappings.setValue('sn_field_data_type', snField.dataType);
+    grMappings.setValue('pd_field_display_name', createdCustomField.display_name);
+    grMappings.setValue('pd_field_id', createdCustomField.id);
+    grMappings.setValue('pd_field_name', createdCustomField.name);
+    grMappings.setValue('pd_field_description', createdCustomField.description);
+    grMappings.setValue('pd_field_type', createdCustomField.field_type);
+    grMappings.setValue('pd_field_data_type', createdCustomField.data_type);
+    grMappings.setValue('default_value', createdCustomField.default_value || '');
+
+    if (createdCustomField.field_options) {
+      // Store a snapshot of the options in the mapping table for syncing purposes
+      var options = {
+        language: mapping.snFieldLanguage,
+        field_options: createdCustomField.field_options.map(function (option) {
+          // Find the original option in the ServiceNow field choice options to store both label and value
+          var originalOption = snFieldChoiceOptions.filter(function (originalOption) {
+            return originalOption.label === option.data.value;
+          })[0];
+          return {
+            id: option.id,
+            value: option.data.value,
+            snLabel: originalOption.label,
+            snValue: originalOption.value,
+            snId: originalOption.sysId
+          };
+        })
+      };
+      grMappings.setValue('options', global.JSON.stringify(options));
+    }
+    grMappings.insert();
+    return grMappings;
+  },
+
+  /**
+   * Delete custom field mappings.
+   * @param {String} sysIds - The sysIds list of the mappings.
+   * @returns {Array} - The deleted custom field mappings array.
+   */
+  deleteMappings: function (sysIds) {
+    var sysIdsArray = sysIds.split(',');
+    var items = [];
+    sysIdsArray.forEach(function (sysId) {
+      this.deleteMapping(sysId);
+      items.push(sysId);
+    }, this);
+    return items;
+  },
+
+  /**
+   * Delete custom field mapping.
+   * @param {String} sysId - The sysId of the field.
+   * @returns {GlideRecord} - The deleted custom field mapping.
+   */
+  deleteMapping: function (sysId) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    if (grMapping.get(sysId)) {
+      // reset origin of custom field on PagerDuty side
+      try {
+        this._updateCustomField(grMapping.getValue('pd_field_id'), {origin: 'PAGERDUTY'});
+      } catch (e) {
+        if (grMapping.getValue('error') === '1') {
+          // if the mapping is already in error state, let's just log a warning
+          // in the future we may improve this logic by tipifying the mapping error reason
+          gs.warn('Failed to release Custom Field "{0}" at PagerDuty while deleting a mapping: {1}', grMapping.getValue('pd_field_display_name'), e.message);
+        } else {
+          throw e;
+        }
+      }
+      // delete custom field mapping on ServiceNow side
+      grMapping.deleteRecord();
+    } else {
+      throw new Error('Custom field mapping not found');
+    }
+  },
+
+  /**
+   * Activate custom field mappings.
+   * @param {String} sysIds - The sysIds list of the mappings.
+   * @returns {Array} - The activate custom field mappings array.
+   */
+  activateMappings: function (sysIds) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMapping.addQuery('sys_id', 'IN', sysIds);
+    grMapping.setValue('active', true);
+    grMapping.updateMultiple();
+    return sysIds.split(',');
+  },
+
+  /**
+   * Deactivate custom field mappings.
+   * @param {String} sysIds - The sysIds list of the mappings.
+   * @returns {Array} - The deactivate custom field mappings array.
+   */
+  deactivateMappings: function (sysIds) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMapping.addQuery('sys_id', 'IN', sysIds);
+    grMapping.setValue('active', false);
+    grMapping.updateMultiple();
+    return sysIds.split(',');
+  },
+
+  /**
+   * Synchronize a choice field option between ServiceNow and PagerDuty.
+   * @param {String} choiceSysId - The sys_id of the choice record.
+   * @param {String} snFieldName - The name of the ServiceNow field.
+   * @param {String} snFieldTable - The name of the ServiceNow table.
+   * @param {String} operation - The operation to perform. Possible values are: 'insert', 'update', 'delete'.
+   */
+  synchronizeOption: function (choiceSysId, snFieldName, snFieldTable, operation) {
+    gs.debug('Synchronizing option "{0}" for field "{1}" on table "{2}". Operation: {3}', choiceSysId, snFieldName, snFieldTable, operation);
+
+    // Get the choice record if it's not a delete operation
+    var grChoice = new GlideRecord('sys_choice');
+    if (operation !== 'delete') {
+      if (!grChoice.get(choiceSysId)) {
+        gs.error('Failed to synchronized "{0}": Record not found', choiceSysId);
+        return;
+      }
+    }
+    // Get the custom field mapping
+    var grMapping = this.getMappingByFieldNameAndTableName(snFieldName, snFieldTable);
+    if (!grMapping) {
+      gs.debug('No custom field mapping found for table "{0}" and field "{1}"', snFieldTable, snFieldName);
+      return;
+    }
+    var options = global.JSON.parse(grMapping.getValue('options')) || {};
+
+    if (operation === 'insert') {
+      // Add option on PagerDuty custom field choice options
+      // Log an warning and return if the choice field mapping is already at maximum number of options
+      if (this.isMappingAtMaximumChoiceSize(grMapping)) {
+        gs.warn('Cannot create new Choice Option at PagerDuty for table "{0}" and field "{1}: Maximum options of "{2}" already reached', snFieldTable, snFieldName, options.field_options.length);
+        return;
+      }
+
+      // add option on ServiceNow mapping table and PagerDuty custom field choice options
+      var optionToAdd = {
+        label: grChoice.getValue('label'),
+        value: grChoice.getValue('value'),
+        sysId: grChoice.getValue('sys_id')
+      };
+      this._addExtraOption(grMapping, options, optionToAdd);
+    } else if (operation === 'update') {
+      // Update option on PagerDuty custom field choice options
+      var optionUpdated = options.field_options.filter(function (option) {
+        return option.snId === choiceSysId;
+      })[0];
+
+      if (optionUpdated) {
+        // Check if an update is needed on the label or value
+        var labelChanged = optionUpdated.snLabel !== grChoice.getValue('label');
+        var valueChanged = optionUpdated.snValue !== grChoice.getValue('value');
+
+        // update option on PagerDuty custom field choice options
+        if (labelChanged) {
+          this._updateCustomFieldOption(
+            grMapping.getValue('pd_field_id'),
+            optionUpdated.id,
+            {
+              data: {
+                data_type: grMapping.getValue('pd_field_data_type'),
+                value: grChoice.getValue('label')
+              }
+            }
+          );
+        }
+
+        // update option on ServiceNow mapping table
+        if (labelChanged || valueChanged) {
+          var newOptionsUpdated = options.field_options.filter(function (option) {
+            return option.snId !== choiceSysId;
+          });
+
+          optionUpdated.value = grChoice.getValue('label');
+          optionUpdated.snValue = grChoice.getValue('value');
+          optionUpdated.snLabel = grChoice.getValue('label');
+
+          newOptionsUpdated.push(optionUpdated);
+          options.field_options = newOptionsUpdated;
+          grMapping.setValue('options', global.JSON.stringify(options));
+          grMapping.update();
+        } else {
+          gs.debug('No update needed for custom field option "{2}" on table "{0}" and field "{1}"', snFieldTable, snFieldName, choiceSysId);
+        }
+      } else {
+        gs.warn('No custom field option "{2}" found for table "{0}" and field "{1}"', snFieldTable, snFieldName, choiceSysId);
+      }
+    } else if (operation === 'delete') {
+      // delete option
+      var optionDeleted = options.field_options.filter(function (option) {
+        return option.snId === choiceSysId;
+      })[0];
+
+      if (optionDeleted) {
+        var isAtMaxSize = options.field_options.length &gt;= this.getPdLimits().maxNumberOfOptions;
+
+        // Check if the default value is the option that is being deleted
+        var fieldDefaultValue = this._getCustomField(grMapping.getValue('pd_field_id')).default_value;
+        if (fieldDefaultValue === optionDeleted.value) {
+          // Update the default value to null
+          this._updateCustomField(grMapping.getValue('pd_field_id'), {default_value: null});
+        }
+        // delete option on PD custom field choice options
+        this._deleteCustomFieldOption(grMapping.getValue('pd_field_id'), optionDeleted.id);
+
+        // delete option on PagerDuty custom field choice options
+        var newOptionsDeleted = options.field_options.filter(function (option) {
+          return option.snId !== choiceSysId;
+        });
+
+        options.field_options = newOptionsDeleted;
+        grMapping.setValue('options', global.JSON.stringify(options));
+        grMapping.update();
+
+        // If the options are at max size, we should check if there is an additional option that can be added
+        if (isAtMaxSize) {
+          snFieldChoiceOptions = this.getSysChoiceOptions(snFieldTable, snFieldName, options.language);
+          // Search for an option that is not in the PagerDuty custom field choice options
+          var optionToAddExtra = snFieldChoiceOptions.filter(function (option) {
+            return !options.field_options.some(function (existingOption) {
+              return existingOption.snId === option.sysId;
+            });
+          })[0];
+          // If option to add exists, add it
+          if (optionToAddExtra) {
+            gs.debug('Adding new extra option "{0}" to PagerDuty custom field choice options', optionToAddExtra.label);
+            this._addExtraOption(grMapping, options, optionToAddExtra);
+          }
+        }
+      } else {
+        gs.warn('No custom field option "{2}" found for table "{0}" and field "{1}"', snFieldTable, snFieldName, choiceSysId);
+      }
+    }
+  },
+
+  /**
+   * Get all PagerDuty custom fields
+   * @returns {Object} - return custom fields and error
+   */
+  getAllCustomFields: function () {
+    var restClient = new x_pd_integration.PagerDuty_REST();
+    var customFields = restClient.getRESTThrowable('incidents/custom_fields').data;
+    return customFields.fields;
+  },
+
+  /**
+   * Queries all choices from the 'sys_choice' table for a specific table, element, and language.
+   * @param {string} tableName - The name of the table containing the choice element.
+   * @param {string} element - The name of the choice element.
+   * @param {string} language - The language code for the choice labels.
+   * @returns {Array} An array of objects containing the choice values and labels.
+   */
+  getSysChoiceOptions: function (tableName, element, language) {
+    var options = [];
+    var gr = new GlideRecord('sys_choice');
+    gr.addQuery('name', tableName);
+    gr.addQuery('element', element);
+    gr.addQuery('language', language);
+    gr.orderBy('sequence');
+    gr.orderBy('label');
+    gr.setLimit(this.getPdLimits().maxNumberOfOptions);
+    gr.query();
+    while (gr.next()) {
+      options.push({
+        label: gr.getValue('label'),
+        value: gr.getValue('value'),
+        sysId: gr.getValue('sys_id')
+      });
+    }
+    return options;
+  },
+
+  /**
+   * Get mapping by field name and table name
+   * @param {String} fieldName - The name of the field.
+   * @param {String} tableName - The name of the table.
+   * @returns {GlideRecord} - The custom field mapping.
+   */
+  getMappingByFieldNameAndTableName: function (fieldName, tableName) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMapping.addActiveQuery();
+    grMapping.addQuery('sn_table_name', tableName);
+    grMapping.addQuery('sn_field_name', fieldName);
+    grMapping.query();
+    if (grMapping.next()) {
+      return grMapping;
+    }
+    return null;
+  },
+
+  /**
+   * Get mapping by id
+   * @param {String} sysId - The sysId of the field.
+   * @returns {GlideRecord} - The custom field mapping.
+   */
+  getMappingBySysId: function (sysId) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    if (grMapping.get(sysId)) {
+      return {
+        sysId: sysId,
+        snFieldId: grMapping.getValue('sn_field_id'),
+        snFieldName: grMapping.getValue('sn_field_name'),
+        snFieldDisplayName: grMapping.getValue('sn_field_display_name'),
+        snFieldType: grMapping.getValue('sn_field_type'),
+        snFieldDataType: grMapping.getValue('sn_field_data_type'),
+        pdFieldId: grMapping.getValue('pd_field_id'),
+        pdFieldName: grMapping.getValue('pd_field_name'),
+        pdFieldType: grMapping.getValue('pd_field_type'),
+        pdFieldDataType: grMapping.getValue('pd_field_data_type'),
+        defaultValue: grMapping.getValue('default_value'),
+        options: global.JSON.parse(grMapping.getValue('options')),
+        error: grMapping.getValue('error') === '1',
+        error_reason: grMapping.getValue('error_reason'),
+      };
+    }
+    return null;
+  },
+
+  /**
+   * Checks if the mapping is at maximum choice size.
+   * @param {GlideRecord} grMapping - The GlideRecord object representing the custom field mapping.
+   * @returns {boolean} - True if the mapping is at maximum choice size, false otherwise.
+   */
+  isMappingAtMaximumChoiceSize: function (grMapping) {
+    var options = global.JSON.parse(grMapping.getValue('options')) || {};
+    return options.field_options.length &gt;= this.getPdLimits().maxNumberOfOptions;
+  },
+
+  /**
+   * Retrieves active custom field mappings from the 'x_pd_integration_custom_field_mapping' table.
+   * @param {boolean} includeMappingsInError - If true, returns all mappings. If false, returns only mappings that are not in error.
+   * @returns {Array} An array of objects containing custom field mapping data.
+   */
+  getMappings: function (includeMappingsInError) {
+    var mappings = [];
+    var grMappings = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMappings.addActiveQuery();
+    if (!includeMappingsInError) {
+      grMappings.addQuery('error', '0');
+    }
+    grMappings.query();
+    while (grMappings.next()) {
+      mappings.push({
+        sysId: grMappings.getValue('sys_id'),
+        snFieldId: grMappings.getValue('sn_field_id'),
+        snFieldName: grMappings.getValue('sn_field_name'),
+        snFieldDisplayName: grMappings.getValue('sn_field_display_name'),
+        snFieldType: grMappings.getValue('sn_field_type'),
+        snFieldDataType: grMappings.getValue('sn_field_data_type'),
+        pdFieldId: grMappings.getValue('pd_field_id'),
+        pdFieldName: grMappings.getValue('pd_field_name'),
+        pdFieldDisplayName: grMappings.getValue('pd_field_display_name'),
+        pdFieldType: grMappings.getValue('pd_field_type'),
+        pdFieldDataType: grMappings.getValue('pd_field_data_type'),
+        defaultValue: grMappings.getValue('default_value'),
+        options: global.JSON.parse(grMappings.getValue('options')),
+      });
+    }
+    return mappings;
+  },
+
+  /**
+   * Returns a list of eligible fields for custom field creation.
+   * @returns {Array} - The list of eligible fields.
+   */
+  getEligibleFields: function () {
+    var labels = this._getLabelsFromSysDocumentation();
+    var fields = [];
+    var grDictionary = new GlideRecord('sys_dictionary');
+    this._appendEligibleFieldQuery(grDictionary);
+    grDictionary.orderBy('element');
+    grDictionary.setLimit(1000);
+    grDictionary.query();
+    while (grDictionary.next()) {
+      var key = grDictionary.getValue('name') + '.' + grDictionary.getValue('element');
+      fields.push({
+        sysId: grDictionary.getValue('sys_id'),
+        name: grDictionary.getValue('element'),
+        displayName: labels[key] || grDictionary.getDisplayValue('column_label'),
+        tableName: grDictionary.getValue('name'),
+        type: this._getFieldType(grDictionary.getValue('choice')),
+        dataType: grDictionary.getValue('internal_type'),
+        dataTypeDisplay: grDictionary.getDisplayValue('internal_type'),
+        defaultValue: grDictionary.getValue('default_value'),
+      });
+    }
+
+    return fields;
+  },
+
+  /**
+   * Returns a list of eligible fields for custom field creation.
+   * This function adapts the data in order for it to be ready for the UI. The UI uses it to populate
+   * the dropdown of eligible fields and to display information about the selected field.
+   * @param {boolean} ignoreMappedFields - If true, returns only fields that are not already mapped.
+   * @param {number} maxNumberOfOptions - The maximum number of options to return for choice fields.
+   * @returns {Array} - The list of eligible fields.
+   */
+  getEligibleFieldsAdvanced: function (ignoreMappedFields, maxNumberOfOptions) {
+    var eligibleFields = [];
+    if (ignoreMappedFields === true) {
+      // get mapped fields
+      var mappedFieldIds = [];
+      var grMappings = new GlideRecord('x_pd_integration_custom_field_mapping');
+      grMappings.query();
+      while (grMappings.next()) {
+        mappedFieldIds.push(grMappings.getValue('sn_field_id'));
+      }
+      // filter-out fields that are already mapped
+      eligibleFields = this.getEligibleFields().filter(function (field) {
+        return mappedFieldIds.indexOf(field.sysId) &lt; 0;
+      });
+    } else {
+      eligibleFields = this.getEligibleFields();
+    }
+    // post-process eligible fields
+    var outboundSync = new x_pd_integration.PagerDutyCustomFieldsOutboundSync();
+    eligibleFields.forEach(function (field) {
+      if (field.type === 'single_value_fixed') {
+        // retrieve options for choice fields
+        var options = this.getSysChoiceOptions(field.tableName, field.name, this.defaultSystemLanguage);
+        field.options = options.map(function (option) { return option.label; }); // eslint-disable-line
+        // limit the number of options
+        if (maxNumberOfOptions &amp;&amp; field.options.length &gt; maxNumberOfOptions) {
+          field.options = field.options.slice(0, maxNumberOfOptions);
+        }
+        // convert default value to label
+        if (field.defaultValue) {
+          var defaultOption = options.filter(function (option) {
+            return option.value === field.defaultValue;
+          })[0];
+          if (defaultOption) {
+            field.defaultValue = defaultOption.label;
+          }
+        }
+      } else {
+        if (field.defaultValue) {
+          // convert default value to the format that will be sent to PagerDuty
+          try {
+            var pdDataType = this._mapSnDataTypeToPdDataType(field.dataType);
+            var result = outboundSync.convertValue({pdFieldDataType: pdDataType}, field.defaultValue);
+            field.defaultValue = result.apply ? result.convertedValue : '';
+          } catch (e) {
+            field.defaultValue = '';
+          }
+        }
+      }
+    }, this);
+    return eligibleFields;
+  },
+
+  getPdLimits: function () {
+    return {
+      maxDisplayNameLength: 50,
+      maxFieldNameLength: 50,
+      maxDescriptionLength: 1000,
+      maxValueLength: 200,
+      maxUrlValueLength: 200,
+      maxNumberOfOptions: 55
+    };
+  },
+
+  /**
+   * Retrieves the names of the fields that are referenced in the Inbound Field Rules.
+   * It only considers active IFRs that are referencing fields from the 'incident' table
+   * because these are the ones that might conflict with custom field mappings.
+   * @returns {Array} - The list of field names.
+   */
+  getIFRIncidentFields: function () {
+    var ifrFields = [];
+    var grIFR = new GlideRecordSecure('x_pd_integration_pagerduty_inbound_field_rule');
+    grIFR.addActiveQuery();
+    grIFR.addQuery('incident_table_name', 'incident');
+    grIFR.query();
+    while (grIFR.next()) {
+      ifrFields.push(grIFR.getValue('target_field'));
+    }
+    return ifrFields;
+  },
+
+  /**
+   * Convert from ServiceNow format to ISO 8601 format. Example: 2018-07-16 15:00:00 -&gt; 2018-07-16T15:00:00.000Z
+   * @param {string} value
+   * @returns {string} - The converted value.
+   */
+  convertDateToISO8601: function (value) {
+    var datetime = new GlideDateTime(value).toString();
+    convertedValue = datetime.replace(' ', 'T') + '.000Z';
+    return convertedValue;
+  },
+
+  /**
+   * Synchronizes the custom field metadata from PagerDuty to ServiceNow.
+   * @returns {Object} - The result object.
+   * @returns {String} result.message - The success message.
+   * @returns {String} result.error - The error message.
+   */
+  syncCustomFieldsMetadata: function () {
+    var me = 'syncCustomFieldsMetadata';
+    var feature = 'incidents/custom_fields';
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.getREST(feature);
+    var responseBody = response.getBody();
+    var status = response.getStatusCode();
+    gs.debug('{0} response: {1}:{2}', me, status, responseBody);
+
+    var errors = [];
+
+    if (rest.hasError()) {
+      errors.push(rest.getError());
+    }
+    if (response.haveError()) {
+      errors.push(rest.extractPagerDutyErrorResponse(response));
+    }
+    if (status !== 200) {
+      errors.push('Failed to get custom fields with status ' + status);
+    }
+
+    if (errors.length &gt; 0) {
+      return {
+        error: errors.join('\n'),
+      };
+    }
+
+    var customFields = global.JSON.parse(responseBody).fields;
+    var updatedFields = 0;
+    var grMappings = new GlideRecord('x_pd_integration_custom_field_mapping');
+    grMappings.query();
+    while (grMappings.next()) {
+      var pdFieldID = grMappings.getValue('pd_field_id');
+      var pdField = customFields.filter(function (customField) {
+        return customField.id === pdFieldID;
+      })[0];
+      if (pdField) {
+        var updated = this._syncMappingMetadata(grMappings, pdField);
+        if (updated) {
+          updatedFields++;
+        }
+      }
+    }
+    return {
+      message: 'Updated ' + updatedFields + ' custom field mappings',
+    };
+  },
+
+  /**
+   * Check Custom Fields Ability.
+   * Set the property 'x_pd_integration.enable_custom_field_mapping' to true if the ability is enabled.
+   * @returns {Object} - Response object.
+   */
+  checkCustomFieldMappingAbility: function () {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var response = rest.getREST('abilities/premium_custom_fields');
+    var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response) : response.getBody();
+    var status = response.getStatusCode();
+    var propertyValue = gs.getProperty('x_pd_integration.enable_custom_field_mapping');
+    if (status === 204 &amp;&amp; propertyValue !== 'true') {
+      gs.debug('Set Custom field mapping ability to enable');
+      gs.setProperty('x_pd_integration.enable_custom_field_mapping', 'true');
+    } else if ((status === 402 || status === 404) &amp;&amp; propertyValue !== 'false') {
+      gs.debug('Set Custom field mapping ability is disable');
+      gs.setProperty('x_pd_integration.enable_custom_field_mapping', 'false');
+    }
+    return {status: status, body: responseBody};
+  },
+
+  /**
+   * Logs the custom field synchronization result.
+   * @param {String} direction - The direction of the synchronization. Possible values are: 'inbound', 'outbound'.
+   * @param {Array} updates - The list of update messages.
+   * @param {Array} errors - The list of error messages.
+   * @param {Array} ignores - The list of ignored fields.
+   */
+  logProcessingResult: function (direction, updates, errors, ignores) {
+    var log = 'PagerDuty Custom Fields ' + direction + ' synchronization:';
+    log += '\nUpdates:\n - ' + (updates &amp;&amp; updates.length &gt; 0 ? updates.join('\n - ') : 'No fields were updated');
+    log += '\nErrors:\n - ' + (errors &amp;&amp; errors.length &gt; 0 ? errors.join('\n - ') : 'No errors');
+    log += '\nIgnores:\n - ' + (ignores &amp;&amp; ignores.length &gt; 0 ? ignores.join('\n - ') : 'No fields were ignored');
+    gs.info(log);
+  },
+
+  /**
+   * Builds a work note with the custom field synchronization result.
+   * @param {String} direction - The direction of the synchronization. Possible values are: 'inbound', 'outbound'.
+   * @param {Boolean} showNotesOnUpdate - If true, the work note will be added if there are updates.
+   * @param {Boolean} showNotesOnError - If true, the work note will be added if there are errors.
+   * @param {Array} updates - The list of update messages.
+   * @param {Array} errors - The list of error messages.
+   * @returns {String} - The work note.
+   */
+  buildNoteWithUpdatesAndErrors: function (direction, showNotesOnUpdate, showNotesOnError, updates, errors) {
+    var note = 'PagerDuty Custom Fields ' + direction + ' synchronization:';
+    if (showNotesOnUpdate &amp;&amp; updates.length &gt; 0) {
+      note += '\nUpdates:\n - ' + updates.join('\n - ');
+    }
+    if (showNotesOnError &amp;&amp; errors.length &gt; 0) {
+      note += '\nErrors:\n - ' + errors.join('\n - ');
+    }
+    return x_pd_integration.WorkNotesHelper.build(note);
+  },
+
+  /**
+   * Sets the error flag and error reason on the custom field mapping.
+   * @param {String} sysId - The sysId of the mapping record.
+   * @param {String} errorReason - The error reason.
+   */
+  setMappingInError: function (sysId, errorReason) {
+    var grMapping = new GlideRecord('x_pd_integration_custom_field_mapping');
+    if (grMapping.get(sysId)) {
+      grMapping.setValue('error', '1');
+      grMapping.setValue('error_reason', errorReason);
+      grMapping.update();
+    }
+  },
+
+  /**
+   * Adds an extra option to the custom field mapping and PagerDuty custom field choice options.
+   * @param {GlideRecord} grMapping - The GlideRecord object representing the custom field mapping.
+   * @param {Object} options - The options object.
+   * @param {Object} optionToAdd - The option to add to the custom field mapping.
+   */
+  _addExtraOption: function (grMapping, options, optionToAdd) {
+    // add option on PagerDuty custom field choice options
+    var extraOption = {
+      data: {
+        data_type: grMapping.getValue('pd_field_data_type'),
+        value: optionToAdd.label
+      }
+    };
+    var createdPdExtraOption = this._createCustomFieldOption(grMapping.getValue('pd_field_id'), extraOption);
+
+    // add option on ServiceNow mapping table
+    var updateOptionsArray = options.field_options || [];
+    updateOptionsArray.push({
+      id: createdPdExtraOption.id,
+      value: createdPdExtraOption.data.value,
+      snLabel: optionToAdd.label,
+      snValue: optionToAdd.value,
+      snId: optionToAdd.sysId
+    });
+    options.field_options = updateOptionsArray;
+    grMapping.setValue('options', global.JSON.stringify(options));
+    grMapping.update();
+  },
+
+  /**
+   * Given the ServiceNow field and the custom field mapping, construct the PagerDuty custom field object for creation.
+   * @param {Object} snField - The ServiceNow field object.
+   * @param {Object} mapping - The custom field mapping object.
+   * @returns {Object} - The PagerDuty custom field object.
+   */
+  _mapPDFieldFromSNField: function (snField, snFieldChoiceOptions, mapping) {
+    var res = {
+      name: mapping.pdFieldName.toLowerCase().trim(),
+      display_name: mapping.pdFieldDisplayName.trim(),
+      description: mapping.pdFieldDescription.trim(),
+      data_type: 'string', // boolean, integer, float, string, datetime, url
+      field_type: 'single_value', // single_value, single_value_fixed, multi_value, multi_value_fixed
+      default_value: null,
+      field_options: null
+    };
+
+    if (snField.type === 'single_value_fixed') {
+      // Handle choice type fields
+      res.data_type = 'string';
+      res.field_type = 'single_value_fixed';
+      res.field_options = snFieldChoiceOptions.map(function (option) {
+        return {
+          data: {
+            data_type: 'string',
+            value: option.label
+          }
+        };
+      });
+    } else {
+      // Map the ServiceNow field data type to the PagerDuty field data type
+      res.data_type = this._mapSnDataTypeToPdDataType(snField.dataType);
+    }
+
+    // Set default value if snField has a default value that is not marked as 'Dynamic'.
+    // On the safe side, also check if it doesn't contain javascript
+    if (!gs.nil(snField.defaultValue) &amp;&amp;
+      gs.nil(snField.dynamicDefaultValue) &amp;&amp;
+      snField.defaultValue.indexOf('javascript:') &lt; 0) {
+
+      // Handle special cases for choice fields
+      if (res.field_type === 'single_value_fixed') {
+        // Only set the default value if the default value is one of the options.
+        // Find the option that matches the default value, matching first on the value, then on the label
+        var option = snFieldChoiceOptions.filter(function (option) {
+          return option.value === snField.defaultValue;
+        })[0];
+        if (!option) {
+          option = snFieldChoiceOptions.filter(function (option) {
+            return option.label === snField.defaultValue;
+          })[0];
+        }
+        if (option) {
+          res.default_value = option.label;
+        }
+      } else {
+        // Use existing Outbound converters to convert the default value to the correct format
+        var outboundSync = new x_pd_integration.PagerDutyCustomFieldsOutboundSync();
+        try {
+          gs.debug('Converting default value of field "{0}" ({1}): {2}', snField.name, res.data_type, snField.defaultValue);
+          var conversionResult = outboundSync.convertValue({pdFieldDataType: res.data_type}, snField.defaultValue);
+          if (conversionResult.apply) {
+            res.default_value = conversionResult.convertedValue;
+          }
+        } catch (e) {
+          gs.debug('Error converting default value of field "{0}": {1}', snField.name, snField.defaultValue);
+        }
+      }
+    }
+    return {field: res};
+  },
+
+  /**
+   * Searches for an eligible field by sys_id.
+   * @param {String} snFieldId - The ServiceNow field sys_id.
+   * @returns {Object} - The eligible field.
+   */
+  _getEligibleFieldById: function (snFieldId) {
+    var grDictionary = new GlideRecord('sys_dictionary');
+    this._appendEligibleFieldQuery(grDictionary);
+    grDictionary.addQuery('sys_id', snFieldId);
+    grDictionary.setLimit(1);
+    grDictionary.query();
+    if (grDictionary.next()) {
+      var table = grDictionary.getValue('name');
+      var column = grDictionary.getValue('element');
+      var label = this._getLabelsFromSysDocumentation(table, column)[table + '.' + column];
+      return {
+        sysId: grDictionary.getValue('sys_id'),
+        name: grDictionary.getValue('element'),
+        displayName: label || grDictionary.getDisplayValue('column_label'),
+        tableName: grDictionary.getValue('name'),
+        type: this._getFieldType(grDictionary.getValue('choice')),
+        dataType: grDictionary.getValue('internal_type'),
+        defaultValue: grDictionary.getValue('default_value'),
+        dynamicDefaultValue: grDictionary.getValue('dynamic_default_value'),
+      };
+    }
+    return null;
+  },
+
+  /**
+   * Append / Constructs the query to retrieve eligible fields.
+   * @param {GlideRecord} grDictionary - The GlideRecord object.
+   * @private
+   */
+  _appendEligibleFieldQuery: function (grDictionary) {
+    grDictionary.addActiveQuery();
+    grDictionary.addQuery('name', 'IN', 'task, incident');
+    grDictionary.addQuery('element', 'DOES NOT CONTAIN', 'sys_');
+    // Exclusions (see https://pagerduty.atlassian.net/wiki/spaces/IN/pages/3325493266):
+    grDictionary.addQuery(
+      'element', 'NOT IN',
+      'escalation, made_sla, priority, sla_due, x_pd_integration_incident, x_pd_integration_incident_id, x_pd_integration_incident_key'
+    );
+    grDictionary.addQuery('internal_type', 'IN', 'boolean, choice, decimal, due_date, glide_date_time, integer, string, url');
+    grDictionary.addNullQuery('dependent_on_field');
+    grDictionary.addQuery('read_only', 'false');
+  },
+
+  /**
+   * Retrieve field labels from the sys_documentation table using the system's default language.
+   * Although the sys_dictionary table contains a 'column_label' field, it may be overridden on the sys_documentation
+   * table. One such example is the 'close_code' field of the 'incident' table; for that field the 'column_label' in
+   * sys_dictionary is 'Close code', but is sys_documentation it is 'Resolution Code'.
+   * Note: Vancouver introduced a new function in the Scoped GlideElement API called 'getDisplayValueLang(String language)'
+   * that implements the logic we are emulating here. In the future, once older versions are no longer supported, we should
+   * use this function instead.
+   * @param {String} filterTable - The table name to filter on (optional).
+   * @param {String} filterColumn - The column name to filter on (optional).
+   * @returns {Object} - The labels object.
+   * @private
+   */
+  _getLabelsFromSysDocumentation: function (filterTable, filterColumn) {
+    var labels = {};
+    var grDoc = new GlideRecord('sys_documentation');
+    grDoc.addActiveQuery();
+    if (filterTable) {
+      grDoc.addQuery('name', filterTable);
+    } else {
+      grDoc.addQuery('name', 'IN', 'task, incident');
+    }
+    if (filterColumn) {
+      grDoc.addQuery('element', filterColumn);
+    }
+    grDoc.addNotNullQuery('element');
+    grDoc.addQuery('element', 'DOES NOT CONTAIN', 'sys_');
+    grDoc.addQuery('language', this.defaultSystemLanguage);
+    grDoc.orderBy('element');
+    grDoc.setLimit(1000);
+    grDoc.query();
+    while (grDoc.next()) {
+      var key = grDoc.getValue('name') + '.' + grDoc.getValue('element');
+      labels[key] = grDoc.getValue('label');
+    }
+    return labels;
+  },
+
+  /**
+   * Infers the field type based on value of the sys_dictionary.choice field.
+   * Possible values are:
+   *  - '0' or null =&gt; single_value
+   *  - '1' =&gt; 'Dropdown with -- None --' =&gt; single_value_fixed
+   *  - '2' =&gt; 'Suggestion' =&gt; single_value
+   *  - '3' =&gt; 'Dropdown without -- None --' =&gt; single_value_fixed
+   * @param {String} choiceType - The ServiceNow field choice type.
+   * @returns {String} - The field type.
+   * @private
+   */
+  _getFieldType: function (choiceType) {
+    if (choiceType === '1' || choiceType === '3') {
+      return 'single_value_fixed';
+    }
+    return 'single_value';
+  },
+
+  /**
+   * Get PagerDuty custom field by id
+   * @param {String} pdFieldId - The PagerDuty field id.
+   * @returns {Object} - return custom fields and error.
+   */
+  _getCustomField: function (pdFieldId) {
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var customField = rest.getRESTThrowable('incidents/custom_fields/' + pdFieldId).data;
+    return customField.field;
+  },
+
+  /**
+   * Create Custom Field in PagerDuty
+   * @param {Object} customField - The custom field object.
+   * @returns {Object} - The created custom field object.
+   */
+  _createCustomField: function (customField) {
+    var me = 'createCustomField';
+    var feature = 'incidents/custom_fields';
+    gs.debug('{0} request: {1}', me, global.JSON.stringify(customField));
+    var result = new x_pd_integration.PagerDuty_REST().postRESTThrowable(feature, customField);
+    if (result.status === 201) {
+      return result.data.field;
+    }
+    throw new Error('Failed to create custom field with status ' + result.status);
+  },
+
+  /**
+   * Update Custom Field in PagerDuty
+   * @param {String} pdFieldId - The PagerDuty field id.
+   * @param {Object} customField - The custom field object.
+   * @returns {Object} - The created custom field object.
+   */
+  _updateCustomField: function (pdFieldId, customField) {
+    var me = 'updateCustomField';
+    var feature = 'incidents/custom_fields/' + pdFieldId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    gs.debug('{0} request: {1}', me, global.JSON.stringify(customField));
+    var result = rest.putRESTThrowable(feature, {field: customField});
+    if (result.status === 200) {
+      return result.data.field;
+    }
+    throw new Error('Failed to update custom field with status ' + result.status);
+  },
+
+  /**
+   * Create a Field Option in PagerDuty
+   * @param {String} pdFieldId - The PagerDuty field id.
+   * @param {Object} fieldOption - The field option object.
+   * @returns {Object} - The created field option object.
+   */
+  _createCustomFieldOption: function (pdFieldId, fieldOption) {
+    var me = '_createCustomFieldOption';
+    var feature = 'incidents/custom_fields/' + pdFieldId + '/field_options/';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    gs.debug('{0} request: {1}', me, feature);
+    var result = rest.postRESTThrowable(feature, {field_option: fieldOption});
+    if (result.status === 201) {
+      return result.data.field_option;
+    }
+    throw new Error('Failed to create custom field option with status ' + result.status);
+  },
+
+  /**
+   * Update a Field Option in PagerDuty
+   * @param {String} pdFieldId - The PagerDuty field id.
+   * @param {String} pdFieldOptionId - The PagerDuty field option id.
+   * @param {Object} fieldOption - The field option object.
+   * @returns {Object} - The updated field option object.
+   */
+  _updateCustomFieldOption: function (pdFieldId, pdFieldOptionId, fieldOption) {
+    var me = '_updateCustomFieldOption';
+    var feature = 'incidents/custom_fields/' + pdFieldId + '/field_options/' + pdFieldOptionId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    gs.debug('{0} request: {1}', me, feature);
+    var result = rest.putRESTThrowable(feature, {field_option: fieldOption});
+    if (result.status === 200) {
+      return result.data.field_option;
+    }
+    throw new Error('Failed to update custom field option with status ' + result.status);
+  },
+
+  /**
+   * Delete a Field Option in PagerDuty
+   * @param {String} pdFieldId - The PagerDuty field id.
+   * @param {String} pdFieldOptionId - The PagerDuty field option id.
+   * @returns {Object} - The deleted field option object.
+   */
+  _deleteCustomFieldOption: function (pdFieldId, pdFieldOptionId) {
+    var me = '_deleteCustomFieldOption';
+    var feature = 'incidents/custom_fields/' + pdFieldId + '/field_options/' + pdFieldOptionId;
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    gs.debug('{0} request: {1}', me, feature);
+    var result = rest.deleteRESTThrowable(feature);
+    if (result.status === 204) {
+      return {pdFieldId: pdFieldId, pdFieldOptionId: pdFieldOptionId};
+    }
+    throw new Error('Failed to delete custom field option with status ' + result.status);
+  },
+
+  /**
+   * Update existing custom field mapping.
+   * @param {GlideRecord} grMapping - The custom field mapping.
+   * @param {Object} pdField - The PagerDuty custom field.
+   * @returns {Boolean} - Whether the mapping was updated or not.
+   */
+  _syncMappingMetadata: function (grMapping, pdField) {
+    var updated = false;
+    var pdFieldDisplayName = pdField.display_name;
+    var pdFieldDescription = pdField.description;
+    var pdFieldDefaultValue = pdField.default_value;
+
+    if (pdFieldDisplayName !== grMapping.getValue('pd_field_display_name')) {
+      grMapping.setValue('pd_field_display_name', pdFieldDisplayName);
+      updated = true;
+    }
+    if (pdFieldDescription !== grMapping.getValue('pd_field_description')) {
+      grMapping.setValue('pd_field_description', pdFieldDescription);
+      updated = true;
+    }
+    if (pdFieldDefaultValue !== grMapping.getValue('default_value')) {
+      grMapping.setValue('default_value', pdFieldDefaultValue);
+      updated = true;
+    }
+
+    if (updated) {
+      grMapping.update();
+    }
+    return updated;
+  },
+
+  /** Maps the ServiceNow data type to the corresponding PagerDuty data type.
+   * @param {string} snDataType - The ServiceNow data type.
+   * @returns {string} - The PagerDuty data type.
+   * @throws {Error} - If the ServiceNow data type is not supported.
+   */
+  _mapSnDataTypeToPdDataType: function (snDataType) {
+    switch (snDataType) {
+      case 'glide_date_time':
+      case 'due_date':
+        return 'datetime';
+      case 'string':
+        return 'string';
+      case 'boolean':
+        return 'boolean';
+      case 'integer':
+        return 'integer';
+      case 'url':
+        return 'url';
+      case 'decimal':
+        return 'float';
+      default:
+        throw new Error('Unsupported ServiceNow field data type: ' + snField.snFieldDataType);
+    }
+  },
+
+  type: 'PagerDutyCustomFieldsSupport'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-01 13:53:08</sys_created_on>
+        <sys_id>51f84a4d47c9711047daf2e7536d4374</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>PagerDutyCustomFieldsSupport</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_51f84a4d47c9711047daf2e7536d4374</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-07 19:48:57</sys_updated_on>
+    </sys_script_include>
+</record_update>

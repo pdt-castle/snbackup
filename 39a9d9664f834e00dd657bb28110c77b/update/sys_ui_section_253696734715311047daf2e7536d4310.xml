@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_section caption="" section_id="253696734715311047daf2e7536d4310" sys_domain="global" table="x_pd_integration_custom_field_mapping" version="3" view="">
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bf6efbeec39a3510743293477d0131a5</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>PagerDuty Custom Field details can only be edited in PagerDuty. Only the mapping sync status can be edited.$[SP]&lt;a href="https://support.pagerduty.com/docs/servicenow-custom-fields#why-cant-i-edit-the-newly-created-pagerduty-custom-field-in-servicenow-after-mapping?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_update_cant_edit_custom_fields_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>3b6efbeec39a3510743293477d0131a6</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>&lt;h4&gt;ServiceNow Field&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>fb6efbeec39a3510743293477d0131a6</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>&lt;h4&gt;PagerDuty Field&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bf6efbeec39a3510743293477d0131a6</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>&lt;h4&gt;Mapping Details&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>736efbeec39a3510743293477d0131a7</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>&lt;h4&gt;Field Mapping Status&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>bf6efbeec39a3510743293477d0131a5</element>
+            <position>0</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>f76e3322c3da3510743293477d013133</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>3b6efbeec39a3510743293477d0131a6</element>
+            <position>1</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bf6e3322c3da3510743293477d013133</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>sn_field_display_name</element>
+            <position>2</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>336e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>sn_calculated_field_type</element>
+            <position>3</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>b36e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>fb6efbeec39a3510743293477d0131a6</element>
+            <position>4</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>376e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>pd_field_display_name</element>
+            <position>5</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>b76e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>pd_calculated_field_type</element>
+            <position>6</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>3b6e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>default_value</element>
+            <position>7</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bb6e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>bf6efbeec39a3510743293477d0131a6</element>
+            <position>8</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>3f6e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>sync_direction</element>
+            <position>9</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bf6e3322c3da3510743293477d013134</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>pd_field_description</element>
+            <position>10</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>336e3322c3da3510743293477d013135</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>sync_status</element>
+            <position>11</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>b36e3322c3da3510743293477d013135</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>736efbeec39a3510743293477d0131a7</element>
+            <position>12</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>376e3322c3da3510743293477d013135</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type>annotation</type>
+        </sys_ui_element>
+        <sys_ui_element action="INSERT_OR_UPDATE">
+            <element>active</element>
+            <position>13</position>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>b76e3322c3da3510743293477d013135</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_ui_formatter/>
+            <sys_ui_section caption="NULL" display_value="" name="x_pd_integration_custom_field_mapping" sys_domain="global" view="Default view">253696734715311047daf2e7536d4310</sys_ui_section>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <sys_user/>
+            <type/>
+        </sys_ui_element>
+        <sys_ui_section action="INSERT_OR_UPDATE">
+            <caption/>
+            <header>false</header>
+            <name>x_pd_integration_custom_field_mapping</name>
+            <roles/>
+            <sys_class_name>sys_ui_section</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-09-22 14:08:31</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>253696734715311047daf2e7536d4310</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>x_pd_integration_custom_field_mapping</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_ui_section_253696734715311047daf2e7536d4310</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-09-22 14:08:31</sys_updated_on>
+            <sys_user/>
+            <title>true</title>
+            <view display_value="Default view" name="NULL">Default view</view>
+            <view_name/>
+        </sys_ui_section>
+    </sys_ui_section>
+</record_update>

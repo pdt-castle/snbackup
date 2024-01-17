@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_choice action="INSERT_OR_UPDATE" field="impact" table="dl_u_priority" version="3">
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>impact</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>1 - High</label>
+            <language>en</language>
+            <name>dl_u_priority</name>
+            <sequence>0</sequence>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2017-05-31 16:29:45</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>7cfd10ce4fcfb2008c38cab18110c727</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2017-05-31 16:29:45</sys_updated_on>
+            <value>1</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>impact</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>2 - Medium</label>
+            <language>en</language>
+            <name>dl_u_priority</name>
+            <sequence>1</sequence>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2017-05-31 16:29:45</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>41fd10ce4fcfb2008c38cab18110c729</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2017-05-31 16:29:45</sys_updated_on>
+            <value>2</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>impact</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>3 - Low</label>
+            <language>en</language>
+            <name>dl_u_priority</name>
+            <sequence>2</sequence>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2017-05-31 16:29:45</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>81fd10ce4fcfb2008c38cab18110c72a</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2017-05-31 16:29:45</sys_updated_on>
+            <value>3</value>
+        </sys_choice>
+        <sys_choice_set action="INSERT_OR_UPDATE">
+            <element>impact</element>
+            <name>dl_u_priority</name>
+            <sys_class_name>sys_choice_set</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2017-05-31 16:29:45</sys_created_on>
+            <sys_id>d3842cccdb1363004529dd3b5e96190f</sys_id>
+            <sys_mod_count>15</sys_mod_count>
+            <sys_name>impact</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_choice_dl_u_priority_impact</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2017-11-10 21:39:10</sys_updated_on>
+        </sys_choice_set>
+    </sys_choice>
+</record_update>

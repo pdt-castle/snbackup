@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.IncidentWorkflowController</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>IncidentWorkflowController</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var IncidentWorkflowController = x_pd_integration.AjaxHelper.createAjaxController({
+  type: 'IncidentWorkflowController',
+
+  /**
+   * Retrieves PagerDuty user ID if the mapping is established
+   * @param {String} userId
+   * @returns {String} Mapped PagerDuty user id
+   */
+  getSnUserPdId: function getSnUserPdId (userId) {
+    var pdUserId;
+
+    var grUser = new GlideRecordSecure('sys_user');
+    grUser.addQuery('sys_id', userId);
+    grUser.setLimit(1);
+    grUser.query();
+
+    if (grUser.next()) {
+      pdUserId = grUser.getValue('x_pd_integration_pagerduty_id');
+    } else {
+      gs.debug('getSnUserPdId: mapping check. There is no user with sys_id {0} in the sys_user table', userId);
+      return false;
+    }
+
+    if (!pdUserId) {
+      return '';
+    }
+
+    return pdUserId;
+  },
+  /**
+   * Retrieves PD responders' IDs from the ServiceNow DB table associated with the SN incident ID
+   * @param {String} snIncidentId
+   * @returns {Array} PD responders' IDs
+   */
+  getRespondersPdIds: function getRespondersPdIds (snIncidentId) {
+    var respondersPdIds = [];
+    var grPdResponseRequests = new GlideRecordSecure('x_pd_integration_pagerduty_response_requests');
+    grPdResponseRequests.addQuery('incident', snIncidentId);
+    grPdResponseRequests.query();
+    while (grPdResponseRequests.next()) {
+      respondersPdIds.push(grPdResponseRequests.getValue('pd_user_id'));
+    }
+
+    return respondersPdIds;
+  },
+
+  /**
+   * Verifies if the ServiceNow user has permission to Run a Workflow
+   * @param {String} snUserSysId
+   * @param {String} snIncidentId
+   * @returns {Boolean} true if all permission valid; false otherwise
+   */
+  isEligibleRunIW: function isEligibleRunIW (snUserSysId, snIncidentId) {
+    var pd = new x_pd_integration.PagerDuty();
+    // Verify if ServiceNow user is mapped with PagerDuty user
+    var snUserPdId = this.getSnUserPdId(snUserSysId);
+    if (!snUserPdId) {
+      return false;
+    }
+    // Verify if the ServiceNow user role is among eligible roles: 'owner', 'admin', 'user', 'limited_user'
+    var mappedPdUserRole = pd.getUserRoleByPDID(snUserPdId);
+    if (gs.nil(mappedPdUserRole)) return false;
+    var allowedRoles = ['owner', 'admin', 'user', 'limited_user'];
+    if (allowedRoles.indexOf(mappedPdUserRole) &gt;= 0) return true;
+
+    // Verify if the mapped PagerDuty user has an eligible role to Run a Workflow (Responder or above)
+    var respondersPdIds = this.getRespondersPdIds(snIncidentId);
+    if (respondersPdIds.indexOf(snUserPdId) &gt;= 0) return true;
+
+    // Verify whether the mapped PagerDuty user is among PagerDuty incident assignees
+    var incidentAssignmentsIds = this.fetchIncidentAssignmentsIds(snUserSysId, snIncidentId);
+    if (incidentAssignmentsIds.indexOf(snUserPdId) &gt;= 0) return true;
+
+    // Verify whether the Assignment group, set in the ServiceNow incident, is associated with the PagerDuty Team, whether the mapped user is its member and has an eligible role in this team (Responder and above)
+    var pdTeamUsers = this.fetchIncidentTeamUsers(snUserSysId, snIncidentId);
+    for (var i = 0; i &lt; pdTeamUsers.length; i++) {
+      // There are three team roles: Manager, Responder, Observer
+      if (pdTeamUsers[i].id === snUserPdId &amp;&amp; pdTeamUsers[i].role !== 'observer') return true;
+    }
+
+    return false;
+  },
+  /**
+   * Retrieves PagerDuty Team users' IDs and roles
+   * @param {String} userId - ServiceNow user's sys_id
+   * @param {String} snIncidentId - ServiceNow incident sys_id
+   * @returns {Array} Objects with PagerDuty user's ID and role
+   */
+  fetchIncidentTeamUsers: function fetchIncidentTeamUsers (userId, snIncidentId) {
+    var me = 'fetchIncidentTeamUsers';
+    if (gs.nil(snIncidentId)) {
+      return null;
+    }
+
+    var items = [];
+    var pd = new x_pd_integration.PagerDuty();
+    var currentPdUserId = pd.getUserIDFromFieldData(userId, 'sys_id', false);
+    var requester = pd.getUserEmailByPDID(currentPdUserId);
+
+    var grIncident = new GlideRecordSecure('incident');
+    if (!grIncident.get(snIncidentId)) {
+      gs.debug('{0} ServiceNow incident with ID {1} not found', me, snIncidentId);
+      return null;
+    }
+
+    // Get the sys_id of the assignment group
+    var assignmentGroupSysId = grIncident.assignment_group + '';
+    if (!assignmentGroupSysId) {
+      gs.debug('{0} assignmentGroup for incident {1} not found', me, snIncidentId);
+      return null;
+    }
+
+    var grUserGroup = new GlideRecordSecure('sys_user_group');
+    if (!grUserGroup.get(assignmentGroupSysId)) {
+      gs.debug('{0} Assignment Group with sys_id {1} not found', me, assignmentGroupSysId);
+      return null;
+    }
+
+    var pdTeamId = grUserGroup.x_pd_integration_pagerduty_team + '';
+
+    if (!pdTeamId) {
+      gs.debug('{0} Assignment Group {1} is not mapped with a PagerDuty team', me, grUserGroup.sys_id);
+      return null;
+    }
+
+    var pdTeamMembers = pd.getIncidentTeamUsers(requester, pdTeamId);
+    if (!pdTeamMembers) {
+      gs.debug('{0} PagerDuty team {1} is not found', me, pdTeamId);
+      return null;
+    }
+    pdTeamMembers.forEach(function (pdTeamMember) {
+      items.push({
+        id: pdTeamMember.user.id,
+        role: pdTeamMember.role,
+      });
+    });
+    return items;
+  },
+  /**
+   * Fetches PagerDuty incident assignees' IDs
+   * @param {String} userId - ServiceNow user's sys_id
+   * @param {String} snIncidentId - ServiceNow incident sys_id
+   * @returns {Array} PagerDuty incident assignees' IDs
+   */
+  fetchIncidentAssignmentsIds: function fetchIncidentAssignmentsIds (userId, snIncidentId) {
+    var incidentHelper = new x_pd_integration.IncidentHelper(snIncidentId);
+    var pd = new x_pd_integration.PagerDuty();
+    var items = [];
+    try {
+      var currentPdUserId = pd.getUserIDFromFieldData(userId, 'sys_id', false);
+      var requester = pd.getUserEmailByPDID(currentPdUserId);
+      var pdIncidentId = incidentHelper.getPdIncidentId();
+      var incidentAssignments = pd.getIncidentAssignments(requester, pdIncidentId);
+      if (incidentAssignments) {
+        incidentAssignments.forEach(function (assignment) {
+          items.push(assignment.assignee.id);
+        });
+      }
+    } catch (e) {
+      gs.warn('GET Incident Incident Assignments list failed. Error: ' + e.message);
+      return null;
+    }
+    return items;
+  },
+  /**
+   * Fetches PagerDuty Incident Workflows for a specific incident
+   * @param {String} userId - ServiceNow user's sys_id
+   * @param {String} snIncidentId - ServiceNow incident ID
+   * @returns {Object} Incident workflow triggers inside the [items] key of the returned object
+   */
+  fetchIncidentWorkflows: function fetchIncidentWorkflows (userId, snIncidentId) {
+    var ih = new x_pd_integration.IncidentHelper(snIncidentId);
+    var iw = new x_pd_integration.IncidentWorkflows();
+    var pd = new x_pd_integration.PagerDuty();
+    var items = [];
+    try {
+      var currentPdUserId = pd.getUserIDFromFieldData(userId, 'sys_id', false);
+      gs.debug('fetchIncidentWorkflows: currentPdUserId: ' + currentPdUserId);
+
+      var requester = pd.getUserEmailByPDID(currentPdUserId);
+      gs.debug('fetchIncidentWorkflows: requester: ' + requester);
+
+      var pdIncidentId = ih.getPdIncidentId();
+
+      var incidentWorkflowTriggers = iw.getIncidentWorkflowTriggers(requester, pdIncidentId);
+      if (incidentWorkflowTriggers) {
+        incidentWorkflowTriggers.forEach(function (trigger) {
+          if (trigger.workflow) {
+            var description = trigger.workflow.hasOwnProperty('description') ? trigger.workflow.description : '';
+            items.push({
+              id: '' + trigger.id,
+              text: '' + trigger.workflow_name,
+              description: '' + description,
+            });
+          }
+        });
+      }
+    } catch (e) {
+      return {
+        items: [],
+        errorMessage: e.message,
+      };
+    }
+    return {items: items};
+  },
+
+  /**
+   * Runs an Incident Workflow in PagerDuty for a specific incident.
+   * @param {String} snIncidentId - ServiceNow incident ID
+   * @param {String} userId - ServiceNow user's ID
+   * @param {String} triggerId - Trigger ID
+   * @param {String} incidentWorkflowName - Name of the Incident Workflow
+   * @returns {Array} Incident workflow trigger response
+   */
+  runIncidentWorkflow: function runIncidentWorkflow (snIncidentId, userId, triggerId, incidentWorkflowName) {
+    var iw = new x_pd_integration.IncidentWorkflows();
+    var pd = new x_pd_integration.PagerDuty();
+
+    if (!snIncidentId) {
+      throw new Error('The ServiceNow Incident Id is missing.');
+    }
+
+    if (!userId) {
+      throw new Error('The userId is missing.');
+    }
+
+    if (!triggerId) {
+      throw new Error('The triggerId is missing.');
+    }
+
+    var currentPdUserId = pd.getUserIDFromFieldData(userId, 'sys_id', false);
+
+    var incident = new GlideRecordSecure('incident');
+
+    if (!incident.get(snIncidentId)) {
+      throw new Error('You cannot use this form out of context of existing incident.');
+    }
+
+    if (gs.nil(incident.x_pd_integration_incident)) {
+      throw new Error('Current incident is not linked to PagerDuty.');
+    }
+
+    var pdIncidentId = incident.x_pd_integration_incident.toString();
+    var requester = pd.getUserEmailByPDID(currentPdUserId);
+
+    var response;
+    try {
+      response = iw.triggerIncidentWorkflow(requester, triggerId, pdIncidentId, snIncidentId, incidentWorkflowName);
+    } catch (e) {
+      throw new Error(e.message);
+    }
+
+    return {
+      response: response,
+      message: 'Incident Workflow has been run.',
+    };
+  },
+});
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-01-16 11:55:08</sys_created_on>
+        <sys_id>7b336b6797102110b21577d71153af91</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>IncidentWorkflowController</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_7b336b6797102110b21577d71153af91</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-16 11:55:08</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl_role">
+    <sys_security_acl_role action="INSERT_OR_UPDATE">
+        <sys_class_name>sys_security_acl_role</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-02 11:48:46</sys_created_on>
+        <sys_id>4a6f784947567110607b7258946d43ce</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_pd_integration_custom_field_mapping_delete_multiple_dialog.x_pd_integration.admin</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_security_acl display_value="x_pd_integration_custom_field_mapping_delete_multiple_dialog">4e6f784947567110607b7258946d43ca</sys_security_acl>
+        <sys_update_name>sys_security_acl_role_4a6f784947567110607b7258946d43ce</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-02 11:48:46</sys_updated_on>
+        <sys_user_role display_value="x_pd_integration.admin" name="x_pd_integration.admin">f2d919a64f834e00dd657bb28110c7fd</sys_user_role>
+        <transaction_id/>
+    </sys_security_acl_role>
+</record_update>

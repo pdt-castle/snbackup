@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDuty_Change_Events</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>ServiceNow Change Request to PagerDuty Change Event&#13;
+-Functions:&#13;
+-Provision Custom SN Integration or Generic Event v2 API integration to linked PD Service&#13;
+-Store integration Token on CI record&#13;
+-Trigger Change Event from a CR when State changes to Implement&#13;
+-POST Change Event to PD for CR CI that's linked to PD and enabled for Change Events&#13;
+-Set Maintenance Window for PD Service based on CR planned Start/End times</description>
+        <name>PagerDuty_Change_Events</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDuty_Change_Events = Class.create();
+
+PagerDuty_Change_Events.prototype = {
+  initialize: function () {
+    this.JSON = new global.JSON();
+
+    // API properties
+    this.authToken = gs.getProperty('x_pd_integration.api_key');
+    this.restApiEndpoint = gs.getProperty('x_pd_integration.rest_api_endpoint');
+    this.eventsApiEndpoint = this.restApiEndpoint.indexOf('api.eu.pagerduty.com') &gt;= 0
+      ? 'https://events.eu.pagerduty.com'
+      : 'https://events.pagerduty.com';
+    this.snInstance = gs.getProperty('instance_name');
+    this.intUserName = gs.getProperty('x_pd_integration.sn_auth_user');
+
+    // PagerDuty Change Events - Set Maintenance Window?
+    this.setMaintWindow = gs.getProperty('x_pd_integration.change_event_maint_window');
+  },
+
+  // triggered from business rule --&gt; event --&gt; script action
+  createChangeReqEvent: function (current) {
+    var me = 'PagerDuty_Change_Events:createChangeReqEvent';
+
+    gs.info('I\'m in {0} now....', me);
+
+    var crNumber = current.number;
+    var crService = current.business_service.getDisplayValue();
+    var crCI = current.getValue('cmdb_ci');
+    var crCIName = current.cmdb_ci.getDisplayValue();
+    var crAGName = current.assignment_group.getDisplayValue();
+    var crShortDesc = current.short_description;
+    var crDescription = current.description;
+    var crLink = 'https://' + this.snInstance + '.service-now.com/nav_to.do?uri=%2Fchange_request.do%3Fsysparm_query%3Dnumber%3D' + crNumber;
+    var crPlannedStart = current.start_date;
+    var crPlannedStop = current.end_date;
+    var crActualStart = current.work_start;
+    // var crCreatedAt = current.opened_at;
+
+    var d = new GlideDateTime(crActualStart);
+    var ms = d.getNumericValue();
+
+    var crActualStartAtISO = new Date(ms).toISOString();
+
+    // for the crCI, do a GR query to see if it's enabled for PDCE.
+    // if yes, get the PDCE token and use that in payload.
+    // if no, either exit or send to a "generic PD CE service"
+
+    // get response, and update the CI field with token
+    var pdCEtoken = '';
+    var serviceId = '';
+
+    var grCI = new GlideRecord('cmdb_ci');
+    grCI.addQuery('sys_id', crCI);
+    grCI.query();
+    while (grCI.next()) {
+      pdCEtoken = grCI.x_pd_integration_pagerduty_change_event_token;
+      serviceId = grCI.x_pd_integration_pagerduty_service;
+    }
+
+    gs.info('{0} the pdCEtoken is: {1}', me, pdCEtoken);
+
+    var chgEventBody = {
+      routing_key: '' + pdCEtoken,
+      payload: {
+        summary: crNumber + ': ' + crService + ' : ' + crShortDesc,
+        timestamp: crActualStartAtISO,
+        source: 'ServiceNow Change Request',
+        custom_details: {
+          'A: Business Service': crService,
+          'B: Configuration Item': crCIName,
+          'C: Assignment Group': crAGName,
+          'D: Short Description': '' + crShortDesc,
+          'E: Description': '' + crDescription,
+          'F: Planned Start': '' + crPlannedStart,
+          'G: Planned Stop': '' + crPlannedStop,
+          'H: Actual Start': '' + crActualStart
+        }
+      },
+      links: [{
+        href: crLink,
+        text: 'View ' + crNumber + ' in ServiceNow'
+      }]
+    };
+
+    gs.info('the chgEventBody is: {0}', JSON.stringify(chgEventBody));
+
+    // POST Change Event
+    this.changeReqChangeEvent(chgEventBody);
+
+    // POST Maintenance Window
+    if (this.setMaintWindow === 'true') {
+      this.createMaintenanceWindow(serviceId, crNumber, crPlannedStart, crPlannedStop);
+    }
+  }, // end createChangeReqEvent
+
+  // POST the PagerDuty Change Event
+  changeReqChangeEvent: function (chgEventBody) {
+    var me = 'changeReqChangeEvent';
+    gs.info('I\'m in PagerDuty_Change_Events {0} now...', me);
+
+    var rest = new x_pd_integration.PagerDuty_REST(this.eventsApiEndpoint);
+    var feature = '/v2/change/enqueue';
+
+    var response = rest.postREST(feature, chgEventBody);
+    var status = response.getStatusCode();
+
+    return status;
+  },
+
+  // create a scheduled maintenance window for SN CR
+  createMaintenanceWindow: function (serviceId, crNumber, planStart, planStop) {
+    var me = 'createMaintenanceWindow';
+
+    gs.info('I\'m in {0} now....', me);
+
+    // convert timestamps to ISO8601
+    var maintStart = new GlideDateTime(planStart);
+    var ms_maintStart = maintStart.getNumericValue();
+
+    var maintStartISO = new Date(ms_maintStart).toISOString();
+    var maintStop = new GlideDateTime(planStop);
+    var ms_maintStop = maintStop.getNumericValue();
+    var maintStopISO = new Date(ms_maintStop).toISOString();
+
+    var mwPayload = {
+      maintenance_window: {
+        type: 'maintenance_window',
+        start_time: String(maintStartISO),
+        end_time: String(maintStopISO),
+        description: 'Maintenance Window for ServiceNow Change Request ' + crNumber,
+        services: [{
+          id: String(serviceId),
+          type: 'service_reference'
+        }]
+      }
+    };
+
+    // need From: user email for POST - use integration user to ensure success
+    var intUserEmail = '';
+    var grUser = new GlideRecord('sys_user');
+    grUser.addQuery('user_name', '=', this.intUserName);
+    grUser.query();
+    while (grUser.next()) {
+      intUserEmail = grUser.getValue('email');
+    }
+    gs.info('{0} the integration user email address is: {1}', me, intUserEmail);
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = '/maintenance_windows';
+
+    var response = rest.postREST(feature, mwPayload, intUserEmail);
+    var status = response.getStatusCode();
+
+    gs.info(
+      '{0} response status:{1}, body:{2}, haveError:{3}, errorMessage:{4}', me, status, response.getBody(),
+      response.haveError(), response.getErrorMessage()
+    );
+
+    // if successful - add a work note to the CR
+    gs.info('{0} create maintenance window response code is: {1}', me, status);
+    gs.info('{0} create maintenance window response body is: {1} ', me, response.getBody());
+
+    if (status === 201) {
+      gs.info('{0} I\'m in status == 201 if statement now....', me);
+      var body = JSON.parse(response.getBody());
+      gs.info('{0} parsed body is: {1}', me, JSON.stringify(body));
+      gs.info('{0} body.maintenance_window: {1}', me, JSON.stringify(body).maintenance_window);
+
+      // Add Work Note to CR for Maintenance Window
+      var maintWindow = 'PagerDuty Service Maintenance Window ([code]&lt;a target="_blank" href=' + body.maintenance_window.html_url + '&gt;Link&lt;/a&gt;[/code]) \nStart: ' + planStart + '-' + planStop;
+
+      var crGR = new GlideRecord('change_request');
+      crGR.addQuery('number', crNumber);
+      crGR.query();
+      if (crGR.next()) {
+        crGR.work_notes = x_pd_integration.WorkNotesHelper.build(maintWindow);
+        crGR.update();
+      }
+
+      gs.info('{0} created maintenance window \'{1}\' for serviceID: {2}', me, maintWindow, serviceId);
+    } else {
+      gs.error('{0} unknown error, body: {1}', me, response.getBody());
+    }
+  },
+
+  // create Event API v2 Integration on Service for Change (custom to this PD instance for SN Change Requests)
+  createChangeEventIntegration: function (serviceName, serviceId) {
+    var me = 'createChangeEventIntegration';
+    gs.info('I\'m in PagerDuty_Change_Events {0} now....', me);
+
+    // this will create a generic event integration
+    var ceEventIntBody = {
+      integration: {
+        type: 'events_api_v2_inbound_integration',
+        name: 'ServiceNow Change Events: ' + serviceName,
+        service: {
+          id: serviceId,
+          type: 'service_reference'
+        }
+      }
+    };
+
+    // this will create a custom ServiceNow change integration unique to this instance's custom app created via developer mode, upload a ServiceNow Logo and retreive the unique vendor ID for your PD instance
+    // var ceEventIntBody = {
+    //   "integration": {
+    //     "type": "app_event_transform_inbound_integration",
+    //     "name": "ServiceNow Change Events: " + serviceName,
+    //     "vendor": {
+    //       "id": "P027IB7", //this would be unique to your instance
+    //       "type": "vendor_reference",
+    //     }
+    //   }
+    // };
+
+    gs.info('the ceEventIntBody is: {0}', JSON.stringify(ceEventIntBody));
+
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = '/services/' + serviceId + '/integrations';
+
+    var response = rest.postREST(feature, ceEventIntBody);
+    var status = response.getStatusCode();
+
+    gs.info(
+      '{0} response status:{1}, body:{2}, haveError:{3}, errorMessage:{4}', me, status, response.getBody(),
+      response.haveError(), response.getErrorMessage()
+    );
+
+    // if successful - update CI record field with integration token
+    gs.info('{0} create PDCE integration response code is: {1}', me, status);
+    gs.info('{0} create PDCE integration response body is: {1} ', me, response.getBody());
+
+    var token;
+
+    if (status === 201) {
+      gs.info('{0} I\'m in status == 201 if statement now....', me);
+      var body = JSON.parse(response.getBody());
+      gs.info('{0} parsed body is: {1}', me, JSON.stringify(body));
+
+      token = body.integration.integration_key;
+      gs.info('{0} created change event integration token \'{1}\' for serviceName: {2} and serviceId: {3}', me, token, serviceName, serviceId);
+    } else {
+      gs.error('{0} unknown error, body: {1}', me, response.getBody());
+    }
+
+    return token;
+  },
+
+  type: 'PagerDuty_Change_Events'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-09-16 23:59:35</sys_created_on>
+        <sys_id>191f9ee9db571010d2e2e04a48961944</sys_id>
+        <sys_mod_count>43</sys_mod_count>
+        <sys_name>PagerDuty_Change_Events</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_191f9ee9db571010d2e2e04a48961944</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-24 17:08:53</sys_updated_on>
+    </sys_script_include>
+</record_update>

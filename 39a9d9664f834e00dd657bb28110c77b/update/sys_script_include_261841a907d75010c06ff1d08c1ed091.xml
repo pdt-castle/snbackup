@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyProvisioningController</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>PagerDutyProvisioningController</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyProvisioningController = Class.create();
+PagerDutyProvisioningController.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+  type: 'PagerDutyProvisioningController',
+
+  getGroupsData: function () {
+    var groupSysIds = this.getParameter('sysparm_group_ids');
+
+    var encodedQuery = 'ORDERBYname^sys_idIN' + groupSysIds;
+
+    var targetGroups = [];
+    var grGroup = new GlideRecordSecure('sys_user_group');
+    grGroup.addEncodedQuery(encodedQuery);
+    grGroup.addNullQuery('x_pd_integration_pagerduty_escalation');
+    grGroup.query();
+    while (grGroup.next()) {
+      targetGroups.push({
+        sys_id: grGroup.getValue('sys_id'),
+        name: grGroup.getValue('name'),
+        manager: grGroup.getValue('manager'),
+        members_count: countGroupMembers(grGroup.getValue('sys_id'))
+      });
+    }
+
+    return JSON.stringify({
+      groups: targetGroups,
+      groups_with_more_than_49_members: targetGroups.filter(function (group) {
+        return group.members_count &gt; 49;
+      }),
+      groups_without_manager: targetGroups.filter(function (group) {
+        return !group.manager;
+      }),
+      auto_provision_grmembers: gs.getProperty('x_pd_integration.auto_provision_grmembers') === 'true',
+      current_user: gs.getUserDisplayName()
+    });
+  },
+
+  provisionGroupService: function () {
+    var managerSysId = this.getParameter('sysparm_manager_sys_id');
+    var groupSysId = this.getParameter('sysparm_group_id');
+    var reduceTargets = this.getParameter('sysparm_reduce_targets');
+    var userPdId = null;
+
+    var grGroup = new GlideRecordSecure('sys_user_group');
+    if (!grGroup.get(groupSysId)) {
+      gs.addErrorMessage('No group found with id: [' + groupSysId + ']');
+    }
+
+    if (!managerSysId) {
+      managerSysId = gs.getUserID();
+    }
+
+    var showMessage = false;
+    userPdId = provisionManager(grGroup, managerSysId, showMessage);
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    pdp.provisionGroupService(grGroup, userPdId, {reduce_targets: reduceTargets});
+    var errors = [];
+    if (pdp.hasError()) {
+      errors = pdp.getErrors();
+    }
+
+    return JSON.stringify({
+      group: grGroup.getValue('name'),
+      errors: errors
+    });
+  },
+
+  provisionDefaultService: function () {
+    var userPdId = this.getParameter('sysparm_default_user_pd_id');
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    var servicePdId = pdp.provisionDefaultService(userPdId);
+    var errors = '';
+    if (pdp.hasError()) {
+      errors = pdp.getErrors().join('&lt;br /&gt;');
+    }
+    return JSON.stringify({service_id: servicePdId, error: errors});
+  },
+
+  provisionDefaultUser: function () {
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    var userPdId = pdp.provisionDefaultUser(gs.getUserID());
+    var errors = '';
+    if (pdp.hasError()) {
+      errors = pdp.getErrors().join('&lt;br /&gt;');
+    }
+    return JSON.stringify({user_id: userPdId, error: errors});
+  }
+});
+
+function provisionManager (grGroup, managerSysId, showMessage) {
+  var grUser = new GlideRecordSecure('sys_user');
+  var userPdId;
+  if (grUser.get(managerSysId)) {
+    var pdp = new x_pd_integration.PagerDutyProvisioning();
+    userPdId = pdp.provisionUser(grUser, 'user', showMessage); // 'Manager' role in PagerDuty
+    if (pdp.hasError()) {
+      gs.addErrorMessage('' + pdp.getErrors());
+    }
+    grGroup.setValue('manager', managerSysId);
+    grGroup.update();
+  } else {
+    gs.addErrorMessage('Error on group manager provisioning: user with sys_id ' + managerSysId + ' not found');
+  }
+
+  return userPdId;
+}
+
+function countGroupMembers (groupSysId) {
+  var count = 0;
+  var ga = new GlideAggregate('sys_user_grmember');
+  ga.addQuery('group.sys_id', groupSysId);
+  ga.addNotNullQuery('user.email');
+  ga.addAggregate('COUNT');
+  ga.query();
+  if (ga.next()) {
+    count = ga.getAggregate('COUNT');
+  }
+  return count;
+}
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-09-16 17:51:06</sys_created_on>
+        <sys_id>261841a907d75010c06ff1d08c1ed091</sys_id>
+        <sys_mod_count>115</sys_mod_count>
+        <sys_name>PagerDutyProvisioningController</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_261841a907d75010c06ff1d08c1ed091</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-06 22:08:18</sys_updated_on>
+    </sys_script_include>
+</record_update>

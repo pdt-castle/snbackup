@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>catalog</category>
+        <client_script>jQuery(function () {
+  var $ = jQuery;
+  var modal = GlideModal.get();
+  var snIncidentId = modal.getPreference('snIncidentId');
+  var loading = false;
+  var storeStatusUpdateTimeout = 1000;
+
+  var api = x_pd_integration.AjaxHelper.ajaxClientFor('StatusUpdateController');
+  var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+
+  var impactedServices = [];
+  var allBusinessServices = [];
+  var impactedServicesIds = {};
+  var bsConfigured = true;
+
+  var groupSelector = new x_pd_integration.PdMultiselect({
+    element: document.querySelector('.pd-group-selector'),
+    initValues: function (text, callback) {
+      api.fetchImpactedBusinessServices(snIncidentId, function (error, data) {
+        $('.pd-ibs-loader').hide();
+        if (data) {
+          if (data.impactedServices) {
+            impactedServices = data.impactedServices;
+          }
+          if (data.allBusinessServices) {
+            allBusinessServices = data.allBusinessServices;
+          }
+          if (data.impactedServicesIds) {
+            impactedServicesIds = data.impactedServicesIds;
+          }
+          if (!impactedServices.length &amp;&amp; !allBusinessServices.length) {
+            bsConfigured = false;
+          }
+          if (data.warnMessage) {
+            $('.pd-warning-message').html(data.warnMessage);
+          }
+        }
+        if (error) {
+          jslog(error);
+          var message = error.message || 'Unknown error. Details: ' + JSON.stringify(error);
+          g_form.addErrorMessage(message);
+          modal.destroy();
+        }
+        data.bsConfigured = bsConfigured;
+
+        data.allBusinessServices.forEach(function (service) {
+          var selected = false;
+          if (impactedServicesIds[service.id]) {
+            selected = true;
+          }
+          var newOption = new Option(service.text, service.id, selected, selected);
+          $('select.pd-ibs-selector').append(newOption).trigger('change');
+        });
+
+        writePublishedMessage(impactedServices.length &gt; 0);
+
+        $('select.pd-ibs-selector').select2().on('change', function () {
+          var selected = $(this).select2('data');
+          writePublishedMessage(selected.length &gt; 0);
+        });
+
+        callback(data);
+      });
+    },
+    load: function (text, callback) {
+      api.suggestBusinessServices(text, allBusinessServices, function (error, data) {
+        if (error) {
+          jslog(error);
+        }
+        callback(data);
+      });
+    },
+    height: 200,
+    padding: 5
+  });
+
+
+  $('.pd-form button.submit-request').on('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (loading) {
+      return;
+    }
+    loading = true;
+    trackingApi.track('send_status_dialog_clicked_submit_button', {}, function (error, _result) {
+      if (error) {
+        jslog('Tracking error: ' + error);
+      }
+    });
+    $('.pd-form button.submit-request').attr('disabled', true);
+    $('.pd-form button.submit-request').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Sending');
+
+    var selectedData = $('select.pd-ibs-selector').select2('data');
+    var chosenServicesIds = [];
+    selectedData.forEach(function (selectedItem) {
+      chosenServicesIds.push(selectedItem.id);
+    });
+
+    var payload = {
+      allBusinessServices: allBusinessServices,
+      chosenServicesIds: chosenServicesIds,
+      currentUserId: g_user.userID,
+      impactedServicesIds: impactedServicesIds,
+      message: $('.pd-resp-request-message').val(),
+      snIncidentId: snIncidentId
+    };
+
+    api.sendStatusUpdate(payload, function (error, result) {
+      handleErrors(error, result);
+      if (!error &amp;&amp; result.messageWasSent) {
+        payload.incidentId = result.incidentId;
+        payload.isSent = true;
+        setTimeout(api.fetchStatusUpdates.bind(null, payload, handleErrors), storeStatusUpdateTimeout);
+      }
+      modal.destroy();
+    });
+  });
+
+  $('.pd-form button.submit-cancel').on('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    trackingApi.track(
+      'send_status_dialog_clicked_cancel_button', {},
+      function (error, _result) {
+        if (error) {
+          jslog('Tracking error: ' + error);
+        }
+      }
+    );
+    modal.destroy();
+  });
+
+  $('select.pd-ibs-selector').select2();
+  addLoader();
+
+  function addLoader () {
+    var containerSelector = 'div.pd-ibs-selector ul';
+    var loaderSelector = '.pd-ibs-loader';
+    $(containerSelector).append($('&lt;span class="pd-ibs-loader icon-loading"&gt;&lt;/span&gt;'));
+    var containerElem = document.querySelector(containerSelector);
+    var loaderElem = document.querySelector(loaderSelector);
+    var siblingsWidth = $(containerSelector + ' li').width();
+    var offsetTop = (containerElem.offsetHeight - loaderElem.offsetHeight) / 2;
+    var offsetLeft = (containerElem.offsetWidth - loaderElem.offsetWidth) / 2 - siblingsWidth;
+    $(loaderSelector).css({'margin-top': offsetTop, 'margin-left': offsetLeft});
+    $('.pd-ibs-loader').css('visibility', 'visible');
+  }
+
+  function handleErrors (error, result) {
+    if (error) {
+      jslog(error);
+      var message = error.message || 'Unknown error. Details: ' + JSON.stringify(error);
+      g_form.addErrorMessage(message);
+    } else {
+      g_form.addInfoMessage(result.message);
+    }
+  }
+
+});
+
+function writePublishedMessage (willPublish) {
+  var message = 'This update will &lt;em&gt;not&lt;/em&gt; be published to your PagerDuty status dashboard.';
+  if (willPublish) {
+    message = 'This update &lt;em&gt;will&lt;/em&gt; be published to your PagerDuty status dashboard.';
+  }
+  document.querySelector('.pd-info-message').innerHTML = message;
+}
+</client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_status_update_dialog.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+  &lt;script language="javascript" src="x_pd_integration.PdMultiselect.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+
+  &lt;g:evaluate&gt;
+    var pdLogo = gs.getProperty('x_pd_integration.pd_logo');
+  &lt;/g:evaluate&gt;
+
+  &lt;form class="form_body form-horizontal pd-form"&gt;
+    &lt;style&gt;
+      .btn.submit-cancel { margin-right: 1rem; }
+      .pd-ibs-loader { visibility: hidden; }
+      .pd-ibs-selector { width: 100%; }
+      .pd-info-message { color: #bdc0c4; font-style: italic; }
+      .pd-warning-message-block { background-color: lightyellow; border-radius: 5px; font-style: italic; }
+      .pd-status-update-block { margin-top: 2rem; }
+      .select2-container-multi .select2-search-choice-close {
+        right: 4px;
+        top: 4px;
+      }
+      .select2-container-multi .select2-choices .select2-search-choice {
+        padding-right: 24px;
+      }
+      .form_body {
+        background-color: #fff;
+      }
+    &lt;/style&gt;
+
+    &lt;div class="row" style="margin-bottom: 2rem"&gt;
+      &lt;div class="col-sm-12 pd-warning-message-block"&gt;
+        &lt;span class="pd-warning-message"&gt;&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class="row"&gt;
+      &lt;div class="col-sm-12"&gt;
+        &lt;div class="form-group"&gt;
+          &lt;div&gt;
+            &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
+              &lt;span class="label-text"&gt;Impacted Business Service&lt;/span&gt;
+            &lt;/label&gt;
+          &lt;/div&gt;
+          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
+            &lt;select class="pd-ibs-selector" name="pd-ibs[]" multiple="multiple"&gt;&lt;/select&gt;
+          &lt;/div&gt;
+          &lt;div class="pd-group-selector hidden"&gt;
+            &lt;div class="input-group ref-container hidden"&gt;
+              &lt;input value="" class="form-control element_reference_input hidden" /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="form-group"&gt;
+          &lt;div&gt;
+            &lt;div&gt;
+              &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
+                &lt;span class="label-text"&gt;&lt;/span&gt;
+              &lt;/label&gt;
+            &lt;/div&gt;
+            &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
+              &lt;span class="label-text pd-info-message"&gt;&lt;/span&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="form-group pd-status-update-block"&gt;
+          &lt;div&gt;
+            &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
+              &lt;span class="label-text"&gt;Status Update&lt;/span&gt;
+            &lt;/label&gt;
+          &lt;/div&gt;
+          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
+            &lt;div class="input-group ref-container"&gt;
+              &lt;textarea class="form-control pd-resp-request-message"&gt;&lt;/textarea&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="row" style="margin-top: 2rem"&gt;
+      &lt;div class="col-sm-12"&gt;
+        &lt;div class="pull-left" style="padding: 6px 9px;"&gt;
+          &lt;img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" /&gt;
+        &lt;/div&gt;
+        &lt;div class="pull-right"&gt;
+          &lt;button class="btn btn-default submit-cancel"&gt;Cancel&lt;/button&gt;
+          &lt;button class="btn btn-primary submit-request"&gt;Send Update&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+  &lt;/form&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>status_update_dialog</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-02-27 13:19:01</sys_created_on>
+        <sys_id>92c9fbd4db53001036b9f53a299619b5</sys_id>
+        <sys_mod_count>469</sys_mod_count>
+        <sys_name>status_update_dialog</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_92c9fbd4db53001036b9f53a299619b5</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-29 14:39:44</sys_updated_on>
+    </sys_ui_page>
+</record_update>

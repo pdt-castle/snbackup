@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="x_pd_integration_pagerduty_webhook" label="PagerDuty webhook" language="en" table="dscy_swtch_fwd_rule">
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>x_pd_integration_pagerduty_webhook</element>
+            <help/>
+            <hint/>
+            <label>PagerDuty webhook</label>
+            <language>en</language>
+            <name>dscy_swtch_fwd_rule</name>
+            <plural>PagerDuty webhooks</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2019-01-24 10:35:42</sys_created_on>
+            <sys_id>ed93a440db1363004529dd3b5e9619e6</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>PagerDuty webhook</sys_name>
+            <sys_package display_value="Global" source="global">global</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_dscy_swtch_fwd_rule_x_pd_integration_pagerduty_webhook_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2019-01-24 10:35:42</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

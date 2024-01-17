@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties_category_m2m">
+    <sys_properties_category_m2m action="INSERT_OR_UPDATE">
+        <category display_value="PagerDuty">9e70d5724f474e00dd657bb28110c7fa</category>
+        <order>200</order>
+        <property display_value="x_pd_integration.rest_api_endpoint" name="x_pd_integration.rest_api_endpoint">c0c7ddf24f474e00dd657bb28110c71b</property>
+        <sys_class_name>sys_properties_category_m2m</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-15 16:06:09</sys_created_on>
+        <sys_id>2b28ddf24f474e00dd657bb28110c71f</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>x_pd_integration.rest_api_endpoint.PagerDuty</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_properties_category_m2m_2b28ddf24f474e00dd657bb28110c71f</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-05-03 02:11:41</sys_updated_on>
+    </sys_properties_category_m2m>
+</record_update>

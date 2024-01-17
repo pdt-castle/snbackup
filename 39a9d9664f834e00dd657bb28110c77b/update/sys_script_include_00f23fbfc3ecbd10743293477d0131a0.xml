@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyWebhooksMigration</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script to support webhooks migration</description>
+        <name>PagerDutyWebhooksMigration</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyWebhooksMigration = Class.create();
+PagerDutyWebhooksMigration.prototype = {
+  initialize: function () {
+    this.STOP_ON_VALIDATION_ERRORS = false;
+  },
+
+  /**
+   * Main execution function for a Migration job
+   * Migration can be set for selected webhooks v2 or all (by webhookSysIds parameter)
+   *
+   * @param {Object} grJob - GlideRecord of the job
+   * @param {Array} webhookSysIds - sys_ids of the webhooks to migrate, emtpy for all existing webhooks v2
+   */
+  executeMigrationJob: function (grJob, webhookSysIds) {
+    try {
+      var pdManagement = new PagerDutyWebhooksManagement();
+
+      // update job step
+      this._updateJobStep(grJob, 'Gathering data', 10);
+
+      // Run HealthChecks
+      pdManagement.executeHealthcheckJob(null);
+
+      // Run migration
+      this._runWebhooksMigration(grJob, webhookSysIds, pdManagement);
+    } catch (error) {
+      gs.error('PagerDuty Webhooks Migration failed: {0} - {1}', error.message, error.stack);
+      grJob.setValue('status', 'failed');
+      grJob.setValue('execution_errors', error.message);
+      grJob.update();
+    }
+  },
+
+  /**
+   * Executes migration that transforms webhooks v2 to v3
+   *
+   * @param {Object} grJob - GlideRecord of the job
+   * @param {Array} webhookSysIds - array of webhooks records Sys Ids
+   * @param {Object} pdManagement - PagerDutyWebhooksManagement instance
+   */
+  _runWebhooksMigration: function (grJob, webhookSysIds, pdManagement) {
+    var stepBasePercentage = 0.2;
+
+    // job data
+    var jobData = JSON.parse(grJob.getValue('data'));
+    jobData.totalWebhooksProcessedSuccess = 0;
+    jobData.totalWebhooksProcessedFailed = 0;
+
+    // Get webhooks
+    var grWebhook = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+    if (webhookSysIds.length &gt; 0) {
+      grWebhook.addQuery('sys_id', 'IN', webhookSysIds);
+    }
+    grWebhook.addQuery('webhook_version', 2);
+    grWebhook.query();
+
+    // Get total webhooks
+    jobData.totalWebhooks = grWebhook.getRowCount();
+    // update job data &amp; step - to show the progress on the UI page
+    jobData.completePercentage = stepBasePercentage * 100;
+    grJob.setValue('data', JSON.stringify(jobData));
+    grJob.setValue('step', 'Processing webhooks');
+    grJob.update();
+
+    while (grWebhook.next()) {
+      var migrationErrors = null;
+      // For webhooks with validation_errors of any kind, skip migration of webhook with error message
+      var validationErrors = JSON.parse(grWebhook.validation_errors) || [];
+      var webhookV2Id = grWebhook.getValue('webhook_id');
+      if (validationErrors.length &gt; 0 &amp;&amp; this.STOP_ON_VALIDATION_ERRORS) {
+        // update job status
+        migrationErrors = 'Migration skipped due to validation errors';
+        jobData.totalWebhooksProcessedFailed++;
+      } else {
+        // Create v3 webhooks
+        var webhookV3Id = pdManagement.createServiceWebhook(grWebhook);
+        if (gs.nil(webhookV3Id)) {
+          // update webhook migration_errors
+          migrationErrors = 'Webhook subscription creation failed';
+          jobData.totalWebhooksProcessedFailed++;
+        } else {
+          // update CI/AG. Skip if this webhook is not associated with a CI/AG
+          var targetTable = grWebhook.getValue('sn_table');
+          var targetSysId = grWebhook.getValue('sn_entity_sys_id');
+          if (!gs.nil(targetTable) &amp;&amp; gs.nil(targetSysId)) {
+            var grCIAG = new GlideRecord(targetTable.trim());
+            grCIAG.addQuery('sys_id', '=', targetSysId.trim());
+            grCIAG.query();
+            if (grCIAG.next()) {
+              grCIAG.setValue('x_pd_integration_pagerduty_webhook', webhookV3Id);
+              grCIAG.update();
+            }
+          }
+
+          // update v2 webhook in ServiceNow
+          grWebhook.setValue('webhook_version', 3);
+          grWebhook.setValue('webhook_id', webhookV3Id);
+          grWebhook.setValue('extension_schema_id', '');
+          grWebhook.setValue('temporarily_disabled', false);
+          grWebhook.update();
+
+          // delete v2 webhook in PagerDuty
+          var pd = new x_pd_integration.PagerDuty();
+          var responseStatus = pd.deletePdExtension(webhookV2Id);
+          if (responseStatus === 204) {
+            // update job status
+            jobData.totalWebhooksProcessedSuccess++;
+          } else {
+            migrationErrors = 'Webhook extension deletion failed';
+            jobData.totalWebhooksProcessedFailed++;
+          }
+        }
+      }
+      // update webhook
+      grWebhook.setValue('migration_errors', migrationErrors);
+      grWebhook.update();
+
+      // Calculate total processed webhooks percentage taking into account the starting percentage
+      jobData.completePercentage = this._calculateWebhooksCompletePercentage(stepBasePercentage, jobData);
+
+      // update job data - to show the progress on the UI page
+      grJob.setValue('data', JSON.stringify(jobData));
+      grJob.update();
+    };
+
+    // update job
+    grJob.setValue('status', 'finished');
+    grJob.update();
+  },
+
+  /**
+   * Calculates total processed webhooks percentage taking into account the starting percentage
+   * @param {Number} stepBasePercentage - starting percentage
+   * @param {Object} jobData - job data
+   * @returns {Number} - total processed webhooks percentage
+  */
+  _calculateWebhooksCompletePercentage: function (stepBasePercentage, jobData) {
+    var totalProcessedWebhooks = jobData.totalWebhooksProcessedSuccess + jobData.totalWebhooksProcessedFailed;
+    var totalProcessedWebhooksPercentage = (totalProcessedWebhooks / jobData.totalWebhooks) * (1 - stepBasePercentage);
+    return (stepBasePercentage + totalProcessedWebhooksPercentage) * 100;
+  },
+
+  /**
+   * Updates job step
+   *
+   * @param {Object} grJob - GlideRecord of the job
+   * @param {String} step - job step
+   * @param {Number} completePercentage - job complete percentage
+   * @returns {Object} - job record
+   */
+  _updateJobStep: function (grJob, step, completePercentage) {
+    var jobData = JSON.parse(grJob.getValue('data'));
+    jobData.completePercentage = completePercentage;
+    grJob.setValue('data', JSON.stringify(jobData));
+    grJob.setValue('step', step);
+    grJob.update();
+  },
+
+  type: 'PagerDutyWebhooksMigration'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-08-16 14:07:09</sys_created_on>
+        <sys_id>00f23fbfc3ecbd10743293477d0131a0</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PagerDutyWebhooksMigration</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_00f23fbfc3ecbd10743293477d0131a0</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-08-16 14:07:09</sys_updated_on>
+    </sys_script_include>
+</record_update>

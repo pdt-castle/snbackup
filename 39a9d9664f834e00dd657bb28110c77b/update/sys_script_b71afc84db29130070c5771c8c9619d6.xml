@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>true</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>false</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>sys_user_grmember</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition table="sys_user_grmember">group.x_pd_integration_sync_group_members_with_pd=true^group.x_pd_integration_pagerduty_teamISNOTEMPTY^EQ<item endquery="false" field="group.x_pd_integration_sync_group_members_with_pd" goto="false" newquery="false" operator="=" or="false" value="true"/>
+            <item endquery="false" field="group.x_pd_integration_pagerduty_team" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PD Remove Group Member from PagerDuty</name>
+        <order>100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script>(function executeRule(current, previous /*null when async*/) {
+
+  var epHelper = new x_pd_integration.EscalationPolicyHelper();
+  var pdEpId = epHelper.getPDEscalationPolicyId(current.getValue('group'));
+  if (!pdEpId)
+    return;
+
+  var eventName = "x_pd_integration.remove_user_from_pdteam";
+
+  var group = current.group.getRefRecord();
+  var user = current.user.getRefRecord();
+  var teamId = group.getValue('x_pd_integration_pagerduty_team');
+  var pdUserId = user.getValue('x_pd_integration_pagerduty_id');
+
+  if (!pdUserId || !teamId) {
+    return;
+  }
+
+  gs.eventQueue(eventName, group, pdUserId, teamId);
+  gs.debug("Firing event {0} for {1}", eventName, current.getDisplayValue());
+})(current, previous);
+</script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-04-13 16:14:47</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>b71afc84db29130070c5771c8c9619d6</sys_id>
+        <sys_mod_count>21</sys_mod_count>
+        <sys_name>PD Remove Group Member from PagerDuty</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_b71afc84db29130070c5771c8c9619d6</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-06-17 17:10:07</sys_updated_on>
+        <template/>
+        <when>before</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=b71afc84db29130070c5771c8c9619d6"/>
+</record_update>

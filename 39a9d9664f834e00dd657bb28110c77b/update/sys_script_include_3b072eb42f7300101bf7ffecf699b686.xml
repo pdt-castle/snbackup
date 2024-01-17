@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyCustomMIDServerConfiguration</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script for setting custom HTTP headers upon MID server configuration, when there is a necessity to invoke custom code in the global scope (to get token, for example).&#13;
+When there is no such need, custom headers can be set directly on the PagerDuty Settings page within the 'PagerDuty API requests customization' section.</description>
+        <name>PagerDutyCustomMIDServerConfiguration</name>
+        <script>var PagerDutyCustomMIDServerConfiguration = Class.create();
+PagerDutyCustomMIDServerConfiguration.prototype = {
+    initialize: function() {
+    },
+
+    // For reference: HTTP headers set in PagerDuty_REST class for every PagerDuty request
+    // restMessage.setRequestHeader("Accept", "application/vnd.pagerduty+json;version=2");
+    // restMessage.setRequestHeader("Authorization", "Token token=" + this.authToken);
+    // restMessage.setRequestHeader("Content-Type", "application/json");
+
+    // Uncomment setCustomHeaders function and set headers following the example
+
+    setCustomHeaders: function(restMessage) {
+    //   restMessage.setRequestHeader('X-Accept', 'application/vnd.pagerduty+json;version=2');
+    //   restMessage.setRequestHeader('X-Authorization', 'Token token=' + new PagerDuty_REST().authToken);
+    //   restMessage.setRequestHeader('Accept', 'application/json;v=1');
+    //   restMessage.setRequestHeader('Authorization', 'Bearer ' + new global.GetOauthToken().getToken());
+
+      return restMessage;
+    },
+
+    type: 'PagerDutyCustomMIDServerConfiguration'
+};</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-03-24 16:59:47</sys_created_on>
+        <sys_id>3b072eb42f7300101bf7ffecf699b686</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PagerDutyCustomMIDServerConfiguration</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_3b072eb42f7300101bf7ffecf699b686</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:47:07</sys_updated_on>
+    </sys_script_include>
+</record_update>

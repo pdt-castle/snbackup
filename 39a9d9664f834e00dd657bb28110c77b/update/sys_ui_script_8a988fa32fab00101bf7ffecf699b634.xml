@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_pd_integration.PdSelect</name>
+        <script>/*jshint esnext: true */
+
+var x_pd_integration = x_pd_integration || {};
+
+x_pd_integration.PdSelect = (function() {
+  "use strict";
+
+  var height = 200;
+
+  var css = document.createElement('style');
+  css.innerHTML = `
+    #pds-input {
+      color: silver;
+    }
+
+    .pds-container {
+      position: relative;
+    }
+
+    .pds-container .pds-body {
+      border: 1px lightgray solid;
+      border-radius: 3px;
+      cursor: text;
+    }
+
+    .pds-container .pds-body ul {
+      display: flex;
+      min-height: 32px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .pds-container .pds-body li {
+      display: block;
+      margin-left: 5px;
+    }
+
+    .pds-container .pds-body li:not(:last-child) {
+      text-decoration: underline;
+      border-radius: 3px;
+      padding: 0 5px;
+    }
+
+    .pds-container .pds-body li:last-child {
+      flex-grow: 1;
+    }
+
+    .pds-container .pds-body input {
+      height: 2rem;
+      border: none;
+      width: 100%;
+    }
+
+    .pds-container .pds-body input:focus {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .pds-container .pds-suggestions {
+      width: 100%;
+      box-shadow: 0 0 3px gray;
+      box-sizing: border-box;
+      visibility: hidden;
+      position: absolute;
+      top: 100%;
+      z-index: 1;
+      background-color: white;
+      height: ` + height + `px;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .pds-container .pds-suggestions ul {
+      padding: 10px;
+      margin: 0;
+      max-height: 100%;
+    }
+
+    .pds-container .pds-suggestions li {
+      display: block;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+    .pds-container .pds-suggestions li .description {
+      padding-top: 2px;
+      font-style: italic;
+      color: #a9a9a9;
+    }
+
+    .pds-container .pds-suggestions li:hover,
+    .pds-container .pds-suggestions li.active {
+      background-color: #EEE;
+      border-radius: 10px;
+    }
+
+    .pds-container .pds-suggestions.visible {
+      visibility: visible;
+    }
+
+    .pds-body .loader {
+      display: none;
+      position: absolute;
+      top: 20%;
+      right: 1.5%;
+    }
+    .pds-container .pds-body ul {
+      background-color: #fff;
+    }
+  `;
+  document.body.appendChild(css);
+
+  class PdSelect {
+    constructor({ element, initValue, initValues, load, minSearchLength, onUpdate }) {
+      this.props = arguments[0];
+      if (!minSearchLength)
+        this.props.minSearchLength = 0;
+      if (!initValue)
+        this.props.initValue = null;
+
+      element.innerHTML = `
+        &lt;div class="pds-container"&gt;
+          &lt;div class="pds-body"&gt;
+            &lt;div class="loader"&gt;
+              &lt;span class="icon icon-loading"&gt;&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;ul&gt;
+              &lt;li&gt;&lt;input id="pds-input" value="Select..."&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/div&gt;
+          &lt;div class="pds-error-message"&gt;
+          &lt;/div&gt;
+          &lt;div class="pds-suggestions"&gt;
+            &lt;div&gt;
+              &lt;ul&gt;&lt;/ul&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      `;
+
+      const i = element.querySelector('.pds-body input');
+      i.onfocus = e =&gt; this.onInputFocus(e);
+      i.onclick = e =&gt; this.onInputFocus(e);
+
+      window.addEventListener('mousedown', (e) =&gt; {
+        if (!element.contains(e.target)){
+          this.onInputBlur(e);
+        }
+      });
+
+      i.onchange = e =&gt; this.onInputEvent(e);
+      i.onkeypress = e =&gt; this.onInputEvent(e);
+      i.onkeydown = e =&gt; this.onInputEvent(e);
+      i.onpaste = e =&gt; this.onInputEvent(e);
+      i.oninput = e =&gt; this.onInputEvent(e);
+
+      element.querySelector('.pds-body').onclick = e =&gt; this.onMainAreaClick(e);
+      this.lastInputValue = '';
+      this.typingTimeout = null;
+      this.loadedSuggestions = [];
+
+      if (initValues) {
+        initValues(initValue, (result) =&gt; {
+          const items = result.items || [];
+          for (var i = 0; i &lt; items.length; i++) {
+            this.addElementToSelection(items[i].id, items[i].text, { focus: false });
+          }
+        });
+      }
+    }
+
+    showLoader() {
+      const { element } = this.props;
+      element.querySelector('.pds-body .loader').style.display = 'block';
+    }
+
+    hideLoader() {
+      const { element } = this.props;
+      element.querySelector('.pds-body .loader').style.display = 'none';
+    }
+
+    onInputFocus() {
+      const { element, minSearchLength } = this.props;
+      let suggestions = element.querySelector('.pds-suggestions ul');
+
+      if (this.getInputValue().length &lt; minSearchLength) {
+        this.hideLoader();
+        this.suggestionsHide();
+      }
+      else if (!this.selectionId() &amp;&amp; suggestions.children.length) {
+        this.hideLoader();
+        this.suggestionsShow();
+      }
+      else if (this.selectionId()) {
+        this.hideLoader();
+      }
+      else {
+        this.showLoader();
+      }
+
+      this.lastInputValue = element.querySelector('.pds-body input').value;
+      this.updateSuggestions(this.lastInputValue);
+    }
+
+    onInputBlur() {
+      const { element } = this.props;
+      element.querySelector('.pds-suggestions').classList.remove('visible');
+    }
+
+    onMainAreaClick() {
+      this.focusInput();
+    }
+
+    onInputEvent(e) {
+      const { element } = this.props;
+      const newVal = e.target.value;
+      if (this.lastInputValue !== newVal) {
+        this.lastInputValue = newVal;
+        this.updateSuggestions(newVal);
+      }
+
+      if (e.key === 'Backspace') {
+        const ul = element.querySelector('.pds-container .pds-body ul');
+        if (ul.children.length &gt; 1) {
+          ul.removeChild(ul.children[ul.children.length - 2]);
+          this.renderLoadedSuggestions();
+          this.updateSelections();
+        }
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!this.selectionId()) {
+          this.selectActiveSuggestion();
+          this.suggestionsRefresh();
+          this.suggestionsHide();
+        }
+      }
+
+      if (e.key === 'ArrowUp') {
+        if (!this.selectionId()) {
+          this.activatePreviousSuggestion();
+          this.suggestionsRefresh();
+          this.scrollList();
+        }
+      }
+
+      if (e.key === 'ArrowDown') {
+        if (!this.selectionId()) {
+          this.activateNextSuggestion();
+          this.suggestionsRefresh();
+          this.scrollList();
+        }
+      }
+    }
+
+    getInputValue() {
+      const { element } = this.props;
+      return element.querySelector('.pds-body input').value;
+    }
+
+    suggestionsRefresh() {
+      if (this.suggestionsHasElements()) {
+        this.suggestionsFlush();
+      }
+      else {
+        this.suggestionsShow();
+        this.lastInputValue = this.getInputValue();
+        this.updateSuggestions(this.lastInputValue);
+      }
+    }
+
+    suggestionsFlush() {
+      if (this.suggestionsHasElements()) {
+        this.suggestionsShow();
+      }
+      else {
+        this.suggestionsHide();
+      }
+    }
+
+    suggestionsIsVisible() {
+      const { element } = this.props;
+      return element.querySelector('.pds-suggestions').classList.contains('visible');
+    }
+
+    suggestionsHasElements() {
+      const { element } = this.props;
+      return element.querySelector('.pds-suggestions ul').children.length;
+    }
+
+    suggestionsHide() {
+      const { element } = this.props;
+      if (this.suggestionsIsVisible()) {
+        element.querySelector('.pds-suggestions').classList.remove('visible');
+      }
+    }
+
+    suggestionsShow() {
+      const { element } = this.props;
+      if (!this.suggestionsIsVisible()) {
+        element.querySelector('.pds-suggestions').classList.add('visible');
+      }
+    }
+
+    activateNextSuggestion() {
+      const { element } = this.props;
+
+      const currentSuggestion = element.querySelector('.pds-suggestions li.active') || element.querySelector('.pds-suggestions li:last-child');
+
+      if (currentSuggestion) {
+        const nextSuggestion = currentSuggestion.nextElementSibling || element.querySelector('.pds-suggestions li');
+        this.toggleActiveSuggestion(currentSuggestion, nextSuggestion);
+      }
+    }
+
+    activatePreviousSuggestion() {
+      const { element } = this.props;
+
+      const currentSuggestion = element.querySelector('.pds-suggestions li.active') || element.querySelector('.pds-suggestions li');
+
+      if (currentSuggestion) {
+        const nextSuggestion = currentSuggestion.previousElementSibling || element.querySelector('.pds-suggestions li:last-child');
+        this.toggleActiveSuggestion(currentSuggestion, nextSuggestion);
+      }
+
+    }
+
+    toggleActiveSuggestion(currentSuggestion, nextSuggestion) {
+      currentSuggestion.classList.remove('active');
+      nextSuggestion.classList.add('active');
+    }
+
+    scrollList() {
+      const { element } = this.props;
+
+      let list = element.querySelector('.pds-suggestions ul');
+      let active = element.querySelector('.pds-suggestions ul li.active');
+      list.scrollTop = 0;
+      let rect = active.getBoundingClientRect();
+      let offsetTop = rect.top + window.scrollY;
+      list.scrollTop = offsetTop - list.clientHeight;
+    }
+
+    selectActiveSuggestion() {
+      const { element } = this.props;
+
+      const currentSuggestion = element.querySelector('.pds-suggestions li.active');
+
+      if (currentSuggestion) {
+        this.addElementToSelection(currentSuggestion.getAttribute('data-id'), currentSuggestion.firstChild.textContent);
+      }
+    }
+
+    focusInput() {
+      const { element } = this.props;
+      element.querySelector('.pds-body input').value = '';
+      element.querySelector('.pds-body input').style.color = 'black';
+      element.querySelector('.pds-body input').focus();
+    }
+
+    resetInput() {
+      const { element } = this.props;
+      const input = element.querySelector('.pds-body input');
+      input.value = this.lastInputValue = '';
+    }
+
+    updateSuggestions(filter) {
+      const { load, minSearchLength } = this.props;
+
+      if (filter &amp;&amp; filter.length &lt; minSearchLength) {
+        this.hideLoader();
+        this.suggestionsHide();
+        return;
+      }
+
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = setTimeout(() =&gt; {
+        this.typingTimeout = null;
+        load(filter, (result) =&gt; {
+          const items = result.items || [];
+          this.mergeIntoSuggestions(items);
+          this.hideLoader();
+          this.renderLoadedSuggestions();
+          if (!this.selectionId()) {
+            this.suggestionsFlush();
+          }
+        });
+      }, 300);
+    }
+
+    updateSelections() {
+      const { onUpdate } = this.props;
+      if (onUpdate) {
+        onUpdate(this.selectionId());
+      }
+    }
+
+    getSelectionData() {
+      const { element } = this.props;
+      const ul = element.querySelector('.pds-container .pds-body ul');
+      return {
+        id: ul.children[0].getAttribute('data-id'),
+        name: ul.children[0].firstChild.textContent,
+      };
+    }
+
+    selectionId() {
+      return this.getSelectionData().id;
+    }
+
+    renderLoadedSuggestions() {
+      const { element } = this.props;
+      const filter = this.lastInputValue = element.querySelector('.pds-body input').value;
+      const selected = this.selectionId();
+
+      if (!this.loadedSuggestions.length) {
+        element.querySelector('.pds-suggestions').style.height = 'auto';
+        element.querySelector('.pds-suggestions ul').innerHTML = '&lt;li&gt;(no items)&lt;/li&gt;';
+        return;
+      }
+      element.querySelector('.pds-suggestions').style.height = height + 'px';
+
+      element.querySelector('.pds-suggestions ul').innerHTML =
+        this.loadedSuggestions
+          .filter(
+            i =&gt; selected !== i.id &amp;&amp; (
+              i.text.toLowerCase().includes(filter.toLowerCase())
+              ||
+              (i.description &amp;&amp; i.description.toLowerCase().includes(filter.toLowerCase()))
+            )
+          )
+          .map(i =&gt; {
+            if (i.description &amp;&amp; i.description !== 'null' &amp;&amp; i.description !== 'undefined') {
+              return (
+                '&lt;li data-id=' + i.id + '&gt;' + i.text +
+                  '&lt;div class="description"&gt;' + i.description + '&lt;/div&gt;' +
+                '&lt;/li&gt;'
+              )}
+              return '&lt;li data-id=' + i.id + '&gt;' + i.text + '&lt;/li&gt;'
+          }).join('');
+
+      var els = element.querySelector('.pds-suggestions ul').children;
+      for(var i = 0; i &lt; els.length; i++) {
+        let el = els[i];
+        el.onclick = () =&gt; this.addElementToSelection(el.getAttribute('data-id'), el.firstChild.textContent);  }
+    }
+
+    mergeIntoSuggestions(list) {
+      function cmp(a, b) { return ('' + a.text + a.id).localeCompare('' + b.text + b.id); }
+      this.loadedSuggestions = [].concat(this.loadedSuggestions, list);
+      this.loadedSuggestions =
+        this.loadedSuggestions
+          .sort(cmp)
+          .filter((val, index, arr) =&gt; index === 0 || val.id !== arr[index - 1].id);
+    }
+
+    addElementToSelection(id, text) {
+      const { element } = this.props;
+      var li = document.createElement('li');
+      li.setAttribute('data-id', id);
+      li.innerText = text;
+      const ul = element.querySelector('.pds-container .pds-body ul');
+      ul.insertBefore(li, element.querySelector('.pds-container .pds-body li:last-child'));
+      this.resetInput();
+      this.updateSelections();
+      this.suggestionsHide();
+    }
+  }
+
+  return PdSelect;
+})();
+</script>
+        <script_name>PdSelect</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-03-20 22:15:37</sys_created_on>
+        <sys_id>8a988fa32fab00101bf7ffecf699b634</sys_id>
+        <sys_mod_count>124</sys_mod_count>
+        <sys_name>x_pd_integration.PdSelect</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_script_8a988fa32fab00101bf7ffecf699b634</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-06-26 16:13:07</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

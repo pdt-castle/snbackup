@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Run Server Side Validation Script</description>
+        <display_name>Run Server Side Script</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes>Execute a new Health check job.&#13;
+Evaluate PagerDuty webhooks table to contain row with previously created Group with validation errors.</notes>
+        <order>2</order>
+        <step_config display_value="Run Server Side Script">41de4a935332120028bc29cac2dc349a</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-29 13:21:44</sys_created_on>
+        <sys_id>b8ae020e4765f110b15271e7826d431a</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>Run Server Side Script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_b8ae020e4765f110b15271e7826d431a</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-29 15:54:06</sys_updated_on>
+        <table/>
+        <test display_value="PD - Webhooks Healthcheck - webhook_service_mismatch and webhook_service_mismatch_multiple">ecae02c64765f110b15271e7826d43b9</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=b8ae020e4765f110b15271e7826d431a"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>b8ae020e4765f110b15271e7826d431a</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-29 13:21:44</sys_created_on>
+        <sys_id>38ae020e4765f110b15271e7826d431b</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-29 15:54:06</sys_updated_on>
+        <value>function mockPDServices(pdWebhookManagement) {&#13;
+    spyOn(pdWebhookManagement, 'getAllPagerDutyServices').and.returnValue(&#13;
+        [{&#13;
+            "id": "SVC_1",&#13;
+            "name": "Mocked PD Service SVC_1"&#13;
+        }]&#13;
+    );&#13;
+    spyOn(pdWebhookManagement, 'getAllPagerDutyWebhooksV3').and.returnValue(&#13;
+        [{&#13;
+                id: 'WHV3_1',&#13;
+                service_id: 'SVC_2',&#13;
+                webhook_version: 3,&#13;
+                task_type: 'incident',&#13;
+                sync_option: 'auto',&#13;
+                custom_query_params: '',&#13;
+                temporarily_disabled: false,&#13;
+            },&#13;
+            {&#13;
+                id: 'WHV3_2',&#13;
+                service_id: 'SVC_1',&#13;
+                webhook_version: 3,&#13;
+                task_type: 'incident',&#13;
+                sync_option: 'auto',&#13;
+                custom_query_params: '',&#13;
+                temporarily_disabled: false,&#13;
+            }&#13;
+        ]&#13;
+    );&#13;
+}&#13;
+(function(outputs, steps, params, stepResult, assertEqual) {&#13;
+    var previousStepOutput = steps('b0ae02c64765f110b15271e7826d43be');&#13;
+    var recordId = previousStepOutput.record_id;&#13;
+    describe('Webhook healthcheck - webhook_service_mismatch', function() {&#13;
+        it('healthcheck marks row with validation error', function() {&#13;
+            expect(recordId).not.toBeNull();&#13;
+            var pdWM = new x_pd_integration.PagerDutyWebhooksManagement();&#13;
+            mockPDServices(pdWM);&#13;
+&#13;
+            pdWM.executeHealthcheckJob(null);&#13;
+&#13;
+            expect(pdWM.getAllPagerDutyServices).toHaveBeenCalled();&#13;
+            expect(pdWM.getAllPagerDutyWebhooksV3).toHaveBeenCalled();&#13;
+            // expect(pdWM.getAllPagerDutyWebhooksV2).toHaveBeenCalled();&#13;
+            var grWebhook = new GlideRecord('x_pd_integration_pagerduty_webhooks');&#13;
+            var hasRecord = grWebhook.get('sn_entity_sys_id', recordId);&#13;
+            expect(hasRecord).toBe(true);&#13;
+            var validationErrors = grWebhook.getValue("validation_errors");&#13;
+            expect(validationErrors).not.toBeNull();&#13;
+            var validationErrorsObj = JSON.parse(validationErrors);&#13;
+            expect(validationErrorsObj.length).toBe(1);&#13;
+            expect(validationErrorsObj[0]).toEqual(jasmine.objectContaining({&#13;
+                "code": "webhook_service_mismatch",&#13;
+                "action_type": "auto_remediation"&#13;
+            }));&#13;
+        });&#13;
+    });&#13;
+    describe('Webhook healthcheck - webhook_service_mismatch_multiple', function() {&#13;
+        it('healthcheck marks row with validation error', function() {&#13;
+            expect(recordId).not.toBeNull();&#13;
+            var pdWM = new x_pd_integration.PagerDutyWebhooksManagement();&#13;
+            mockPDServices(pdWM);&#13;
+            // Add one more Webhook (v2) that points to SVC_1 to cause the multiple mismatch condition&#13;
+            spyOn(pdWM, 'getAllPagerDutyWebhooksV2').and.returnValue(&#13;
+                [{&#13;
+                    id: 'WHV2_1',&#13;
+                    service_id: 'SVC_1',&#13;
+                    webhook_version: 2,&#13;
+                    extension_schema_id: 'PAKM60Z',&#13;
+                    task_type: 'incident',&#13;
+                    sync_option: 'auto',&#13;
+                    custom_query_params: '',&#13;
+                    temporarily_disabled: false,&#13;
+                }]);&#13;
+			&#13;
+            pdWM.executeHealthcheckJob(null);&#13;
+            expect(pdWM.getAllPagerDutyServices).toHaveBeenCalled();&#13;
+            expect(pdWM.getAllPagerDutyWebhooksV3).toHaveBeenCalled();&#13;
+            expect(pdWM.getAllPagerDutyWebhooksV2).toHaveBeenCalled();&#13;
+            var grWebhook = new GlideRecord('x_pd_integration_pagerduty_webhooks');&#13;
+            var hasRecord = grWebhook.get('sn_entity_sys_id', recordId);&#13;
+            expect(hasRecord).toBe(true);&#13;
+            var validationErrors = grWebhook.getValue("validation_errors");&#13;
+            expect(validationErrors).not.toBeNull();&#13;
+            var validationErrorsObj = JSON.parse(validationErrors);&#13;
+            expect(validationErrorsObj.length).toBe(1);&#13;
+            expect(validationErrorsObj[0]).toEqual(jasmine.objectContaining({&#13;
+                "code": "webhook_service_mismatch_multiple",&#13;
+                "action_type": "manual_remediation"&#13;
+            }));&#13;
+        });&#13;
+    });&#13;
+})(outputs, steps, params, stepResult, assertEqual);&#13;
+// uncomment the next line to execute this script as a jasmine test&#13;
+jasmine.getEnv().execute();</value>
+        <variable display_value="Test script">989d9e235324220002c6435723dc3484</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>b8ae020e4765f110b15271e7826d431a</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-29 13:21:44</sys_created_on>
+        <sys_id>74ae020e4765f110b15271e7826d431b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-29 13:21:44</sys_updated_on>
+        <value>3.1</value>
+        <variable display_value="Jasmine version">42f2564b73031300440211d8faf6a777</variable>
+    </sys_variable_value>
+</record_update>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.v3webhook</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Set of functions to manage Webhooks V3</description>
+        <name>v3webhook</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var v3webhook = Class.create();
+v3webhook.prototype = {
+  type: 'v3webhook',
+  initialize: function () {
+    this.client = new x_pd_integration.PagerDuty().client;
+    this.pd_endpoint = 'webhook_subscriptions';
+    this.rest = new x_pd_integration.PagerDuty_REST();
+    this.sn_auth_user = gs.getProperty('x_pd_integration.sn_auth_user');
+    this.sn_auth_pass = gs.getProperty('x_pd_integration.sn_auth_userpwd');
+    this.sn_auth_basic = gs.base64Encode(this.sn_auth_user + ':' + this.sn_auth_pass);
+    this.sn_base_url = gs.getProperty('glide.servlet.uri');
+    this.sn_webhook_path = gs.getProperty('x_pd_integration.webhook_restapi');
+    this.sn_webhook_url = this.sn_base_url + this.sn_webhook_path;
+    this.supported_events = [
+      'incident.acknowledged',
+      'incident.annotated',
+      'incident.conference_bridge.updated',
+      'incident.custom_field_values.updated',
+      'incident.delegated',
+      'incident.escalated',
+      'incident.priority_updated',
+      'incident.reassigned',
+      'incident.resolved',
+      'incident.responder.added',
+      'incident.responder.replied',
+      'incident.triggered',
+      'incident.unacknowledged',
+      'incident.workflow.completed',
+      'incident.workflow.started',
+    ];
+  },
+
+  /**
+   * Gets v3 webhook subscription
+   * @param {string} webhookId
+   * @returns {Object} parsed JSON
+   */
+  get: function (webhookId) {
+    if (!webhookId) {
+      throw new Error('Failed to get subscription, please provide webhook Id');
+    }
+    return this.rest.getRESTThrowable(this.pd_endpoint + '/' + webhookId).data;
+  },
+
+  /**
+   * Creates PagerDuty webhook subscription and adds record
+   * in the PagerDuty Webhooks table
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @param {GlideRecordSecure} grRec - record of a table (e.g., cmdb_ci, sys_user_group)
+   * @returns {String} PagerDuty webhook subscription ID
+   */
+  create: function (pdServiceId, grRec) {
+    if (!pdServiceId) {
+      throw new Error('Failed to create v3 webhook, please provide service id');
+    }
+    var syncOption = gs.getProperty('x_pd_integration.webhook_config_sync_option');
+    var taskType = gs.getProperty('x_pd_integration.webhook_config_task_type');
+    var params = {
+      sync_option: syncOption,
+      task_type: taskType
+    };
+
+    var webhookId = this.createPdSubscription(pdServiceId, params);
+
+    // PagerDuty webhooks not linked with any CI/Group (depending on mapping) are not registered
+    // in the PagerDuty Webhooks table. In particular, webhook created on default service provisioning
+    if (grRec) {
+      var pd = new x_pd_integration.PagerDuty();
+      var pdServiceName = pd.getPdServiceName(pdServiceId);
+      var snTable = grRec.getTableName();
+      var snEntityName = grRec.getValue('name');
+      var snEntitySysId = grRec.getValue('sys_id');
+
+      var grPdWh = new GlideRecordSecure('x_pd_integration_pagerduty_webhooks');
+      // handles case when ci provisioned -&gt; pd webhook deleted and webhook deleted in ci form -&gt;
+      // webhook provisioned through ui action
+      grPdWh.addQuery('sn_entity_sys_id', snEntitySysId);
+      grPdWh.addQuery('pd_service_id', pdServiceId);
+      grPdWh.query();
+      if (grPdWh.next()) {
+        grPdWh.setValue('sn_entity_name', snEntityName);
+        grPdWh.setValue('pd_service_name', pdServiceName);
+        grPdWh.setValue('webhook_id', webhookId);
+        grPdWh.setValue('webhook_version', 3);
+        grPdWh.setValue('sync_option', syncOption);
+        grPdWh.setValue('task_type', taskType);
+        grPdWh.update();
+      } else {
+        grPdWh.initialize();
+        grPdWh.setValue('sn_table', snTable);
+        grPdWh.setValue('sn_entity_name', snEntityName);
+        grPdWh.setValue('sn_entity_sys_id', snEntitySysId);
+        grPdWh.setValue('pd_service_name', pdServiceName);
+        grPdWh.setValue('pd_service_id', pdServiceId);
+        grPdWh.setValue('webhook_id', webhookId);
+        grPdWh.setValue('webhook_version', 3);
+        grPdWh.setValue('sync_option', syncOption);
+        grPdWh.setValue('task_type', taskType);
+        grPdWh.insert();
+      }
+    }
+
+    return webhookId;
+  },
+
+  /**
+   * Creates PagerDuty webhook subscription in PD
+   * @param {String} pdServiceId - PagerDuty service ID
+   * @param {Object} params - {task_type, sync_option}
+   * @returns {String} PagerDuty webhook subscription ID
+   */
+  createPdSubscription: function (pdServiceId, params) {
+    if (!pdServiceId) {
+      throw new Error('Failed to create v3 webhook, please provide service id');
+    }
+    var events = this.supported_events;
+    if (params.sync_option === 'manual') {
+      events = events.filter(function (event) {
+        return event !== 'incident.triggered';
+      });
+    }
+    var webhookUrl = this.sn_webhook_url;
+    var names = Object.keys(params).filter(function (name) {
+      return Boolean(params[name]);
+    });
+    if (names.length) {
+      var delimiter;
+      names.forEach(function (name, index) {
+        delimiter = index ? '&amp;' : '?';
+        webhookUrl += delimiter + name + '=' + params[name];
+      });
+    }
+
+    var requestBody = {
+      webhook_subscription: {
+        type: 'webhook_subscription',
+        active: true,
+        delivery_method: {
+          temporarily_disabled: false,
+          type: 'http_delivery_method',
+          url: webhookUrl,
+          custom_headers: [
+            {name: 'Authorization', value: 'Basic ' + this.sn_auth_basic}
+          ]
+        },
+        description: 'Created by the "PagerDuty Platform for Real-Time Operations" application',
+        events: events,
+        filter: {
+          id: pdServiceId,
+          type: 'service_reference'
+        }
+      }
+    };
+    var responseBody = this.rest.postRESTThrowable(this.pd_endpoint, requestBody, '').data;
+    var webhookId = responseBody.webhook_subscription.id;
+    return webhookId;
+  },
+  /**
+   * Updates v3 webhook subscription
+   * @param {string} webhookId
+   * @param {object} requestBody
+   * @returns {Object} parsed JSON
+   */
+  update: function (webhookId, requestBody) {
+    if (!webhookId) {
+      throw new Error('Failed to update subscription, please provide webhook Id');
+    } else if (!requestBody) {
+      throw new Error('Failed to update subscription, please provide request body');
+    }
+    return this.rest.putRESTThrowable(this.pd_endpoint + '/' + webhookId, requestBody, '').data;
+  },
+
+  isSupported: function (payload) {
+    return this.isV3Webhook(payload) &amp;&amp; ''.includes.call(this.supported_events, payload.event.event_type);
+  },
+
+  isV3Webhook: function (payload) {
+    return payload.hasOwnProperty('event') &amp;&amp; payload.event.hasOwnProperty('event_type');
+  }
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-06-30 14:50:59</sys_created_on>
+        <sys_id>7bbc825787d41110007552873cbb35a1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>v3webhook</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_7bbc825787d41110007552873cbb35a1</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-06-30 14:50:59</sys_updated_on>
+    </sys_script_include>
+</record_update>

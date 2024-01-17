@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>ServiceNow REST endpoint for webhook callback (default=api/x_pd_integration/pagerduty2sn)</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_pd_integration.webhook_restapi</name>
+        <read_roles>admin,x_pd_integration.admin</read_roles>
+        <suffix>webhook_restapi</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2016-08-08 20:21:08</sys_created_on>
+        <sys_id>905cb8b2db49660087f0f5f0cf96199c</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>x_pd_integration.webhook_restapi</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_properties_905cb8b2db49660087f0f5f0cf96199c</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2019-04-19 12:20:36</sys_updated_on>
+        <type>string</type>
+        <value>api/x_pd_integration/pagerduty2sn</value>
+        <write_roles>admin,x_pd_integration.admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=905cb8b2db49660087f0f5f0cf96199c"/>
+</record_update>

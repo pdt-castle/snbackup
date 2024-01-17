@@ -1,0 +1,830 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+
+// navbar back button
+var navBarBackButton = $J('#navbar-back-button');
+// step indicator
+var stepsCounterPlaceholder = $J('#steps-completed-counter-placeholder');
+// step 1 - Select a ServiceNow field
+var snFieldSelect = $J('#servicenow-field_select');
+var snFieldTypeContainer = $J('#servicenow-fieldtype-container');
+var snFieldTypePlaceholder = $J('#servicenow-fieldtype-placeholder');
+// step 2 - Configure the new PagerDuty field
+var pdDisplayNameGroup = $J('#pagerduty-displayname_group');
+var pdDisplayNameInput = $J('#pagerduty-displayname_input');
+var pdFieldNameGroup = $J('#pagerduty-fieldname_group');
+var pdFieldNameInput = $J('#pagerduty-fieldname_input');
+var pdDescriptionGroup = $J('#pagerduty-description_group');
+var pdDescriptionInput = $J('#pagerduty-description_input');
+var pdFieldTypeInput = $J('input[name="pagerduty-fieldtype"]');
+// step 3 - Review Mapping
+var snFieldReviewInput = $J('#servicenow-field-review_input');
+var pdFieldReviewInput = $J('#pagerduty-field-review_input');
+var fieldNotes = $J('#notes-and-disclaimer-container');
+var fieldNotesList = $J('#field-notes-list');
+// save buttons (navbar and main)
+var saveButtons = $J('button[data-savebutton="true"]');
+// modal
+var successModal = $J('#success-modal');
+var successModalDoneButton = $J('#success-modal-done-button');
+var successModalCreateAnotherButton = $J('#success-modal-create-another-button');
+var successModalFieldNamePlaceholder = $J('#success-modal-field-name-placeholder');
+// error &amp; warning toasts
+var errorToast = $J('#error-toast');
+var errorToastCloseButton = $J('#error-toast-close-button');
+var ifrWarningToast = $J('#ifr-warning-toast');
+
+$J(function () {
+  setupInputEventHandler(pdDisplayNameGroup, true, false, true, g_customFields.displayNames);
+  setupInputEventHandler(pdFieldNameGroup, true, true, true, g_customFields.names);
+  setupInputEventHandler(pdDescriptionGroup, false, false, false, []);
+
+  setupServiceNowFieldDropdown();
+  setupSaveButtonsEventHandler();
+
+  navBarBackButton.on('click', function () {
+    navBarBackButton.prop('disabled', true);
+    g_navigation.open('x_pd_integration_custom_field_mapping_list.do');
+  });
+  successModalDoneButton.on('click', function () {
+    successModalDoneButton.prop('disabled', true);
+    g_navigation.open('x_pd_integration_custom_field_mapping_list.do');
+  });
+  successModalCreateAnotherButton.on('click', function () {
+    successModalCreateAnotherButton.prop('disabled', true);
+    g_navigation.reloadWindow();
+  });
+  errorToastCloseButton.on('click', function () {
+    errorToast.hide();
+  });
+});
+
+function setupInputEventHandler (formGroup, requiredFieldValidation, invalidFormatValidation, uniquenessValidation, uniqueValues) {
+  var prefix = formGroup.data('prefix');
+  var input = $J('#' + prefix + '_input');
+  var maxLength = input.attr('maxlength');
+  var charCounterPlaceholder = $J('#' + prefix + '_charsleft');
+  var charLimitMessageElement = $J('#' + prefix + '_messages').children('[data-message="charlimit"]');
+  var requiredFieldMessageElement = $J('#' + prefix + '_messages').children('[data-message="required"]');
+  var invalidFormatMessageElement = $J('#' + prefix + '_messages').children('[data-message="format"]');
+  var uniquenessMessageElement = $J('#' + prefix + '_messages').children('[data-message="uniqueness"]');
+  // register on input event handler
+  input.on('input', function () {
+    var requiredFieldError = requiredFieldValidation &amp;&amp; input.val().length === 0;
+    var invalidFormatError = invalidFormatValidation &amp;&amp; (input.val().match(/[^\w]/gi) !== null);
+    var uniquenessError = uniquenessValidation &amp;&amp; uniqueValues.indexOf(input.val()) &gt; -1;
+    if (requiredFieldValidation) {
+      requiredFieldMessageElement.toggle(requiredFieldError);
+    }
+    if (invalidFormatValidation) {
+      invalidFormatMessageElement.toggle(invalidFormatError);
+    }
+    if (uniquenessValidation) {
+      uniquenessMessageElement.toggle(uniquenessError);
+    }
+    if (charCounterPlaceholder &amp;&amp; maxLength &amp;&amp; maxLength &gt; 0) {
+      charCounterPlaceholder.text(maxLength - input.val().length);
+      if (requiredFieldValidation || invalidFormatValidation || uniquenessValidation) {
+        if (requiredFieldError || invalidFormatError || uniquenessError) {
+          // validation errors have priority over char limit information
+          charLimitMessageElement.hide();
+        } else {
+          charLimitMessageElement.show();
+        }
+      }
+    }
+    if (requiredFieldError || invalidFormatError || uniquenessError) {
+      if (uniquenessError) {
+        var prefixElement = prefix.replace(/-/g, '_');
+        trackEvent('custom_fields_mapping_deduping_' + prefixElement + '_show_error', {});
+      }
+      formGroup.addClass('has-error');
+      input.data('invalid', true);
+    } else {
+      formGroup.removeClass('has-error');
+      input.data('invalid', false);
+    }
+  });
+  // register on focus event handler
+  input.on('focus', function () {
+    startStep2();
+  });
+  // register on blur event handler
+  input.on('blur', function () {
+    if (!pdDisplayNameInput.data('invalid') &amp;&amp; !pdFieldNameInput.data('invalid')) {
+      finishStep2();
+    }
+    if (!pdDisplayNameInput.data('invalid')) {
+      pdFieldReviewInput.val(pdDisplayNameInput.val());
+    }
+  });
+}
+
+function setupServiceNowFieldDropdown () {
+  // add default option
+  snFieldSelect.append($J('&lt;option&gt;', {
+    value: '-',
+    text: '-- Select a field --'
+  }));
+  // add eligible fields
+  g_eligibleFields.forEach(function (field) {
+    snFieldSelect.append($J('&lt;option&gt;', {
+      value: field.sysId,
+      text: field.displayName + ' (' + field.dataTypeDisplay + ')'
+    }));
+  });
+  // register on change event handler
+  snFieldSelect.on('change', function () {
+    var selectedOption = $J(this).find('option:selected'); // eslint-disable-line es5/no-es6-methods
+    var selectedField = g_eligibleFields.find(function (field) { // eslint-disable-line es5/no-es6-methods
+      return field.sysId === selectedOption.val();
+    });
+    if (selectedField) {
+      setActiveField(selectedField);
+    } else {
+      clearActiveField();
+    }
+  });
+}
+
+function setupSaveButtonsEventHandler () {
+  saveButtons.on('click', function () {
+    saveButtons.prop('disabled', true);
+    var selectedOption = snFieldSelect.find('option:selected'); // eslint-disable-line es5/no-es6-methods
+    var selectedField = g_eligibleFields.find(function (field) { // eslint-disable-line es5/no-es6-methods
+      return field.sysId === selectedOption.val();
+    });
+    if (selectedField) {
+      var mapping = {
+        snFieldId: selectedField.sysId,
+        pdFieldDisplayName: pdDisplayNameInput.val(),
+        pdFieldName: pdFieldNameInput.val(),
+        pdFieldDescription: pdDescriptionInput.val()
+      };
+      var customFieldsApi = x_pd_integration.AjaxHelper.ajaxClientFor('PagerDutyCustomFieldsController');
+      customFieldsApi.createCustomFieldMapping(mapping, function (error, _result) {
+        if (error) {
+          handleSaveError(error.message);
+          saveButtons.prop('disabled', false); // user may try again
+        } else {
+          handleSaveSuccess(selectedOption, selectedField);
+        }
+      });
+      // log buttonId
+      var buttonId = $J(this).attr('id');
+      var buttonPosition = buttonId === 'navbar-save-button' ? 'navbar' : 'form-bottom';
+      var displayName = selectedField &amp;&amp; selectedField.displayName || '';
+      var dataType = selectedField &amp;&amp; selectedField.dataType || '';
+      var trackingProps = {
+        button_position: buttonPosition,
+        sn_field_name: displayName,
+        sn_field_type: dataType
+      };
+      trackEvent('custom_fields_mapping_save_click_button', trackingProps);
+    }
+  });
+}
+
+function handleSaveError (message) {
+  if (message.indexOf('Cannot create more than') &gt; -1) {
+    $J('#error-generic-message').hide();
+    $J('#error-limit-reached-message').show();
+  } else {
+    $J('#error-message-placeholder').text(message);
+    $J('#error-generic-message').show();
+    $J('#error-limit-reached-message').hide();
+  }
+  errorToast.show();
+  window.scrollTo(0, 0);
+}
+
+function handleSaveSuccess (selectedOption, selectedField) {
+  successModal.modal();
+  successModalDoneButton.trigger('focus');
+  successModalFieldNamePlaceholder.text(selectedField.displayName);
+}
+
+function setActiveField (field) {
+  snFieldSelect.val(field.sysId);
+  snFieldTypeContainer.show();
+  snFieldTypePlaceholder.text(field.type === 'single_value_fixed' ? 'Choice' : field.dataTypeDisplay);
+  pdDisplayNameInput.prop('disabled', false)
+    .val(generateUniqueName(field.displayName, g_customFields.displayNames, false))
+    .trigger('input').trigger('focus');
+  pdFieldNameInput.prop('disabled', false)
+    .val(generateUniqueName(field.displayName, g_customFields.names, true))
+    .trigger('input');
+  pdDescriptionInput.prop('disabled', false)
+    .trigger('input');
+  pdFieldTypeInput.val(mapToPagetDutyDisplayType(field.type, field.dataType));
+  snFieldReviewInput.val(field.displayName);
+  pdFieldReviewInput.val(pdDisplayNameInput.val());
+
+  ifrWarningToast.toggle(g_ifrIncidentFields.indexOf(field.name) &gt; -1);
+
+  displayNotesForField(field);
+
+  startStep2();
+}
+
+function clearActiveField () {
+  snFieldSelect.val('-');
+  snFieldTypeContainer.hide();
+  snFieldTypePlaceholder.text('');
+  pdDisplayNameGroup.removeClass('has-error');
+  pdDisplayNameInput.val('').prop('disabled', true);
+  pdFieldNameGroup.removeClass('has-error');
+  pdFieldNameInput.val('').prop('disabled', true);
+  pdDescriptionGroup.removeClass('has-error');
+  pdDescriptionInput.text('').prop('disabled', true);
+  pdFieldTypeInput.val('');
+  snFieldReviewInput.val('');
+  pdFieldReviewInput.val('');
+
+  $J('[data-message="required"]').hide();
+  $J('[data-message="format"]').hide();
+  $J('[data-message="uniqueness"]').hide();
+  $J('[data-message="charlimit"]').show();
+
+  ifrWarningToast.hide();
+  fieldNotes.hide();
+
+  startStep1();
+}
+
+function generateUniqueName (name, existingNames, convertToSnakeCase) {
+  var uniqueName = name;
+  if (convertToSnakeCase) {
+    var words = uniqueName.trim().replace(/[^\w\s]/gi, '').split(' ');
+    uniqueName = words.map(function (word) {
+      return word.toLowerCase();
+    }).join('_');
+  }
+  // gurarantee uniqueness
+  var counter = 1;
+  while (existingNames.indexOf(uniqueName) &gt; -1) {
+    uniqueName += (convertToSnakeCase ? '_' : ' ') + counter++;
+  }
+  // return unique name
+  return uniqueName;
+}
+
+function mapToPagetDutyDisplayType (fieldType, dataType) {
+  if (fieldType === 'single_value_fixed') {
+    return 'Single Select';
+  }
+  switch (dataType) {
+    case 'glide_date_time':
+    case 'due_date':
+      return 'Date Time';
+    case 'string':
+      return 'Text';
+    case 'boolean':
+      return 'Checkbox';
+    case 'integer':
+      return 'Integer';
+    case 'url':
+      return 'URL';
+    case 'decimal':
+      return 'Decimal';
+    default:
+      return dataType;
+  }
+}
+
+function startStep1 () {
+  stepsCounterPlaceholder.text('0');
+  changeStepIndicatorState(1, 'started');
+  changeStepIndicatorState(2, 'not-started');
+  changeStepIndicatorState(3, 'not-started');
+  saveButtons.prop('disabled', true);
+}
+
+function startStep2 () {
+  stepsCounterPlaceholder.text('1');
+  changeStepIndicatorState(1, 'finished');
+  changeStepIndicatorState(2, 'started');
+  changeStepIndicatorState(3, 'not-started');
+  saveButtons.prop('disabled', true);
+}
+
+function finishStep2 () {
+  stepsCounterPlaceholder.text('3');
+  changeStepIndicatorState(2, 'finished');
+  changeStepIndicatorState(3, 'finished');
+  saveButtons.prop('disabled', false);
+}
+
+function changeStepIndicatorState (step, newState) {
+  var stepIndicator = $J('#step-' + step + '-indicator');
+  stepIndicator.removeClass('step-indicator-not-started step-indicator-started step-indicator-finished');
+  stepIndicator.addClass('step-indicator-' + newState);
+}
+
+function displayNotesForField (field) {
+  fieldNotesList.children().hide();
+  fieldNotesList.children('[data-for-type="all"]').show();
+  if (field.type === 'single_value_fixed') {
+    fieldNotesList.children('[data-for-type="choice"]').show();
+    // set number of options displayed
+    $J('#field-notes-options-count-placeholder').text(field.options.length);
+    // add options to the UL list
+    var optionsList = $J('#field-notes-options-list').empty();
+    field.options.forEach(function (option) {
+      optionsList.append($J('&lt;li&gt;', {
+        text: option
+      }));
+    });
+  } else if (field.dataType === 'glide_date_time' || field.dataType === 'due_date') {
+    fieldNotesList.children('[data-for-type="datetime"]').show();
+  } else if (field.dataType === 'string') {
+    fieldNotesList.children('[data-for-type="string"]').show();
+  } else if (field.dataType === 'url') {
+    fieldNotesList.children('[data-for-type="url"]').show();
+  }
+
+  if (field.defaultValue) {
+    $J('#field-notes-default-value-placeholder').text(field.defaultValue);
+    $J('#field-notes-default-value-container').show();
+  } else {
+    $J('#field-notes-default-value-container').hide();
+  }
+
+  fieldNotes.show();
+}
+
+function trackEvent (eventName, properties) {
+  var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+  trackingApi.track(eventName, properties, function (error, _result) {
+    if (error) {
+      jslog('Tracking error: ' + error);
+    }
+  });
+}
+</client_script>
+        <description>New Custom field mapping UI page</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_custom_field_mapping_create.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+  &lt;style&gt;
+    body[data-formname="ui_page_render"] {
+      padding: 0;
+    }
+    .navbar .navbar-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 95%;
+      margin-left: 8px;
+    }
+    .page-container {
+      padding: 24px 48px 0 24px;
+      font-style: normal;
+      line-height: normal;
+    }
+    .page-container .header {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .main-container {
+      border: 1px solid #D3D6DC;
+      margin-top: 12px;
+    }
+    /* step indicator container (left side) */
+    .sidebar-container {
+      padding: 16px;
+    }
+    .sidebar-container .divider {
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    .sidebar-container .steps-completed {
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .sidebar-container .step-indicator-not-started, 
+    .sidebar-container .step-indicator-started, 
+    .sidebar-container .step-indicator-finished {
+      margin-right: 8px;
+    }
+    .sidebar-container .step-indicator-not-started {
+      color: #CBCED5
+    }
+    .sidebar-container .step-indicator-started {
+      color: #778BEE;
+    }
+    .sidebar-container .step-indicator-finished {
+      color: #51B962;
+    }
+    /* form container (righ side) */
+    .form-container {
+      border-left: 1px solid #D3D6DC;
+      padding: 12px;
+    }
+    .form-container .step-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .form-container .step-header i, .control-label i {
+      margin-left: 4px;
+    }
+    .form-container .step-content {
+      margin-left: 24px;
+    }
+    .form-container .step-controls {
+      max-width: 500px;
+    }
+    .form-container .step-controls .control-label {
+      font-size: 12px;
+      margin-top: 18px;
+    }
+    .form-container .step-controls .info-label {
+      font-size: 12px;
+      padding: 4px;
+    }
+    .form-container .step-controls .info-message {
+      font-size: 12px;
+      padding: 2px 4px;
+      background-color: #BDDCF2;
+      border-radius: 2px;
+    }
+    .form-container .step-controls .error-message {
+      display: none;
+      font-size: 12px;
+      padding: 2px 4px;
+      background-color: #F8C8CD;
+      border-radius: 2px;
+    }
+    .form-container #pagerduty-fieldname_group .error-message {
+      margin-top: 4px;
+    }
+    .form-container .form-group.has-error .form-control {
+      border: 1px solid #E42338;
+    }
+    .form-container .form-group.has-error .control-label {
+      color: #B61C2D;
+    }
+    /* selected field notes (step 3) */
+    .notes-and-disclaimer-container {
+      display: none;
+    }
+    .notes-container {
+      max-width: 650px;
+      background-color: #E4E6EA;
+      border: 1px solid #D1D2EE;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 24px 0;
+    }
+    .notes-container ul {
+      margin-bottom: 0;
+      padding-left: 24px;
+    }
+    /* bottom controls */
+    .btn-container {
+      margin-top: 36px;
+    }
+    /* error + IFR warning toasts */
+    #error-toast, #ifr-warning-toast {
+      display: none;
+    }
+    .notification {
+      padding: 12px;
+      margin-bottom: 24px;
+    }
+    .notification-content {
+      display: flex;
+      gap: 4px;
+    }
+    .notification-error .error-message {
+      font-style: italic;
+      margin-top: 8px; 
+    }
+    .notification-error .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-warning {
+      margin-top: 16px;
+      border: 1px solid #FEBE60;
+      background: #FFE5BF;
+    }
+    .notification-warning .notification-icon {
+      margin-top: 2px;
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path d="M6.99951 3.50018C6.99951 3.22404 7.22337 3.00018 7.49951 3.00018C7.77565 3.00018 7.99951 3.22404 7.99951 3.50018V8.50018C7.99951 8.77633 7.77565 9.00018 7.49951 9.00018C7.22337 9.00018 6.99951 8.77633 6.99951 8.50018V3.50018Z"/&gt;&lt;path d="M7.99951 10.5002C7.99951 10.7763 7.77565 11.0002 7.49951 11.0002C7.22337 11.0002 6.99951 10.7763 6.99951 10.5002C6.99951 10.224 7.22337 10.0002 7.49951 10.0002C7.77565 10.0002 7.99951 10.224 7.99951 10.5002Z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M8.55994 0.442889C7.97423 -0.142423 7.02503 -0.142421 6.43933 0.442893L0.443599 6.43463C-0.142378 7.02022 -0.142699 7.96996 0.442883 8.55594L6.43861 14.5558C7.02448 15.142 7.97478 15.142 8.56065 14.5558L14.5564 8.55594C15.142 7.96996 15.1417 7.02021 14.5557 6.43462L8.55994 0.442889ZM7.1462 1.15024C7.34143 0.95513 7.65783 0.95513 7.85307 1.15023L13.8488 7.14197C14.0442 7.33717 14.0443 7.65375 13.8491 7.84907L7.85331 13.8489C7.65802 14.0443 7.34125 14.0443 7.14596 13.8489L1.15023 7.84907C0.955038 7.65375 0.955145 7.33717 1.15047 7.14197L7.1462 1.15024Z"/&gt;&lt;/svg&gt;');
+    }
+    /* modal */
+    .modal-content {
+      padding: 8px;
+    }
+    .modal-header {
+      border: none;
+    }
+    /* other */
+    a i {
+      color: #222;
+    }
+    .divider {
+      background: #D3D6DC;
+      height: 1px;
+      margin-top: 36px;
+      margin-bottom: 36px;
+    }
+  &lt;/style&gt;
+
+  &lt;g:evaluate var="jvar_eligibleFields"&gt;
+    var eligibleFieldsStr;
+    try {
+      var eligibleFields = new x_pd_integration.PagerDutyCustomFieldsSupport().getEligibleFieldsAdvanced(true, 3);
+      eligibleFieldsStr = JSON.stringify(eligibleFields);
+    } catch (e) {
+      gs.error('Error getting eligible fields: {0}', e.message);
+      eligibleFieldsStr = JSON.stringify([]);
+    }
+    eligibleFieldsStr;
+  &lt;/g:evaluate&gt;
+  &lt;g:evaluate var="jvar_customFields"&gt;
+    var customFieldsStr;
+    try {
+      var customFields = new x_pd_integration.PagerDutyCustomFieldsSupport().getAllCustomFields();
+      customFieldsStr = JSON.stringify({
+        names: customFields.map(function(field) { return field.name; }),
+        displayNames: customFields.map(function(field) { return field.display_name; })
+      });
+    } catch (e) {
+      gs.error('Error getting custom fields: {0}', e.message);
+      customFieldsStr = JSON.stringify({ names: [], displayNames: [] });
+    }
+    customFieldsStr;
+  &lt;/g:evaluate&gt;
+  &lt;g:evaluate var="jvar_ifrIncidentFields"&gt;
+    var ifrIncidentFieldsStr;
+    try {
+      var ifrIncidentFields = new x_pd_integration.PagerDutyCustomFieldsSupport().getIFRIncidentFields();
+      ifrIncidentFieldsStr = JSON.stringify(ifrIncidentFields);
+    } catch (e) {
+      gs.error('Error getting IFR incident fields: {0}', e.message);
+      ifrIncidentFieldsStr = JSON.stringify([]);
+    }
+    ifrIncidentFieldsStr;
+  &lt;/g:evaluate&gt;
+  &lt;g:evaluate var="jvar_limits" object="true"&gt;
+    var limits;
+    try {
+      limits = new x_pd_integration.PagerDutyCustomFieldsSupport().getPdLimits();
+    } catch (e) {
+      gs.error('Error getting PagerDuty limits: {0}', e.message);
+      limits = {};
+    }
+    limits;
+  &lt;/g:evaluate&gt;
+
+  &lt;script&gt;
+    var g_eligibleFields = JSON.parse('${HTML:jvar_eligibleFields}');
+    var g_customFields = JSON.parse('${HTML:jvar_customFields}');
+    var g_ifrIncidentFields = JSON.parse('${HTML:jvar_ifrIncidentFields}');
+  &lt;/script&gt;
+  
+  &lt;!-- Navigation bar --&gt;
+  &lt;nav class="navbar navbar-default" role="navigation"&gt;
+    &lt;div class="container-fluid"&gt;
+      &lt;div class="navbar-header"&gt;
+        &lt;button id="navbar-back-button" class="btn btn-default icon-chevron-left navbar-btn"&gt;&lt;/button&gt;
+        &lt;div style="display:inline-block;" class="navbar-title"&gt;
+          &lt;div&gt;PagerDuty Custom Field Mappings&lt;/div&gt;
+          &lt;div&gt;New Field Mapping&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class="nav navbar-right"&gt;
+        &lt;button id="navbar-save-button" data-savebutton="true" class="btn btn-primary navbar-btn" disabled="true"&gt;Save&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/nav&gt;
+
+  &lt;div class="page-container"&gt;
+    &lt;div class="header"&gt;New Field Mapping&lt;/div&gt;
+    &lt;div&gt;Automatically sync data between a ServiceNow Incident Record field and a PagerDuty custom field. Once mapped, updates to one field are mirrored to the other.&lt;/div&gt;
+
+    &lt;div class="row main-container"&gt;
+      
+      &lt;!-- Step indicator (left side) --&gt;
+      &lt;div class="col-md-3 sidebar-container"&gt;
+        &lt;div class="steps-completed"&gt;&lt;span id="steps-completed-counter-placeholder"&gt;0&lt;/span&gt;/3 steps completed&lt;/div&gt;
+        &lt;div&gt;&lt;i id="step-1-indicator" class="icon-circle-solid step-indicator-started"&gt;&lt;/i&gt;&lt;span&gt;Select a ServiceNow field&lt;/span&gt;&lt;/div&gt;
+        &lt;div class="divider"&gt;&lt;/div&gt;
+        &lt;div&gt;&lt;i id="step-2-indicator" class="icon-circle-solid step-indicator-not-started"&gt;&lt;/i&gt;&lt;span&gt;Configure the new PagerDuty field&lt;/span&gt;&lt;/div&gt;
+        &lt;div class="divider"&gt;&lt;/div&gt;
+        &lt;div&gt;&lt;i id="step-3-indicator" class="icon-circle-solid step-indicator-not-started"&gt;&lt;/i&gt;&lt;span&gt;Review Mapping&lt;/span&gt;&lt;/div&gt;
+      &lt;/div&gt; 
+
+      &lt;!-- Form (right side) --&gt;
+      &lt;div class="col-md-8 form-container"&gt;
+        
+        &lt;!-- Error toast (hidden by default) --&gt;
+        &lt;div id="error-toast" class="notification notification-error"&gt;
+          &lt;div class="notification-content"&gt;
+            &lt;div class="notification-icon"&gt;&lt;/div&gt;
+            &lt;j2:whitespace trim="false"&gt;
+              &lt;div id="error-generic-message"&gt;
+                &lt;div class="error-title"&gt;&lt;b&gt;Field mapping failed&lt;/b&gt;. Please try again.&lt;/div&gt;
+                &lt;div class="error-message" id="error-message-placeholder"&gt;&lt;/div&gt;
+              &lt;/div&gt;
+              &lt;div id="error-limit-reached-message"&gt;
+                &lt;div class="error-title"&gt;&lt;b&gt;Unable to create mapping&lt;/b&gt;. Custom field limit in PagerDuty has been reached. &lt;a href="https://support.pagerduty.com/docs/servicenow-custom-fields#how-do-i-create-a-new-mapping-if-the-custom-field-limit-in-pagerduty-has-been-reached?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_limit_reached_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn More&lt;/a&gt;&lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/j2:whitespace&gt;
+          &lt;/div&gt;
+          &lt;button id="error-toast-close-button" class="btn-icon close icon-cross"&gt;&lt;span class="sr-only"&gt;Close&lt;/span&gt;&lt;/button&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Step 1 --&gt;
+        &lt;div class="step-header"&gt;1. Select a ServiceNow field 
+          &lt;span&gt;&lt;i class="icon-required"&gt;&lt;/i&gt;&lt;/span&gt;
+          &lt;span class="sn-tooltip-basic" title="Select a ServiceNow field from the list. Fields are displayed by their Column Name and Field Type." data-toggle="tooltip" data-placement="auto"&gt;
+            &lt;a target="_self" href="#"&gt;&lt;i class="icon-info"&gt;&lt;/i&gt;&lt;/a&gt;
+          &lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class="step-content"&gt;
+          &lt;div class="step-controls"&gt;
+            &lt;!-- ServiceNow Field --&gt;
+            &lt;div class="form-group" id="servicenow-field_group"&gt;
+              &lt;select class="form-control select2" id="servicenow-field_select" name="servicenow-field"&gt;&lt;/select&gt;
+            &lt;/div&gt;
+            &lt;j2:whitespace trim="false"&gt;
+              &lt;div id="servicenow-fieldtype-container" style="display: none;" class="info-label"&gt;
+                &lt;i class="icon-info"&gt;&lt;/i&gt; Field type: &lt;span id="servicenow-fieldtype-placeholder"&gt;&lt;/span&gt;&lt;/div&gt;
+            &lt;/j2:whitespace&gt;
+          &lt;/div&gt;
+          &lt;div id="ifr-warning-toast" class="notification notification-warning"&gt;
+            &lt;div class="notification-content"&gt;
+              &lt;div class="notification-icon"&gt;&lt;/div&gt;
+              &lt;j2:whitespace trim="false"&gt;
+                &lt;div&gt;&lt;b&gt;Potential syncing conflict&lt;/b&gt;. An &lt;a href="https://support.pagerduty.com/docs/advanced-servicenow-configuration#inbound-field-rules?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_potencial_ifr_conflict_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Inbound Field Rule&lt;/a&gt; is already set for this field, which may cause a syncing conflict. 
+                  It is recommended to only use one syncing method per field.&lt;/div&gt;
+              &lt;/j2:whitespace&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="divider"&gt;&lt;/div&gt;
+
+        &lt;!-- Step 2 --&gt;
+        &lt;div class="step-header"&gt;2. Configure the new PagerDuty field&lt;/div&gt;
+        &lt;div class="step-content"&gt;
+          &lt;div&gt;A new PagerDuty Custom Field will be automatically created and mapped with the ServiceNow field selected above.&lt;/div&gt;
+          &lt;div class="step-controls"&gt;
+            &lt;!-- PagerDuty Display Name --&gt;
+            &lt;div class="form-group" id="pagerduty-displayname_group" data-prefix="pagerduty-displayname"&gt;
+              &lt;label class="control-label" for="pagerduty-displayname"&gt;Display Name &lt;i class="icon-required"&gt;&lt;/i&gt;&lt;/label&gt;
+              &lt;input type="text" class="form-control" id="pagerduty-displayname_input" name="pagerduty-displayname"
+                disabled="false" maxlength="${HTML:jvar_limits.maxDisplayNameLength}" placeholder=""/&gt;
+              &lt;j2:whitespace trim="false"&gt;
+                &lt;div class="info-label"&gt;Characters left: &lt;span id="pagerduty-displayname_charsleft"&gt;${HTML:jvar_limits.maxDisplayNameLength}&lt;/span&gt;&lt;/div&gt;
+                &lt;div id="pagerduty-displayname_messages" class="field-messages"&gt;
+                  &lt;div class="info-message" data-message="charlimit"&gt;&lt;i class="icon-info"&gt;&lt;/i&gt; ${HTML:jvar_limits.maxDisplayNameLength} character limit&lt;/div&gt;
+                  &lt;div class="error-message" data-message="required"&gt;&lt;i class="icon-alert"&gt;&lt;/i&gt; Display Name is required&lt;/div&gt;
+                  &lt;div class="error-message" data-message="uniqueness"&gt;&lt;i class="icon-alert"&gt;&lt;/i&gt; That name is already in use. Try another name.&lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/j2:whitespace&gt;
+            &lt;/div&gt;
+            &lt;!-- PagerDuty Field Name --&gt;
+            &lt;div class="form-group" id="pagerduty-fieldname_group" data-prefix="pagerduty-fieldname"&gt;
+              &lt;label class="control-label" for="pagerduty-fieldname"&gt;
+                Field Name
+                &lt;span&gt;&lt;i class="icon-required"&gt;&lt;/i&gt;&lt;/span&gt;
+                &lt;span class="sn-tooltip-basic" title="Refer to this field in the API by the Field Name. Can only contain letters, numbers, and underscores." data-toggle="tooltip" data-placement="auto"&gt;
+                  &lt;a target="_self" href="#"&gt;&lt;i class="icon-info"&gt;&lt;/i&gt;&lt;/a&gt;
+                &lt;/span&gt;
+              &lt;/label&gt;
+              &lt;input type="text" class="form-control" id="pagerduty-fieldname_input" name="pagerduty-fieldname"
+                disabled="true" maxlength="${HTML:jvar_limits.maxFieldNameLength}" placeholder=""/&gt;
+              &lt;j2:whitespace trim="false"&gt;
+                &lt;div id="pagerduty-fieldname_messages" class="field-messages"&gt;
+                  &lt;div class="error-message" data-message="required"&gt;&lt;i class="icon-alert"&gt;&lt;/i&gt; Field Name is required&lt;/div&gt;
+                  &lt;div class="error-message" data-message="format"&gt;&lt;i class="icon-alert"&gt;&lt;/i&gt; Can only contain letters, numbers, and underscores.&lt;/div&gt;
+                  &lt;div class="error-message" data-message="uniqueness"&gt;&lt;i class="icon-alert"&gt;&lt;/i&gt; That name is already in use. Try another name.&lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/j2:whitespace&gt;
+            &lt;/div&gt;
+            &lt;!-- PagerDuty Description --&gt;
+            &lt;div class="form-group" id="pagerduty-description_group" data-prefix="pagerduty-description"&gt;
+              &lt;label class="control-label" for="pagerduty-description"&gt;Description&lt;/label&gt;
+              &lt;textarea style="width: 100%; height: 100px;" id="pagerduty-description_input" name="pagerduty-description" 
+                disabled="true" maxlength="${HTML:jvar_limits.maxDescriptionLength}" placeholder="Enter description for this field"&gt;
+              &lt;/textarea&gt;
+              &lt;j2:whitespace trim="false"&gt;
+                &lt;div class="info-label"&gt;Characters left: &lt;span id="pagerduty-description_charsleft"&gt;${HTML:jvar_limits.maxDescriptionLength}&lt;/span&gt;&lt;/div&gt;
+                &lt;div id="pagerduty-description_messages" class="field-messages"&gt;
+                  &lt;div class="info-message" data-message="charlimit"&gt;&lt;i class="icon-info"&gt;&lt;/i&gt; ${HTML:jvar_limits.maxDescriptionLength} character limit&lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/j2:whitespace&gt;
+            &lt;/div&gt;
+            &lt;!-- PagerDuty Field Type --&gt;
+            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_disabled"
+              label="Field Type"
+              type="input"
+              name="pagerduty-fieldtype"
+            /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="divider"&gt;&lt;/div&gt;
+
+        &lt;!-- Step 3 --&gt;
+        &lt;div class="step-header"&gt;3. Review Mapping&lt;/div&gt;
+        &lt;div class="step-content"&gt;
+          &lt;!-- Review mapped fields --&gt;
+          &lt;div class="step-controls"&gt;
+            &lt;div class="step-controls"&gt;
+              &lt;div style="display: flex;"&gt;
+                &lt;div style="width: 47%;"&gt;
+                  &lt;label class="control-label" for="servicenow-field-review"&gt;ServiceNow Field&lt;/label&gt;
+                  &lt;input type="text" class="form-control" id="servicenow-field-review_input" name="servicenow-fieldname-review" disabled="true"/&gt;
+                &lt;/div&gt;
+                &lt;div style="width: 6%; text-align: center; margin-top: 44px;"&gt;
+                  &lt;span class="glyphicon glyphicon-transfer" aria-hidden="true"&gt;&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div style="width: 47%;"&gt;
+                  &lt;label class="control-label" for="pagerduty-field-review"&gt;PagerDuty Field&lt;/label&gt;
+                  &lt;input type="text" class="form-control" id="pagerduty-field-review_input" name="pagerduty-fieldname-review" disabled="true"/&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;!-- Notes &amp; disclaimer (hidden by default) --&gt;
+          &lt;j2:whitespace trim="false"&gt;
+            &lt;div id="notes-and-disclaimer-container" class="notes-and-disclaimer-container"&gt;
+              &lt;!-- Selected field notes --&gt;
+              &lt;div id="notes-container" class="notes-container"&gt;
+                The new PagerDuty custom field will:
+                &lt;ul id="field-notes-list"&gt;
+                  &lt;li data-for-type="all" id="field-notes-default-value-container"&gt;Inherit the mapped ServiceNow field's current default value: "&lt;span id="field-notes-default-value-placeholder"&gt;&lt;/span&gt;".&lt;/li&gt;
+                  &lt;li data-for-type="all"&gt;Mirror any value set in the ServiceNow field while the mapping is active.&lt;/li&gt;
+                  &lt;li data-for-type="string"&gt;Accept synced values up to ${HTML:jvar_limits.maxValueLength} characters. Excess characters will be truncated. &lt;a href="https://support.pagerduty.com/docs/custom-fields-on-incidents#field-types?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_notes_excess_characters_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;&lt;/li&gt;
+                  &lt;li data-for-type="choice"&gt;Accept up to ${HTML:jvar_limits.maxNumberOfOptions} options. Preview of the first &lt;span id="field-notes-options-count-placeholder"&gt;3&lt;/span&gt; options:&lt;/li&gt;
+                  &lt;ul data-for-type="choice" id="field-notes-options-list"&gt;
+                    &lt;li&gt;Option 1&lt;/li&gt;
+                    &lt;li&gt;Option 2&lt;/li&gt;
+                    &lt;li&gt;...&lt;/li&gt;
+                  &lt;/ul&gt;
+                  &lt;li data-for-type="choice"&gt;Excess options will be omitted. &lt;a href="https://support.pagerduty.com/docs/custom-fields-on-incidents#field-types?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_notes_excess_options_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;&lt;/li&gt;
+                  &lt;li data-for-type="url"&gt;Accept synced values up to ${HTML:jvar_limits.maxUrlValueLength} characters. &lt;a href="https://support.pagerduty.com/docs/custom-fields-on-incidents#field-types?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_notes_accept_sync_values_max_characters_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;&lt;/li&gt;
+                  &lt;li data-for-type="datetime"&gt;Display the the date/time based on users' timezones. &lt;a href="https://support.pagerduty.com/docs/custom-fields-on-incidents#field-types?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_notes_date_time_users_timezones_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;&lt;/li&gt;
+                &lt;/ul&gt;
+              &lt;/div&gt;
+              &lt;!-- Disclaimer --&gt;
+              &lt;div&gt;Once created, you &lt;b&gt;cannot edit the Custom Field in ServiceNow&lt;/b&gt;. To make changes, edit the custom field in PagerDuty. &lt;a href="https://support.pagerduty.com/docs/servicenow-custom-fields#why-cant-i-edit-the-newly-created-pagerduty-custom-field-in-servicenow-after-mapping?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_create_cant_edit_custom_fields_after_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/j2:whitespace&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Save Button --&gt;
+        &lt;div class="btn-container"&gt;
+          &lt;button id="save-button" data-savebutton="true" class="btn btn-primary" disabled="true"&gt;Save&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Success Modal (hidden by default) --&gt;
+    &lt;div id="success-modal" data-backdrop="static" tabindex="-1" aria-hidden="true" class="modal" role="dialog"&gt;
+      &lt;div class="modal-dialog"&gt;
+        &lt;div class="modal-content modal-sm"&gt;
+          &lt;header class="modal-header"&gt;
+            &lt;h3 class="modal-title"&gt;Success!&lt;/h3&gt;
+          &lt;/header&gt;
+          &lt;div class="modal-body"&gt;
+              &lt;span&gt;ServiceNow "&lt;span id="success-modal-field-name-placeholder"&gt;&lt;/span&gt;" field mapping created and active.&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;footer class="modal-footer"&gt;
+            &lt;button id="success-modal-create-another-button" class="btn btn-default"&gt;Create another mapping&lt;/button&gt;
+            &lt;button id="success-modal-done-button" class="btn btn-primary"&gt;Done&lt;/button&gt;
+          &lt;/footer&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+  &lt;/div&gt;
+&lt;/j:jelly&gt;</html>
+        <name>custom_field_mapping_create</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-25 08:39:03</sys_created_on>
+        <sys_id>68e6c3524742311047daf2e7536d43d9</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>custom_field_mapping_create</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_68e6c3524742311047daf2e7536d43d9</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-25 08:39:03</sys_updated_on>
+    </sys_ui_page>
+</record_update>

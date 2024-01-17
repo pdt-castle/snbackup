@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="pd_incident_id" label="PD Incident ID" language="en" table="x_pd_integration_workflow_log_entries">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>pd_incident_id</element>
+            <help/>
+            <hint/>
+            <label>PD Incident ID</label>
+            <language>en</language>
+            <name>x_pd_integration_workflow_log_entries</name>
+            <plural>PD Incident IDs</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-02-09 18:28:34</sys_created_on>
+            <sys_id>5d0424e347f4a110c03354f3836d43fd</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>PD Incident ID</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_workflow_log_entries_pd_incident_id_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-02-09 18:28:34</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

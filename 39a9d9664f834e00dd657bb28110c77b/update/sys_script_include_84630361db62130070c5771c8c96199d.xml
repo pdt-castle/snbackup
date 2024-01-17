@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.OutboundRequestsStubConfig</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>OutboundRequestsStubConfig</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var json = new global.JSON();
+
+var OutboundRequestsStubConfig = {
+  hasError: [{
+    returns: false
+  }],
+
+  putREST: [
+    resolveIncident(),
+    setEscalationPolicyToIncident(),
+    setAssignmentsToIncidents(),
+    setPriorityToIncident(),
+    setExternalReferencesToIncident(),
+    updateEscalationPolicyForTeam(),
+    updateUserForTeam()
+  ],
+
+  postREST: [
+    createIncident(),
+    createUser(),
+    createEscalationPolicy(),
+    createSchedule(),
+    createService(),
+    createWebhook(),
+    createTeam()
+  ],
+
+  getREST: [
+    getIncidents(),
+    getUsersFilteredByEmail()
+  ],
+
+  deleteREST: [
+    removeUserFromTeam()
+  ]
+};
+
+function resolveIncident () {
+  return {
+    argsPatterns: [
+      /incidents\/.+$/,
+      {
+        incident: {
+          type: 'incident_reference',
+          status: 'resolved',
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return '';
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function setEscalationPolicyToIncident () {
+  return {
+    argsPatterns: [
+      /incidents\/.+$/,
+      {
+        incident: {
+          type: 'incident_reference',
+          escalation_policy: {
+            id: '$$var',
+            type: 'escalation_policy_reference'
+          }
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return '';
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function setAssignmentsToIncidents () {
+  return {
+    argsPatterns: [
+      /incidents\/.+$/,
+      {
+        incident: {
+          type: 'incident_reference',
+          assignments: [{
+            assignee: {
+              id: '$$var',
+              'type': 'user_reference'
+            }
+          }]
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return '';
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function setPriorityToIncident () {
+  return {
+    argsPatterns: [
+      /incidents\/.+$/,
+      {
+        incident: {
+          type: 'incident_reference',
+          priority: {
+            id: '$$var',
+            type: 'priority'
+          }
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return '';
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function setExternalReferencesToIncident () {
+  return {
+    argsPatterns: [
+      /incidents\/.+$/,
+      {
+        incident: {
+          type: 'incident_reference',
+          external_references: [{
+            type: 'incident_external_reference',
+            sync: true,
+            external_id: '$$var',
+            external_url: '$$var'
+          }]
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return '';
+      },
+      getStatusCode: statusNoContent,
+      haveError: noErrors
+    }
+  };
+}
+
+function updateEscalationPolicyForTeam () {
+  return {
+    argsPatterns: [
+      /teams\/(\w)+\/escalation_policies\/(\w)+/
+    ],
+    returns: function(args, patterns) {
+      return {
+        getBody: function() {
+          return {};
+        },
+        getStatusCode: statusOK,
+        haveError: noErrors
+      }
+    }
+  }
+}
+
+function updateUserForTeam () {
+  return {
+    argsPatterns: [
+      /teams\/(\w)+\/users\/(\w)+/,
+      {},
+      '$$var'
+    ],
+    returns: function(args, patterns) {
+      return {
+        getBody: function() {
+          return {};
+        },
+        getStatusCode: statusNoContent,
+        haveError: noErrors
+      }
+    }
+  }
+}
+
+function createIncident () {
+  return {
+    argsPatterns: [
+      /incidents/,
+      {
+        incident: {
+          type: 'incident',
+          title: '$$var',
+          service: {
+            id: '$$var',
+            type: 'service_reference'
+          },
+          body: {
+            type: 'incident_body',
+            details: '$$var'
+          }
+        }
+      }
+    ],
+    returns: {
+      getBody: function () {
+        return json.encode({
+          incident: {
+            incident_key: 'expected_key',
+            id: 'expected_id',
+            assignments: [{
+                assignee: {
+                  summary: 'User 1'
+                }
+              },
+              {
+                assignee: {
+                  summary: 'User 2'
+                }
+              }
+            ]
+          }
+        });
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function createUser () {
+  return {
+    argsPatterns: [
+      /users/,
+      {
+        type: 'user',
+        name: '$$var',
+        email: '$$var',
+        role: '$$var'
+      }
+    ],
+    returns: function(args) {
+      var user = args[1];
+
+      return {
+        getBody: function () {
+          return json.encode({
+            user: {
+              id: randomPDId(),
+              name: user.name,
+              email: user.email,
+              role: user.role
+            }
+          });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      }
+    }
+  };
+}
+
+function createEscalationPolicy () {
+  return {
+    argsPatterns: [
+      /escalation_policies/,
+      {
+        escalation_policy: {
+          type: 'escalation_policy'
+        }
+      }
+    ],
+    returns: function(args) {
+      var body = args[1];
+      var escalationPolicy = body.escalation_policy;
+
+      return {
+        getBody: function () {
+          return json.encode({
+            escalation_policy: {
+              id: randomPDId(),
+              name: escalationPolicy.name,
+              escalation_rules: escalationPolicy.escalation_rules.map(function (rule) {
+                return {
+                  id: randomPDId(),
+                  escalation_delay_in_minutes: rule.escalation_delay_in_minutes,
+                  targets: rule.targets.map(function (target) {
+                    return {
+                      id: target.id
+                    }
+                  })
+                }
+              }),
+            }
+          });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      };
+    }
+  };
+}
+
+function createSchedule () {
+  return {
+    argsPatterns: [
+      /schedules/,
+      { schedule: { type: 'schedule' } },
+    ],
+    returns: function(args) {
+      var schedule = args[1].schedule;
+
+      return {
+        getBody: function () {
+          return json.encode({
+            schedule: {
+              id: randomPDId(),
+              schedule_layers: schedule.schedule_layers.map(function (schedule_layer) {
+                return {
+                  id: randomPDId(),
+                  users: schedule_layer.users.map(function (user) {
+                    return user;
+                  })
+                }
+              })
+            }
+          });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      }
+    }
+  };
+}
+
+function createService () {
+  return {
+    argsPatterns: [
+      /services/,
+      { service: { type: 'service' } },
+    ],
+    returns: function(args) {
+      var service = args[1].service;
+
+      return {
+        getBody: function () {
+          return json.encode({
+            service: {
+              id: randomPDId(),
+              escalation_policy: service.escalation_policy,
+              name: service.name,
+              status: service.status,
+              type: service.type
+            }
+          });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      }
+    }
+  };
+}
+
+function createWebhook () {
+  return {
+    argsPatterns: [
+      /webhooks/,
+      { webhook: { type: 'webhook' } }
+    ],
+    returns: function(args) {
+      var webhook = args[1].webhook
+      return {
+        getBody: function () {
+          webhook.id = randomPDId()
+          return json.encode({ webhook: webhook });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      }
+
+    }
+  };
+}
+
+function createTeam () {
+  return {
+    argsPatterns: [
+      /teams/,
+      {
+        team: {
+          type: 'team'
+        }
+      }
+    ],
+    returns: function(args, patterns) {
+      var team = args[1].team;
+      team.id = randomPDId();
+
+      return {
+        getBody: function () {
+          return json.encode({
+            team: team
+          });
+        },
+        getStatusCode: statusCreated,
+        haveError: noErrors
+      }
+    }
+  };
+}
+
+function getIncidents () {
+  return {
+    argsPatterns: [
+      /incidents\/.+\?include%5B%5D=external_references$/
+    ],
+    returns: {
+      getBody: function () {
+        return json.encode({
+          incident: {
+            external_references: [{
+              id: 'expected_id',
+              webhook: {
+                id: 'POPAZHT'
+              }
+            }]
+          }
+        });
+      },
+      getStatusCode: statusOK,
+      haveError: noErrors
+    }
+  };
+}
+
+function getUsersFilteredByEmail () {
+  return {
+    argsPatterns: [
+      /users\?query=(.+)/
+    ],
+    returns: function(args, patterns) {
+      var query   = args[0];
+      var pattern = patterns[0];
+      var matches = query.match(pattern);
+      var email   = matches[1];
+      var id = randomPDId();
+
+      return {
+        getBody: function () {
+          return json.encode({
+            users: [{
+              id: id,
+              email: decodeURIComponent(email)
+            }]
+          });
+        },
+        getStatusCode: statusOK,
+        haveError: noErrors
+      };
+    }
+  };
+}
+
+function removeUserFromTeam () {
+  return {
+    argsPatterns: [
+      /teams\/(\w)+\/users\/(\w)+/
+    ],
+    returns: function(args, patterns) {
+      return {
+        getBody: function() {
+          return {};
+        },
+        getStatusCode: statusNoContent,
+        haveError: noErrors
+      }
+    }
+  }
+}
+
+function randomPDId () {
+  return 'PF' + GlideSecureRandomUtil.getSecureRandomIntBound(10000,999999) + 'M';
+}
+
+function statusOK () {
+  return 200;
+}
+
+function statusCreated () {
+  return 201;
+}
+
+function statusNoContent () {
+  return 204;
+}
+
+function noErrors () {
+  return false;
+}</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-06-07 11:08:00</sys_created_on>
+        <sys_id>84630361db62130070c5771c8c96199d</sys_id>
+        <sys_mod_count>33</sys_mod_count>
+        <sys_name>OutboundRequestsStubConfig</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_84630361db62130070c5771c8c96199d</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:46:54</sys_updated_on>
+    </sys_script_include>
+</record_update>

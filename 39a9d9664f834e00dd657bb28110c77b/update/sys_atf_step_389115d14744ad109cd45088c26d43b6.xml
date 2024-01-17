@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Set the components on the page as follows:
+'Password &lt;input&gt;: api_key' = 'wrong format', Page area = 'default'
+'Text &lt;input&gt;: rest_api_endpoint' = 'https://api.pagerduty.com', Page area = 'default'
+</description>
+        <display_name>Set Component Values (Custom UI)</display_name>
+        <inputs/>
+        <mugshots_cache_json>{"fe5f04354d89a59f31c038402d1c92ac":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Text &lt;input&gt;: rest_api_endpoint\",\"sn_atf_mugshot_long_description\":\"Text &lt;input&gt;: rest_api_endpoint with value https://api.pagerduty.com\",\"methods\":[\"setValue\"],\"sn_atf_mugshot_label\":\"rest_api_endpoint\",\"type\":\"text\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"input\"],\"get_value_result\":\"https://api.pagerduty.com\",\"sn_atf_mugshot_tag_display_name\":\"Text &lt;input&gt;\",\"name\":\"rest_api_endpoint\",\"sn_atf_mugshot_value\":\"https://api.pagerduty.com\",\"tag\":\"input\",\"isDisabled\":false,\"placeholder\":\"https://api.pagerduty.com\",\"label_path\":[\"default\"],\"hash\":\"fe5f04354d89a59f31c038402d1c92ac\",\"html_value\":\"https://api.pagerduty.com\"}","38feaad2e4ac57e439175efb09085d9e":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Password &lt;input&gt;: api_key\",\"sn_atf_mugshot_long_description\":\"Password &lt;input&gt;: api_key with value \",\"methods\":[\"setValue\"],\"sn_atf_mugshot_label\":\"api_key\",\"type\":\"password\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"input\"],\"get_value_result\":\"\",\"sn_atf_mugshot_tag_display_name\":\"Password &lt;input&gt;\",\"name\":\"api_key\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"input\",\"isDisabled\":false,\"placeholder\":\"general access REST API key\",\"label_path\":[\"default\"],\"hash\":\"38feaad2e4ac57e439175efb09085d9e\",\"html_value\":\"\"}"}</mugshots_cache_json>
+        <notes>Set api_key and endpoint values manually</notes>
+        <order>2</order>
+        <snapshot display_value="">af6e5ed74777d5109cd45088c26d43d2</snapshot>
+        <step_config display_value="Set Component Values (Custom UI)">e5dd168473330300c79260bdfaf6a794</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-27 15:14:11</sys_created_on>
+        <sys_id>389115d14744ad109cd45088c26d43b6</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>Set Component Values (Custom UI)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_389115d14744ad109cd45088c26d43b6</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-17 15:02:34</sys_updated_on>
+        <table/>
+        <test display_value="PD: Settings page - Use PagerDuty teams checkbox (wrong api_key format)">ec9115d14744ad109cd45088c26d43ad</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_element_mapping action="delete_multiple" query="id=389115d14744ad109cd45088c26d43b6"/>
+    <sys_variable_value action="delete_multiple" query="document_key=389115d14744ad109cd45088c26d43b6"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>389115d14744ad109cd45088c26d43b6</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-27 15:14:11</sys_created_on>
+        <sys_id>389115d14744ad109cd45088c26d43b7</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-17 15:02:34</sys_updated_on>
+        <value>38feaad2e4ac57e439175efb09085d9e=wrong format^fe5f04354d89a59f31c038402d1c92ac=https://api.pagerduty.com^EQ</value>
+        <variable display_value="Component values">d12fde8473330300c79260bdfaf6a7b5</variable>
+    </sys_variable_value>
+</record_update>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>true</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>incident</collection>
+        <condition>gs.isLoggedIn()</condition>
+        <description/>
+        <execute_function>true</execute_function>
+        <filter_condition table="incident">x_pd_integration_incidentISNOTEMPTY^assignment_groupVALCHANGES^assignment_groupISNOTEMPTY^x_pd_integration_incidentNOT LIKE---^stateNOT IN6,7,8^EQ<item endquery="false" field="x_pd_integration_incident" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
+            <item endquery="false" field="assignment_group" goto="false" newquery="false" operator="VALCHANGES" or="false" value=""/>
+            <item endquery="false" field="assignment_group" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
+            <item endquery="false" field="x_pd_integration_incident" goto="false" newquery="false" operator="NOT LIKE" or="false" value="---"/>
+            <item display_value="6,7,8" endquery="false" field="state" goto="false" newquery="false" operator="NOT IN" or="false" value="6,7,8"/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PD Group Policy Assign</name>
+        <order>1100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script>function onAfter(current, previous) {
+
+  var epHelper = new x_pd_integration.EscalationPolicyHelper();
+  var pdEpId = epHelper.getPDEscalationPolicyId(current.getValue('assignment_group'));
+  if (!pdEpId)
+    return;
+
+  if (current.assigned_to.changes() &amp;&amp; !gs.nil(current.assigned_to)) {
+    gs.debug("{0} Aborting assignment rule update on PD since the assigned user has also changed, only send the user reassignment", current.getDisplayValue());
+    return;
+  }
+
+  if (current.priority.changes()) {
+    gs.debug("{0}. Prevent rule from execution in favour of \"PD Update Priority and Assignment\" business rule that handle the case when Assignment Group and Priority are changing simultaneously.", current.getDisplayValue());
+    return;
+  }
+
+  var eventName = "x_pd_integration.assign_incident_policy";
+  if (x_pd_integration.TaskEntityHelper.isPdWebhook()) {
+    gs.debug("Bypassing firing event {0} for {1} because source is PagerDuty", eventName, current.getDisplayValue());
+    return;
+  }
+
+  var currentUserSysId = gs.getUser().getID();
+  gs.debug("Firing event {0} for {1}", eventName, current.getDisplayValue());
+  gs.eventQueue(eventName, current, current.x_pd_integration_incident, currentUserSysId);
+}</script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-23 19:14:51</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>711057d94f93ce00dd657bb28110c75d</sys_id>
+        <sys_mod_count>29</sys_mod_count>
+        <sys_name>PD Group Policy Assign</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_711057d94f93ce00dd657bb28110c75d</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2021-05-12 08:17:09</sys_updated_on>
+        <template/>
+        <when>after</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=711057d94f93ce00dd657bb28110c75d"/>
+</record_update>

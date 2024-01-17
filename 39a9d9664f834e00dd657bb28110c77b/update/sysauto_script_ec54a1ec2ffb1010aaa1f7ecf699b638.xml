@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <business_calendar display_value=""/>
+        <condition/>
+        <conditional>false</conditional>
+        <entered_time>1970-01-01 00:00:00</entered_time>
+        <name>PagerDuty Refresh Business Services</name>
+        <run_as/>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-01 04:00:00</run_period>
+        <run_start>2020-10-08 13:40:20</run_start>
+        <run_time>1970-01-01 08:00:00</run_time>
+        <run_type>periodically</run_type>
+        <script>var pd = new x_pd_integration.BusinessServices();
+var result = pd.refreshBusinessServices();
+
+if (result.error) {
+  gs.error(result.error);
+} else if (result.message) {
+  gs.info(result.message);
+}
+</script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-10-08 13:41:21</sys_created_on>
+        <sys_id>ec54a1ec2ffb1010aaa1f7ecf699b638</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PagerDuty Refresh Business Services</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysauto_script_ec54a1ec2ffb1010aaa1f7ecf699b638</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-10-08 16:21:39</sys_updated_on>
+        <time_zone/>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>

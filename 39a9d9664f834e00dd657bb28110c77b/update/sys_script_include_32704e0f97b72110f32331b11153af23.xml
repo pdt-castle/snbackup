@@ -1,0 +1,921 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyWebhooksManagement</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Script to support webhooks management module</description>
+        <name>PagerDutyWebhooksManagement</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+/* eslint-disable no-underscore-dangle */
+var PagerDutyWebhooksManagement = Class.create();
+PagerDutyWebhooksManagement.prototype = {
+  initialize: function () {
+    this.instanceBaseUrl = gs.getProperty('glide.servlet.uri');
+    var webhookRestApi = gs.getProperty('x_pd_integration.webhook_restapi');
+    this.instanceWebhookUrl = (this.instanceBaseUrl + webhookRestApi).toLowerCase();
+    this.defaultServiceID = gs.getProperty('x_pd_integration.default_service');
+  },
+
+  /**
+   * deleteAllWebhooks - Deletes all records from PagerDuty Webhooks table
+   * @returns {void}
+   */
+  deleteAllWebhooks: function () {
+    var grWebhooks = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+    grWebhooks.query();
+    grWebhooks.deleteMultiple();
+  },
+
+  /**
+   * deleteAllNonAssociatedWebhooks - Deletes all records from PagerDuty Webhooks table
+   * where sn_entity_sys_id is empty
+   * @returns {void}
+   */
+  deleteAllNonAssociatedWebhooks: function () {
+    var grWebhooks = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+    grWebhooks.addNullQuery('sn_entity_sys_id');
+    grWebhooks.query();
+    grWebhooks.deleteMultiple();
+  },
+
+  /**
+   * Updates PagerDuty Webhooks table when PagerDuty service or webhook value changes
+   * in the Configuration Item [cmdb_ci] or Group [sys_user_group] record form
+   * @param {GlideRecord} current - current state of the record (cmdb_ci or sys_user_group)
+   * @param {GlideRecord} previous - previous state of the record (cmdb_ci or sys_user_group)
+   */
+  updatePdWebhooksTable: function (current, previous) {
+    var pdServiceId = current.x_pd_integration_pagerduty_service;
+    var pdWebhookId = current.x_pd_integration_pagerduty_webhook;
+    var grPdWh = new GlideRecordSecure('x_pd_integration_pagerduty_webhooks');
+    var currentSysId = current.getValue('sys_id');
+    // more than 1 SN CI can be associated with 1 PD service
+    var isRegistered = false;
+    if (grPdWh.get('sn_entity_sys_id', currentSysId)) {
+      isRegistered = true;
+    }
+
+    if (current.operation() === 'insert') {
+      if (!pdServiceId.nil()) {
+        this.addRecord(grPdWh, pdServiceId, pdWebhookId);
+      }
+    }
+
+    if (current.operation() === 'update') {
+      if (pdServiceId.changes()) {
+        // empty -&gt; id
+        if (previous.x_pd_integration_pagerduty_service.nil() &amp;&amp; !isRegistered) {
+          this.addRecord(grPdWh, pdServiceId, pdWebhookId);
+          // id -&gt; empty
+        } else if (pdServiceId.nil() &amp;&amp; isRegistered) {
+          grPdWh.deleteRecord();
+          // id -&gt; new_id
+        } else {
+          if (!previous.x_pd_integration_pagerduty_service.nil() &amp;&amp; isRegistered) {
+            grPdWh.setValue('pd_service_id', String(pdServiceId));
+            grPdWh.update();
+          } else if (!isRegistered) {
+            this.addRecord(grPdWh, pdServiceId, pdWebhookId);
+          }
+        }
+      }
+      if (!pdServiceId.nil() &amp;&amp; pdWebhookId.changes()) {
+        grPdWh.setValue('webhook_id', String(pdWebhookId));
+        if (!previous.x_pd_integration_pagerduty_webhook.nil()) {
+          grPdWh.setValue('webhook_version', 'NULL');
+          grPdWh.setValue('extension_schema_id', 'NULL');
+        }
+        grPdWh.update();
+      }
+    }
+
+    if (current.operation() === 'delete') {
+      grPdWh.deleteRecord();
+    }
+  },
+
+  /**
+   * Adds a new record to PagerDuty Webhooks table
+   * @param {GlideRecord} grPdWh - GlideRecord of PagerDuty Webhooks table
+   * @param {String} pdServiceId - PagerDuty service id
+   * @param {String} pdWebhookId - PagerDuty webhook id
+   * @returns {void}
+   */
+  addRecord: function (grPdWh, pdServiceId, pdWebhookId) {
+    grPdWh.initialize();
+    grPdWh.setValue('sn_table', current.getTableName());
+    grPdWh.setValue('sn_entity_name', current.getValue('name'));
+    grPdWh.setValue('sn_entity_sys_id', current.getValue('sys_id'));
+    grPdWh.setValue('pd_service_id', String(pdServiceId));
+    grPdWh.setValue('webhook_id', String(pdWebhookId));
+    var grService = new GlideRecordSecure('x_pd_integration_services');
+    if (grService.get('service_id', pdServiceId)) {
+      grPdWh.setValue('pd_service_name', grService.getValue('service_name'));
+    }
+    grPdWh.insert();
+  },
+
+  /**
+   * getAllConnectedCIs - Returns all Configuration Items [cmdb_ci] records
+   * with x_pd_integration_pagerduty_service not empty
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Array} - array of objects with CI data
+   */
+  getAllConnectedCIs: function (grJob) {
+    // Query cmdb_ci table for all records with x_pd_integration_pagerduty_service not empty
+    var items = [];
+    var grCmdbCi = new GlideRecordSecure('cmdb_ci');
+    grCmdbCi.addNotNullQuery('x_pd_integration_pagerduty_service');
+    grCmdbCi.addActiveQuery();
+    grCmdbCi.query();
+    while (grCmdbCi.next()) {
+      items.push({
+        sn_table: grCmdbCi.getTableName(),
+        sn_entity_name: grCmdbCi.getValue('name'),
+        sn_entity_sys_id: grCmdbCi.getValue('sys_id'),
+        pd_service_id: grCmdbCi.getValue('x_pd_integration_pagerduty_service'),
+        pd_webhook_id: grCmdbCi.getValue('x_pd_integration_pagerduty_webhook'),
+      });
+    }
+    if (!gs.nil(grJob)) {
+      this._updateJobStep(grJob, 'Gathering Configuration Items', 10);
+    }
+
+    return items;
+  },
+
+  /**
+   * getAllConnectedAssignmentGroups - Returns all Group [sys_user_group] records
+   * with x_pd_integration_pagerduty_service not empty
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Array} - array of objects with Assignment Group data
+   */
+  getAllConnectedAssignmentGroups: function (grJob) {
+    // Query sys_user_group table for all records with x_pd_integration_pagerduty_service not empty
+    var items = [];
+    var grSysUserGroup = new GlideRecordSecure('sys_user_group');
+    grSysUserGroup.addNotNullQuery('x_pd_integration_pagerduty_service');
+    grSysUserGroup.addActiveQuery();
+    grSysUserGroup.query();
+    while (grSysUserGroup.next()) {
+      items.push({
+        sn_table: grSysUserGroup.getTableName(),
+        sn_entity_name: grSysUserGroup.getValue('name'),
+        sn_entity_sys_id: grSysUserGroup.getValue('sys_id'),
+        pd_service_id: grSysUserGroup.getValue('x_pd_integration_pagerduty_service'),
+        pd_webhook_id: grSysUserGroup.getValue('x_pd_integration_pagerduty_webhook'),
+      });
+    }
+
+    if (!gs.nil(grJob)) {
+      this._updateJobStep(grJob, 'Gathering Assignment Groups', 20);
+    }
+
+    return items;
+  },
+
+  // TODO: Move these two functions to a separate file
+  /**
+   * Parse query parameters from provided url
+   * @param {String} url - url to parse
+   * @returns - object with query parameters
+   * @example
+   * var url = 'https://myinstance.service-now.com/api/x_pd_integration/pagerduty2sn?task_type=incident&amp;sync_option=auto';
+   * var result = _parseUrlQueryParams(url);
+   * // result = {task_type: 'incident', sync_option: 'auto'}
+   */
+  _parseUrlQueryParams: function (url) {
+    var query = url.split('?')[1];
+    return this._parseQueryParams(query);
+  },
+  /**
+   * Parse query parameters string
+   * @param {String} queryParamsStr - query parameters string
+   * @returns - object with query parameters
+   * @example
+   * var queryParamsStr = 'task_type=incident&amp;sync_option=auto';
+   * var result = _parseQueryParams(queryParamsStr);
+   * // result = {task_type: 'incident', sync_option: 'auto'}
+  */
+  _parseQueryParams: function (queryParamsStr) {
+    var queryParams = {};
+    if (queryParamsStr === undefined || queryParamsStr === null) {
+      return queryParams;
+    }
+    var pairs = queryParamsStr.split('&amp;');
+    pairs.forEach(function (pair) {
+      var kv = pair.split('=');
+      queryParams[kv[0]] = kv[1];
+    });
+    return queryParams;
+  },
+
+  /**
+   * Convert object to query parameters string
+   * @param {Object} obj - object to convert
+   * @param {Array} excludedKeys - keys to exclude from the result
+   * @returns - query parameters string
+   * @example
+   * var obj = {a: 1, b: 2, c: 3};
+   * var excludedKeys = ['a', 'c'];
+   * var result = _objectToQueryParamsStr(obj, excludedKeys);
+   * // result = 'b=2'
+   */
+  _objectToQueryParamsStr: function (obj, excludedKeys) {
+    var queryParams = [];
+    Object.keys(obj).forEach(function (key) {
+      if (excludedKeys.indexOf(key) &lt; 0) {
+        queryParams.push(key + '=' + obj[key]);
+      }
+    });
+    return queryParams.join('&amp;');
+  },
+
+  _mapWebhookV2: function (extension) {
+    var webhookUrl = extension.config.target.toLowerCase();
+    return {
+      id: extension.id,
+      service_id: extension.extension_objects[0].id,
+      service_name: extension.extension_objects[0].summary,
+      webhook_version: 2,
+      extension_schema_id: extension.extension_schema.id,
+      task_type: extension.config.task_type || 'incident',
+      sync_option: extension.config.sync_options === 'sync_all' ? 'auto' : 'manual',
+      custom_query_params: webhookUrl.indexOf('?') &lt; 0 ? '' : webhookUrl.slice(webhookUrl.indexOf('?') + 1),
+      temporarily_disabled: extension.blacklisted || false,
+    };
+  },
+
+  _getAllPagerDutyExtensionsByExtensionSchemaId: function (extensionSchemaId) {
+    var restClient = new x_pd_integration.PagerDuty_REST();
+    var path = 'extensions?extension_schema_id=' + extensionSchemaId + '&amp;include%5B%5D=blacklisted';
+    return restClient.getAllItemsThrowable(path, null);
+  },
+
+  /**
+   * Get all ServiceNow connected webhooks from PagerDuty extensions
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Array} - array of objects with webhook data
+   */
+  getAllPagerDutyWebhooksV2: function (grJob) {
+    var eligible_outbound_integration_ids = [
+      'PAKM60Z', // V7
+      'PBZUP2B', // V6
+      'PAD6MYW', // V5
+      'P6MB86H', // V4
+      'P84JQII', // V3.5
+    ];
+
+    var allWebhooks = [];
+    eligible_outbound_integration_ids.forEach(function (extensionSchemaId) {
+      var extensions = this._getAllPagerDutyExtensionsByExtensionSchemaId(extensionSchemaId);
+      var connectedExtensions = extensions.filter(function (extension) {
+        var targetUrl = extension.config.target || '';
+        return targetUrl.toLowerCase().indexOf(this.instanceWebhookUrl) &gt;= 0 &amp;&amp;
+          extension.extension_objects &amp;&amp;
+          extension.extension_objects.length &gt; 0;
+      }, this);
+      allWebhooks = allWebhooks.concat(connectedExtensions.map(this._mapWebhookV2));
+    }, this);
+
+    if (!gs.nil(grJob)) {
+      this._updateJobStep(grJob, 'Gathering PagerDuty Webhooks V2', 40);
+    }
+
+    return allWebhooks;
+  },
+
+  _mapWebhookV3: function (webhook) {
+    var webhookUrl = webhook.delivery_method.url.toLowerCase();
+    var queryParams = this._parseUrlQueryParams(webhookUrl);
+    return {
+      id: webhook.id,
+      service_id: webhook.filter.id,
+      webhook_version: 3,
+      task_type: queryParams.task_type || 'incident',
+      sync_option: queryParams.sync_option || 'auto',
+      events: webhook.events || [],
+      custom_query_params: this._objectToQueryParamsStr(queryParams, ['task_type', 'sync_option']), // Any query param excluding task_type and sync_option
+      temporarily_disabled: webhook.delivery_method.temporarily_disabled || false,
+    };
+  },
+
+  /**
+   * Get all ServiceNow connected webhooks from PagerDuty webhook subscriptions (v3)
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Array} - array of objects with webhook data
+   */
+  getAllPagerDutyWebhooksV3: function (grJob) {
+    var restClient = new x_pd_integration.PagerDuty_REST();
+    var webhooks = restClient.getAllItemsThrowable('webhook_subscriptions', null);
+    var connectedWebhooks = webhooks.filter(function (webhook) {
+      var delivery_url = webhook.delivery_method.url || '';
+      return webhook.filter.type === 'service_reference' &amp;&amp;
+        delivery_url.toLowerCase().indexOf(this.instanceWebhookUrl) &gt;= 0;
+    }, this);
+
+    if (!gs.nil(grJob)) {
+      this._updateJobStep(grJob, 'Gathering PagerDuty Webhooks V3', 60);
+    }
+
+    return connectedWebhooks.map((this._mapWebhookV3.bind(this)));
+  },
+
+  /**
+   * Get all PagerDuty services
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Array} - array of objects with PagerDuty services data
+   */
+  getAllPagerDutyServices: function (grJob) {
+    var restClient = new x_pd_integration.PagerDuty_REST();
+    var services = restClient.getAllItemsThrowable('services', null);
+
+    if (!gs.nil(grJob)) {
+      this._updateJobStep(grJob, 'Gathering PagerDuty Services', 80);
+    }
+
+    return services.map(function (service) {
+      return {
+        id: service.id,
+        name: service.name,
+      };
+    });
+  },
+
+  /**
+   * Find item by id in array of items
+   * @param {Array} items - array of items
+   * @param {String} id - id of item to find in array
+   * @returns {Object} - item with id
+   */
+  _findItemById: function (items, id) {
+    if (!id) {
+      return null;
+    }
+    return items.filter(function (item) {
+      return item.id === id;
+    })[0];
+  },
+
+  getServiceName: function (pd_service_id, services) {
+    var service = this._findItemById(services, pd_service_id);
+    if (service) {
+      return service.name;
+    }
+    return '';
+  },
+
+  /**
+   * Generates list of PagerDuty Webhooks Table items based on dataset
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @returns {Array} - array of objects with PagerDuty Webhooks Table items
+   */
+  generateWebhooksTableItems: function (dataset) {
+    var allItems = dataset.assignment_groups.concat(dataset.cmdb_cis);
+    var webhookTableItems = [];
+    allItems.forEach(function (item) {
+      var webhook = null;
+      if (!gs.nil(item.pd_webhook_id)) {
+        // search for a matching webhook in the webhooks array
+        webhook = this._findItemById(dataset.pd_webhooks_v2, item.pd_webhook_id);
+        if (!webhook) {
+          webhook = this._findItemById(dataset.pd_webhooks_v3, item.pd_webhook_id);
+        }
+      }
+      if (webhook) {
+        item.pd_service_name = webhook.service_name || '';
+        item.webhook_version = webhook.webhook_version;
+        item.extension_schema_id = webhook.extension_schema_id || '';
+        item.sync_option = webhook.sync_option;
+        item.task_type = webhook.task_type;
+        item.custom_query_params = webhook.custom_query_params;
+        item.temporarily_disabled = webhook.temporarily_disabled;
+      } else {
+        item.webhook_version = '';
+        item.extension_schema_id = '';
+        item.sync_option = '';
+        item.task_type = '';
+        item.custom_query_params = '';
+        item.temporarily_disabled = null;
+      }
+      if (gs.nil(item.pd_service_name)) {
+        item.pd_service_name = this.getServiceName(item.pd_service_id, dataset.pd_services);
+      }
+      webhookTableItems.push(item);
+    }, this);
+
+    // Add webhooks that are not associated with any CI/AG
+    var allPdWebhooks = dataset.pd_webhooks_v2.concat(dataset.pd_webhooks_v3);
+    allPdWebhooks.forEach(function (pd_webhook) {
+      var existingWebhook = webhookTableItems.filter(function (item) {
+        return !gs.nil(item.pd_webhook_id) &amp;&amp; item.pd_webhook_id === pd_webhook.id;
+      })[0];
+      if (!existingWebhook) {
+        webhookTableItems.push({
+          sn_table: '',
+          sn_entity_name: '',
+          sn_entity_sys_id: '',
+          pd_service_id: pd_webhook.service_id,
+          pd_service_name: gs.nil(pd_webhook.service_name) ? this.getServiceName(pd_webhook.service_id, dataset.pd_services) : pd_webhook.service_name,
+          pd_webhook_id: pd_webhook.id,
+          webhook_version: pd_webhook.webhook_version,
+          extension_schema_id: pd_webhook.extension_schema_id || '',
+          task_type: pd_webhook.task_type,
+          sync_option: pd_webhook.sync_option,
+          custom_query_params: pd_webhook.custom_query_params,
+          temporarily_disabled: pd_webhook.temporarily_disabled,
+        });
+      }
+    }, this);
+
+    return webhookTableItems;
+  },
+
+  /**
+   * Compiles dataset with all required data for PagerDuty Webhooks table
+   * Namely: Webhooks (v2/v3) connected to this instance of ServiceNow, PagerDuty services, CIs and Assignment Groups
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {Object} - dataset with all required data for PagerDuty Webhooks table
+   */
+  buildWebhooksTableDataset: function (grJob) {
+    var dataset = {
+      cmdb_cis: this.getAllConnectedCIs(grJob),
+      assignment_groups: this.getAllConnectedAssignmentGroups(grJob),
+      pd_webhooks_v2: this.getAllPagerDutyWebhooksV2(grJob),
+      pd_webhooks_v3: this.getAllPagerDutyWebhooksV3(grJob),
+      pd_services: this.getAllPagerDutyServices(grJob)
+    };
+    return dataset;
+  },
+
+  /**
+   * Upserts PagerDuty Webhooks table with a single item
+   * @param {Object} item - object with PagerDuty Webhooks Table item
+   * @param {Array} errors - array of validation errors
+   * @param {String} healthCheckJobId - sys_id of PagerDuty Webhooks Job record (healthCheck)
+   * @returns {void}
+   */
+  upsertPagerDutyWebhooksTableItem: function (item, errors, healthCheckJobId) {
+    var validationErrors = JSON.stringify(errors || []);
+    var grPdWh = new GlideRecordSecure('x_pd_integration_pagerduty_webhooks');
+    grPdWh.addQuery('sn_entity_sys_id', item.sn_entity_sys_id);
+    grPdWh.addQuery('pd_service_id', item.pd_service_id);
+    grPdWh.addQuery('webhook_id', item.pd_webhook_id);
+    grPdWh.query();
+    if (grPdWh.next()) {
+      // Update
+      grPdWh.setValue('sn_entity_name', item.sn_entity_name);
+      grPdWh.setValue('sn_table', item.sn_table);
+      grPdWh.setValue('pd_service_name', item.pd_service_name);
+      grPdWh.setValue('webhook_id', item.pd_webhook_id);
+      grPdWh.setValue('webhook_version', item.webhook_version);
+      grPdWh.setValue('extension_schema_id', item.extension_schema_id);
+      grPdWh.setValue('task_type', item.task_type);
+      grPdWh.setValue('sync_option', item.sync_option);
+      grPdWh.setValue('custom_query_params', item.custom_query_params);
+      grPdWh.setValue('temporarily_disabled', item.temporarily_disabled);
+      grPdWh.setValue('validation_errors', validationErrors);
+      if (!gs.nil(healthCheckJobId)) {
+        grPdWh.setValue('last_health_check_id', healthCheckJobId);
+      }
+      grPdWh.update();
+    } else {
+      // Insert
+      grPdWh.initialize();
+      grPdWh.setValue('sn_table', item.sn_table);
+      grPdWh.setValue('sn_entity_name', item.sn_entity_name);
+      grPdWh.setValue('sn_entity_sys_id', item.sn_entity_sys_id);
+      grPdWh.setValue('pd_service_id', item.pd_service_id);
+      grPdWh.setValue('pd_service_name', item.pd_service_name);
+      grPdWh.setValue('webhook_id', item.pd_webhook_id);
+      grPdWh.setValue('webhook_version', item.webhook_version);
+      grPdWh.setValue('extension_schema_id', item.extension_schema_id);
+      grPdWh.setValue('task_type', item.task_type);
+      grPdWh.setValue('sync_option', item.sync_option);
+      grPdWh.setValue('custom_query_params', item.custom_query_params);
+      grPdWh.setValue('temporarily_disabled', item.temporarily_disabled);
+      grPdWh.setValue('validation_errors', validationErrors);
+      grPdWh.setValue('last_health_check_id', healthCheckJobId || '');
+      grPdWh.insert();
+    }
+  },
+
+  /**
+   * Main execution function for a Healthcheck job
+   * Run healthchecks for PagerDuty Webhooks based on PagerDuty Webhooks Dataset
+   * @param {GlideRecord} grJob - PagerDuty Webhooks grJob record (HealthcheckJob)
+   * @returns {void}
+   */
+  executeHealthcheckJob: function (grJob) {
+    var error = null;
+    var jobData = null;
+    try {
+      var dataset = this.buildWebhooksTableDataset(grJob);
+      var webhooksInMemory = this.generateWebhooksTableItems(dataset);
+      var webhooksInMemoryHealthCheckResults = this.validateWebhooks(webhooksInMemory, dataset);
+      if (!gs.nil(grJob)) {
+        jobData = JSON.parse(grJob.getValue('data'));
+
+        // Get total webhooks
+        jobData.totalWebhooks = webhooksInMemory.length;
+        // update data and step
+        jobData.completePercentage = 90;
+        grJob.setValue('data', JSON.stringify(jobData));
+        grJob.setValue('step', 'Processing webhooks');
+        grJob.update();
+      }
+      // Delete all non-associated webhooks before upserting new ones, since these are always re-generated from dataset
+      // Only if running in the context of a healthcheck grJob, not when running from migration script
+      if (grJob) {
+        this.deleteAllNonAssociatedWebhooks();
+      }
+      webhooksInMemory.forEach(function (webhookInMemory) {
+        var validationErrors = webhooksInMemoryHealthCheckResults.filter(function (itemResult) {
+          return itemResult.webhook.sn_table === webhookInMemory.sn_table &amp;&amp;
+          itemResult.webhook.sn_entity_sys_id === webhookInMemory.sn_entity_sys_id &amp;&amp;
+          itemResult.webhook.pd_service_id === webhookInMemory.pd_service_id &amp;&amp;
+          itemResult.webhook.pd_webhook_id === webhookInMemory.pd_webhook_id;
+        })[0].validationErrors || [];
+
+        validationErrors = validationErrors.map(function (validationError) {
+          return {
+            code: validationError.code,
+            action_type: validationError.action_type,
+            desc: validationError.desc,
+          };
+        });
+
+        var jobId = !gs.nil(grJob) ? grJob.getValue('sys_id') : null;
+        this.upsertPagerDutyWebhooksTableItem(webhookInMemory, validationErrors, jobId);
+
+        if (!gs.nil(grJob)) {
+          if (validationErrors.length &gt; 0) {
+            jobData.totalWebhooksProcessedFailed++;
+          } else {
+            jobData.totalWebhooksProcessedSuccess++;
+          }
+          grJob.setValue('data', JSON.stringify(jobData));
+          grJob.update();
+        }
+      }, this);
+    } catch (err) {
+      gs.error('PagerDuty Webhooks Healthcheck failed: {0}', err.message);
+      error = err.message;
+    } finally {
+      if (!gs.nil(grJob)) {
+        if (!gs.nil(error)) {
+          grJob.setValue('status', 'failed');
+          grJob.setValue('execution_errors', error);
+        } else {
+          jobData.completePercentage = 100;
+          grJob.setValue('data', JSON.stringify(jobData));
+          grJob.setValue('status', 'finished');
+        }
+        grJob.update();
+      }
+    }
+  },
+
+  /**
+   * Validates webhooks
+   * @param {Array} webhooks - array of webhook objects
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @returns {Array} - array of validation results
+   */
+  validateWebhooks: function (webhooks, dataset) {
+    var results = [];
+    // validate each webhook in the array
+    webhooks.forEach(function (webhook) {
+      var validationResults;
+      if (gs.nil(webhook.sn_entity_sys_id)) {
+        // This is a non-associated webhook, skip normal webhook validation suite
+        validationResults = this.validateWebhook(dataset, webhook, [
+          this.validateWebhooksNotAssociated,
+          this.validateWebhookDuplicated
+        ]);
+      } else {
+        validationResults = this.validateWebhook(dataset, webhook, [
+          this.validateServiceInvalid,
+          this.validateWebhookMissing,
+          this.validateWebhookServiceMismatch,
+          this.validateWebhookDuplicated,
+          this.validateWebhookConfigMismatch,
+          this.validateWebhookDisabled
+        ]);
+      }
+      // filter errors and warnings
+      validationResults = validationResults.filter(function (validationResult) {
+        return validationResult.status === 'error' || validationResult.status === 'warning';
+      });
+      results.push({webhook: webhook, validationErrors: validationResults});
+    }, this);
+    return results;
+  },
+
+  /**
+   * Validates webhook
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @param {Array} validators - array of validation functions
+   * @returns {Array} - array of validation results
+   */
+  validateWebhook: function (dataset, webhook, validators) {
+    var results = [];
+    var impeditiveValidationFailed = false;
+    validators.forEach(function (validator) {
+      if (!impeditiveValidationFailed) {
+        var validation = validator.bind(this)(dataset, webhook);
+        if (validation.status === 'error') {
+          impeditiveValidationFailed = true;
+        }
+        results.push(validation);
+      }
+    }, this);
+    return results;
+  },
+
+  /**
+   * Validates webhook verifying - service_invalid
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateServiceInvalid: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    var service = this._findItemById(dataset.pd_services, webhook.pd_service_id);
+
+    if (gs.nil(service)) {
+      result.status = 'error';
+      result.code = 'service_invalid';
+      result.desc = 'PagerDuty Service that is linked to SNow Entity doesn’t exist';
+      result.action_type = 'manual_remediation';
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhook verifying - webhook_missing
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhookMissing: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    var webhookFromDataset = this._findItemById(dataset.pd_webhooks_v2, webhook.pd_webhook_id);
+    if (gs.nil(webhookFromDataset)) {
+      webhookFromDataset = this._findItemById(dataset.pd_webhooks_v3, webhook.pd_webhook_id);
+    }
+
+    if (gs.nil(webhook.pd_webhook_id) || gs.nil(webhookFromDataset)) {
+      result.status = 'error';
+
+      var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
+      if (serviceWebhooks.length &gt; 1) {
+        result.action_type = 'manual_remediation';
+        result.code = 'webhook_invalid_multiple';
+        result.desc = 'SNow Entity linked to a PagerDuty Service has an incorrect Webhook ID. There are multiple Webhooks already created';
+      } else {
+        result.action_type = 'requires_attention';
+        result.code = 'webhook_missing';
+        result.desc = 'SNow Entity linked to a PagerDuty Service has an incorrect Webhook ID';
+      }
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhook verifying - webhook_service_mismatch
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhookServiceMismatch: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    var webhookFromDataset = this._findItemById(dataset.pd_webhooks_v2, webhook.pd_webhook_id);
+    if (gs.nil(webhookFromDataset)) {
+      webhookFromDataset = this._findItemById(dataset.pd_webhooks_v3, webhook.pd_webhook_id);
+    }
+
+    if (webhook.pd_service_id !== webhookFromDataset.service_id) {
+      result.status = 'error';
+
+      var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
+      if (serviceWebhooks.length &gt; 1) {
+        result.action_type = 'manual_remediation';
+        result.code = 'webhook_service_mismatch_multiple';
+        result.desc = 'SNow Entity linked to a PagerDuty Service has a mismatched Webhook ID. There are multiple Webhooks already created';
+      } else {
+        result.action_type = 'auto_remediation';
+        result.code = 'webhook_service_mismatch';
+        result.desc = 'SNow Entity linked to a PagerDuty Service has a mismatched Webhook ID';
+      }
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhook verifying - webhook_duplicated
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhookDuplicated: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
+    if (serviceWebhooks.length &gt; 1) {
+      result.status = 'warning';
+      result.code = 'webhook_duplicated';
+      result.action_type = 'requires_attention';
+      result.desc = 'Webhook duplicated for a Service linked to a SNow Entity';
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhook verifying - webhook_config_mismatch
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhookConfigMismatch: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    if (webhook.webhook_version === 3) {
+      var webhookFromDataset = this._findItemById(dataset.pd_webhooks_v3, webhook.pd_webhook_id);
+      var trigeredEvent = webhookFromDataset.events.filter(function (event) {
+        return event === 'incident.triggered';
+      });
+      if ((webhook.sync_option === 'auto' &amp;&amp; !trigeredEvent) || (webhook.sync_option === 'manual' &amp;&amp; trigeredEvent)) {
+        result.status = 'warning';
+        result.code = 'webhook_config_mismatch';
+        result.action_type = 'auto_remediation';
+        result.desc = 'Webhook configuration (sync_mode &amp; task_type) params do not match with SNow entity configuration';
+      }
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhook verifying - webhook_disabled
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhookDisabled: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+    if (webhook.temporarily_disabled === true) {
+      result.status = 'warning';
+      result.code = 'webhook_disabled';
+      result.action_type = 'auto_remediation';
+      result.desc = 'Webhook is temporarily disabled';
+    }
+    return result;
+  },
+
+  /**
+   * Validates webhooks - validation for PagerDutyWebhooks that are not associated with any service now entity (CI/AG)
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Object} - validation result
+   */
+  validateWebhooksNotAssociated: function (dataset, webhook) {
+    var result = {
+      status: 'ok',
+      code: '',
+      action_type: '',
+      desc: '',
+    };
+
+    if (gs.nil(webhook.sn_entity_sys_id) &amp;&amp; webhook.pd_service_id !== this.defaultServiceID) {
+      result.status = 'error';
+      result.code = 'webhook_not_associated';
+      result.action_type = 'requires_attention';
+      result.desc = 'Webhook is not associated with any SNow Entity';
+    }
+    return result;
+  },
+
+  /**
+   * Get all PagerDuty webhooks that are associated with the same PagerDuty service as provided webhook
+   * @param {Object} dataset - dataset with all webhook data and CI/AG data
+   * @param {Object} webhook - webhook object
+   * @returns {Array} - array of PagerDuty webhooks that are associated with the same PagerDuty service as provided webhook
+   */
+  getAllServiceWebhooks: function (dataset, webhook) {
+    var serviceWebhooks = dataset.pd_webhooks_v2.filter(function (item) {
+      return item.service_id === webhook.pd_service_id;
+    });
+    serviceWebhooks = serviceWebhooks.concat(dataset.pd_webhooks_v3.filter(function (item) {
+      return item.service_id === webhook.pd_service_id;
+    }));
+    return serviceWebhooks;
+  },
+
+  /**
+   * Creates PagerDuty webhook subscription in PD
+   * @param {Object} grWebhook - GlideRecord of PagerDuty Webhooks Table item
+   * @returns {String} PagerDuty webhook subscription ID
+   */
+  createServiceWebhook: function (grWebhook) {
+    var me = 'createServiceWebhook';
+    var webhookId;
+    var pdServiceId = grWebhook.getValue('pd_service_id').trim();
+    var customQueryParams = this._parseQueryParams(grWebhook.getValue('custom_query_params'));
+    var params = {
+      sync_option: grWebhook.getValue('sync_option'),
+      task_type: grWebhook.getValue('task_type'),
+    };
+
+    // merge params into customQueryParams
+    Object.keys(params).forEach(function (key) {
+      customQueryParams[key] = params[key];
+    });
+
+    try {
+      var v3wh = new x_pd_integration.v3webhook();
+      webhookId = v3wh.createPdSubscription(pdServiceId, customQueryParams);
+    } catch (e) {
+      gs.error('{0} | Error creating webhook v3 in PagerDuty error: {1}', me, e.message);
+    }
+
+    return webhookId;
+  },
+
+  /**
+   * Updates job step
+   *
+   * @param {Object} grJob - GlideRecord of the job
+   * @param {String} step - job step
+   * @param {Number} completePercentage - job complete percentage
+   * @returns {Object} - job record
+   */
+  _updateJobStep: function (grJob, step, completePercentage) {
+    var jobData = JSON.parse(grJob.getValue('data'));
+    jobData.completePercentage = completePercentage;
+    grJob.setValue('data', JSON.stringify(jobData));
+    grJob.setValue('step', step);
+    grJob.update();
+  },
+  /**
+   * Update system property 'webhooks_v2_identified' based on the existence of v2 webhooks
+   * @returns {void}
+   */
+  setV2WebhooksIdentifiedProperty: function () {
+    var grWebhook = new GlideRecord('x_pd_integration_pagerduty_webhooks');
+    var isV2Identified = 'false';
+    if (grWebhook.get('webhook_version', 2)) {
+      isV2Identified = 'true';
+    }
+    if (gs.getProperty('x_pd_integration.webhooks_v2_identified') !== isV2Identified) {
+      gs.setProperty('x_pd_integration.webhooks_v2_identified', isV2Identified);
+    }
+  },
+
+  type: 'PagerDutyWebhooksManagement'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-07-07 15:04:28</sys_created_on>
+        <sys_id>32704e0f97b72110f32331b11153af23</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PagerDutyWebhooksManagement</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_32704e0f97b72110f32331b11153af23</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-07-07 15:04:28</sys_updated_on>
+    </sys_script_include>
+</record_update>

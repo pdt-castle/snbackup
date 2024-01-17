@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_test">
+    <sys_atf_test action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <copied_from/>
+        <description>Check fuctions abilities by rest_api_endpoint&#13;
+Before the test you should put api_key and endpoint.&#13;
+Test will be success if no rest_api_endpoint</description>
+        <enable_parameterized_testing>false</enable_parameterized_testing>
+        <name>PD: Settings page -  Enable Conference Bridge feature (empty rest_api_endpoint)</name>
+        <parameters/>
+        <remember/>
+        <sys_class_name>sys_atf_test</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2022-12-27 15:54:13</sys_created_on>
+        <sys_id>07ba991d4744ad109cd45088c26d4307</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>PD: Settings page -  Enable Conference Bridge feature (empty rest_api_endpoint)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_test_07ba991d4744ad109cd45088c26d4307</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-17 12:17:56</sys_updated_on>
+    </sys_atf_test>
+    <sys_variable_value action="delete_multiple" query="document_key=07ba991d4744ad109cd45088c26d4307"/>
+</record_update>

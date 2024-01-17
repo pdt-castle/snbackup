@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_db_view_table">
+    <sys_db_view_table action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <left_join>false</left_join>
+        <order>100</order>
+        <sys_class_name>sys_db_view_table</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-05-28 11:07:27</sys_created_on>
+        <sys_id>9275c4b907c918109f3bff1d7c1ed0a7</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>sys_user_group</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_db_view_table_9275c4b907c918109f3bff1d7c1ed0a7</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-05-28 11:15:25</sys_updated_on>
+        <table>sys_user_group</table>
+        <variable_prefix>ag</variable_prefix>
+        <view display_value="x_pd_integration_join_group_and_ep">8f0f7b2507c918109f3bff1d7c1ed0c2</view>
+        <where_clause/>
+    </sys_db_view_table>
+</record_update>

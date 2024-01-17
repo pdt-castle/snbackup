@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action">
+    <sys_ui_action action="INSERT_OR_UPDATE">
+        <action_name/>
+        <active>false</active>
+        <client>true</client>
+        <client_script_v2>function onClick(g_form) {
+
+}</client_script_v2>
+        <comments>DEPRECATED.&#13;
+In order to create a webhook subscription with the task_type set to a Security Incident [sn_si_incident], set this parameter on the PagerDuty Settings page, Webhook Configuration section.</comments>
+        <condition>x_pd_integration.ConditionsHelper.provisionGroupSiUiAction(current)</condition>
+        <form_action>true</form_action>
+        <form_button>false</form_button>
+        <form_button_v2>false</form_button_v2>
+        <form_context_menu>false</form_context_menu>
+        <form_link>true</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
+        <form_style/>
+        <hint>Create a service and escalation policy in PagerDuty</hint>
+        <isolate_script>false</isolate_script>
+        <list_action>true</list_action>
+        <list_banner_button>false</list_banner_button>
+        <list_button>false</list_button>
+        <list_choice>false</list_choice>
+        <list_context_menu>false</list_context_menu>
+        <list_link>false</list_link>
+        <list_save_with_form_button>false</list_save_with_form_button>
+        <list_style/>
+        <messages/>
+        <name>Provision Group into PagerDuty (SI)</name>
+        <onclick>provisionGroup()</onclick>
+        <order>901</order>
+        <script>function provisionGroup() {
+  var manager = g_form.getValue('manager');
+  if (!manager) {
+    var decision = confirm('The assignment group contains no manager user, the current user will be set as a manager. Do you want to provision the group?');
+    if (decision)
+      provision({ use_current_user: 'true' });
+    else
+      return;
+  } else {
+    provision({ manager: manager, use_current_user: 'false' });
+  }
+}
+
+function provision(opts) {
+  var snGroupId = g_form.getUniqueValue();
+  var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
+  ga.addParam('sysparm_name', 'provisionGroupService');
+  ga.addParam('sysparm_group_id', snGroupId);
+  ga.addParam('sysparm_manager_sys_id', opts.manager);
+  ga.addParam('sysparm_use_current_user', opts.use_current_user);
+  ga.getXMLAnswer(function(answer) {});
+}
+</script>
+        <show_insert>false</show_insert>
+        <show_multiple_update>false</show_multiple_update>
+        <show_query>false</show_query>
+        <show_update>true</show_update>
+        <sys_class_name>sys_ui_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-05-10 16:15:47</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>144db7ecdb02130070c5771c8c9619d2</sys_id>
+        <sys_mod_count>16</sys_mod_count>
+        <sys_name>Provision Group into PagerDuty (SI)</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_action_144db7ecdb02130070c5771c8c9619d2</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-08 14:29:56</sys_updated_on>
+        <table>sys_user_group</table>
+        <ui11_compatible>true</ui11_compatible>
+        <ui16_compatible>false</ui16_compatible>
+    </sys_ui_action>
+</record_update>

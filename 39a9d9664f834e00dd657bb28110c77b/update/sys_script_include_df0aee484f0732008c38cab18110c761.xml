@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyPriorities</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>*** Changes made to this script are not supported by PagerDuty ***</description>
+        <name>PagerDutyPriorities</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyPriorities = Class.create();
+PagerDutyPriorities.prototype = {
+	initialize: function() {
+		this.JSON = new global.JSON();
+		this.priorityInfo = [];
+	},
+
+
+  /**
+   * Refresh PagerDuty priorities
+   */
+  updatePriorities: function() {
+    gs.debug('****** Priorities import started ******');
+    var fn = 'updatePriorities';
+    var error = '';
+
+    //query for all webhooks using base url address
+    error = this.queryPriorities();
+    var priorityInfo = this.priorityInfo;
+    var gr = new GlideRecordSecure('x_pd_integration_pagerduty_priority');
+    gr.addNotNullQuery('sys_id');
+    gr.query();
+    gr.deleteMultiple();
+    gs.debug(fn + ': ' + priorityInfo.toString());
+
+    for (var i = 0; i &lt; priorityInfo.length; i+=2) {
+      gs.debug('Inserting priority {0} and id {1}', priorityInfo[i], priorityInfo[i+1]);
+      this._insertPriorities(priorityInfo[i], priorityInfo[i+1]);
+    }
+    gs.debug('****** Priority updates completed ******');
+    return error;
+  },
+
+  /**
+   * Query PagerDuty for all priorities
+   * @return void
+   */
+  queryPriorities: function() {
+    var fn = 'queryPriorities';
+    gs.debug(fn);
+
+    var error = '';
+    var feature = 'priorities';
+    var rest = new x_pd_integration.PagerDuty_REST();
+
+    var response = rest.getREST(feature);
+    var responseBody = response.haveError() ? response.getErrorMessage() : response.getBody();
+    var status = response.getStatusCode();
+    gs.debug(fn + ' response: {0}:{1}', status, responseBody);
+
+    if (status == 200) {
+      var body = this.JSON.decode(response.getBody());
+      var priorities = body.priorities;
+      if (gs.nil(priorities) || priorities.length &lt; 1) {
+        error = fn + ': no priorities found';
+        gs.error(error);
+        return error;
+      }
+      for (var i = 0; i &lt; priorities.length; i++) {
+        this.priorityInfo.push(priorities[i].summary);
+        this.priorityInfo.push(priorities[i].id);
+      }
+    }
+    else {
+      error = 'PagerDuty Priorities could not be imported. '
+        + 'This may be due to Incident Priority not being enabled on your PagerDuty account. '
+        + 'To enable this feature, please go to Account Settings -&gt; Incident Priorities (within PagerDuty) '
+        + 'and click on Enable Incident Priority Levels.';
+      gs.error(error);
+    }
+    return error;
+  },
+
+
+  _insertPriorities: function(priority, priorityID) {
+    var me = "_insertPriorities";
+    //insert priorites through import set for tracking purposes
+    var gr = new GlideRecordSecure("x_pd_integration_pagerduty_pri_import");
+	var sysid = gs.generateGUID();
+	gr.setValue("priority_sysid", sysid);
+    gr.setValue("pagerduty_priority_id", priorityID);
+	gr.setValue("pagerduty_priority", priority);
+    gr.insert();
+    gs.debug("{0} added import for priority sysid {1} priority {2} with id:{3}", me, sysid, priority, priorityID);
+  },
+
+
+
+	type: "PagerDutyPriorities",
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-05-25 21:56:01</sys_created_on>
+        <sys_id>df0aee484f0732008c38cab18110c761</sys_id>
+        <sys_mod_count>24</sys_mod_count>
+        <sys_name>PagerDutyPriorities</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_df0aee484f0732008c38cab18110c761</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-30 17:21:46</sys_updated_on>
+    </sys_script_include>
+</record_update>

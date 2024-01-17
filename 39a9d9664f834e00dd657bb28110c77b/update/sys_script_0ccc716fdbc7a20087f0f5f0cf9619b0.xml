@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>true</action_update>
+        <active>false</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>incident</collection>
+        <condition>!current.x_pd_integration_incident_key.nil() &amp;&amp; current.state.changesTo(gs.getProperty("x_pd_integration.resolved_state_value"), 6)</condition>
+        <description/>
+        <execute_function>true</execute_function>
+        <filter_condition table="incident">x_pd_integration_incident_keyISNOTEMPTY^EQ<item endquery="false" field="x_pd_integration_incident_key" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>PD delete inc key on resolve(DEPRECATED)</name>
+        <order>900</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script>function onBefore(current, previous) {
+	current.setValue("x_pd_integration_incident_key", "");
+
+}
+</script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2016-11-18 19:03:40</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>0ccc716fdbc7a20087f0f5f0cf9619b0</sys_id>
+        <sys_mod_count>8</sys_mod_count>
+        <sys_name>PD delete inc key on resolve(DEPRECATED)</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_0ccc716fdbc7a20087f0f5f0cf9619b0</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2018-04-13 15:48:00</sys_updated_on>
+        <template/>
+        <when>before</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=0ccc716fdbc7a20087f0f5f0cf9619b0"/>
+</record_update>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_operation">
+    <sys_ws_operation action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <consumes>application/json</consumes>
+        <consumes_customized>true</consumes_customized>
+        <default_operation_uri>/api/x_pd_integration/pagerduty2sn</default_operation_uri>
+        <enforce_acl>e9c0c2df4ffc07008c38cab18110c766</enforce_acl>
+        <http_method>POST</http_method>
+        <name>Webhook Post</name>
+        <operation_script>(function process (/* RESTAPIRequest*/ request, /* RESTAPIResponse*/ response) {
+
+  gs.debug('Scripted REST POST pagerduty2sn API started');
+
+  if (request.getHeader('Content-Type').indexOf('application/json') === -1) {
+    return new sn_ws_err.BadRequestError('Requires content-type = application/json');
+  }
+
+  var bodyData = request.body.data;
+  var queryParams = request.queryParams;
+
+  if (!gs.nil(bodyData.event) &amp;&amp; bodyData.event === 'incident.action.trigger') {
+    var PDInbound = new x_pd_integration.PagerDutyInboundWorkflowActions();
+    var actionData = PDInbound.processAction(bodyData, queryParams);
+    gs.debug('REST pagerduty2sn POST: processed workflow action webhook. Data: {0}', JSON.stringify(actionData));
+    response.setBody(actionData);
+    response.setContentType('application/json');
+    response.setStatus(200);
+  } else {
+    /* Note: The V3 webhook payload contains a single event object; the V2 webhook payload contain a single 'messages'
+    array that may contain multiple elements. Once we sunset V2 webhooks we can remove all the logic related to the
+    'messages' array. */
+    var messages = bodyData.hasOwnProperty('messages') ? bodyData.messages : [bodyData];
+
+    if (gs.nil(messages)) {
+      gs.error('No value for "messages" parameter');
+      return new sn_ws_err.BadRequestError('No messages found in request body');
+    }
+
+    gs.debug('REST pagerduty2sn POST: {0} messages received', messages.length);
+
+    var validMessages = filterOutV3TriggersWithManualSync(messages, queryParams);
+
+    if (validMessages.length &gt; 0) {
+      if (isSyncProcessingModeEnabled()) {
+        processMessages(validMessages, queryParams);
+      } else {
+        enqueueMessages(validMessages, queryParams);
+      }
+    }
+
+    response.setContentType('application/json');
+    response.setStatus(200);
+    response.setBody({received: messages});
+  }
+
+  function isSyncProcessingModeEnabled () {
+    // default to 'async' if property does not exist or its value is different from 'sync'
+    return gs.getProperty('x_pd_integration.webhook_processing_mode') === 'sync';
+  }
+
+  function processMessages (messages, queryParams) {
+    gs.debug('REST pagerduty2sn POST: processing {0} messages', messages.length);
+    var v3wh = new x_pd_integration.v3webhook();
+    messages.forEach(function (message) {
+      if (v3wh.isSupported(message)) {
+        var inboundV3 = new x_pd_integration.PagerDutyInboundV3();
+        inboundV3.consume(message.event, queryParams);
+      } else {
+        var PDInbound = new x_pd_integration.PagerDutyInbound();
+        PDInbound.processRestWebhook(message);
+      }
+    });
+  }
+
+  function enqueueMessages (messages, queryParams) {
+    messages.forEach(function (message) {
+      var queueName = 'pagerduty_webhook_queue';
+      if (gs.getProperty('x_pd_integration.webhook_processing_mode') === 'async_multi') {
+        var incidentId;
+        if (message.event &amp;&amp; message.event.event_type) { // V3
+          if (message.event.data.type === 'incident') {
+            // Webhook carries an Incident object as part of the event
+            incidentId = message.event.data.id;
+          } else {
+            // Webhook is for another object (incident_conference_bridge, incident_responder, ...)
+            // In these cases, the incident id is on the Incident reference object
+            incidentId = message.event.data.incident.id;
+          }
+        } else if (message.incident) { // V2
+          incidentId = message.incident.id;
+        }
+        var digest = new GlideDigest();
+        partition = parseInt(digest.getMD5Hex(incidentId).substring(0, 7), 16) % 4 + 1;
+        queueName = 'pagerduty_webhook_queue_' + partition;
+      }
+
+      // Introduce an artifical delay to prevent events of the same PD incident from being processed out of order when
+      // they arrive at the same second. This is because events enqueued at the same second will be processed in a non
+      // deterministic order due to ServiceNow’s  limited time precision (1 second).
+      sleep(1000);
+
+      var eventType = message.event &amp;&amp; message.event.event_type ? message.event.event_type : message.event;
+      gs.debug('REST pagerduty2sn POST: enqueueing 1 message for async processing (queue={0}, event={1})', queueName, eventType || 'unknown');
+      gs.eventQueue('x_pd_integration.process_webhook', null, JSON.stringify({
+        message: message,
+        query_params: queryParams
+      }), null, queueName);
+    });
+  }
+
+  function sleep (ms) {
+    var endSleep = new GlideDuration().getNumericValue() + ms;
+    while (new GlideDuration().getNumericValue() &lt; endSleep) {}
+  }
+
+  function filterOutV3TriggersWithManualSync (messages, queryParams) {
+    var v3wh = new x_pd_integration.v3webhook();
+    return messages.filter(function (message) {
+      if (v3wh.isSupported(message) &amp;&amp; message.event.event_type === 'incident.triggered' &amp;&amp;
+          queryParams.sync_option &amp;&amp; queryParams.sync_option.length &amp;&amp; queryParams.sync_option[0] === 'manual') {
+        gs.info('Webhook processing dropped since sync mode in the config is set to manual');
+        return false;
+      }
+      return true;
+    });
+  }
+
+})(request, response);
+</operation_script>
+        <operation_uri>/api/x_pd_integration/v1/pagerduty2sn</operation_uri>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <relative_path>/</relative_path>
+        <request_example/>
+        <requires_acl_authorization>true</requires_acl_authorization>
+        <requires_authentication>true</requires_authentication>
+        <requires_snc_internal_role>false</requires_snc_internal_role>
+        <short_description/>
+        <sys_class_name>sys_ws_operation</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2016-08-06 15:03:56</sys_created_on>
+        <sys_id>a54e1902dbcd260087f0f5f0cf96190d</sys_id>
+        <sys_mod_count>55</sys_mod_count>
+        <sys_name>Webhook Post</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ws_operation_a54e1902dbcd260087f0f5f0cf96190d</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2022-09-04 10:11:01</sys_updated_on>
+        <web_service_definition display_value="pagerduty2sn">a65dd102dbcd260087f0f5f0cf9619bd</web_service_definition>
+        <web_service_version display_value="v1">90bdd102dbcd260087f0f5f0cf9619f5</web_service_version>
+    </sys_ws_operation>
+</record_update>

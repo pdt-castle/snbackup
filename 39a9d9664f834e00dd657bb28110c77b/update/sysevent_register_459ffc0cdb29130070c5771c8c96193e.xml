@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysevent_register">
+    <sysevent_register action="INSERT_OR_UPDATE">
+        <description/>
+        <event_name>x_pd_integration.remove_user_from_pdteam</event_name>
+        <fired_by>PagerDuty business rules</fired_by>
+        <queue/>
+        <suffix>remove_user_from_pdteam</suffix>
+        <sys_class_name>sysevent_register</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-04-13 16:37:24</sys_created_on>
+        <sys_id>459ffc0cdb29130070c5771c8c96193e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_pd_integration.remove_user_from_pdteam</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysevent_register_459ffc0cdb29130070c5771c8c96193e</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2018-04-13 16:37:24</sys_updated_on>
+        <table/>
+    </sysevent_register>
+</record_update>

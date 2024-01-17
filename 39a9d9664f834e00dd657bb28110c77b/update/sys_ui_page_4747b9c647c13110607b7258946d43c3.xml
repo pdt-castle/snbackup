@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+var webhooksAutoRemediationIds = [];
+var healthcheckStatusResult = null;
+
+// Pagination variables
+var itemsPerPage = 5; // Default number of items to show per page
+var currentPage = 1;
+var storedItemsPerPage = localStorage.getItem('pd.HealthCheck.itemsPerPage');
+if (storedItemsPerPage) {
+  itemsPerPage = parseInt(storedItemsPerPage, 10);
+  $J('#records-per-page-select').val(itemsPerPage);
+}
+
+function hideAllViews () {
+  $J('#healthcheck-never-ran-view').hide();
+  $J('#healthcheck-running-view').hide();
+  $J('#healthcheck-results-view').hide();
+  $J('#healthcheck-success-notification').hide();
+  $J('#healthcheck-failed-notification').hide();
+  $J('#healthcheck-totals').hide();
+  $J('#healthcheck-no-totals').hide();
+  $J('#healthcheck-auto-remediation-totals').hide();
+  $J('#healthcheck-migration-totals').hide();
+  $J('#healthcheck-manual-intervention-table').hide();
+  $J('#auto-remediation-view').hide();
+}
+
+function addAutoRemediationItem (total, itemText) {
+  if (total &gt; 0) {
+    // Append to parent UL list the item
+    $J('#healthcheck-auto-remediation-list').append('&lt;li&gt;' + total + ' ' + itemText + '&lt;/li&gt;');
+  }
+}
+
+function handleHealthCheckStatus (healthcheckStatus) {
+  // reset pagination
+  currentPage = 1;
+  var healthcheckJob = healthcheckStatus?.result?.job;
+  $J('#re-run-healthcheck-col').show();
+
+  if (!healthcheckJob) {
+    $J('#re-run-healthcheck-col').hide();
+    $J('#healthcheck-never-ran-view').show();
+  } else if (healthcheckJob.status === 'running') {
+    $J('#re-run-healthcheck').prop('disabled', true);
+    updateHealthCheckProgressBar(healthcheckJob);
+    $J('#healthcheck-running-view').show();
+    pollRunningJobProgressInterval = setInterval(pollRunningJobProgress, 2000);
+  } else {
+    healthcheckStatusResult = healthcheckStatus?.result || {webhooks: [], webhooksAutoRemediationIds: [], autoRemediationTotals: {total: 0}, totalWebhooks: 0, totalWithInconsistencies: 0, totalCanBeMigrated: 0};
+    webhooksAutoRemediationIds = healthcheckStatusResult?.webhooksAutoRemediationIds || [];
+    $J('#re-run-healthcheck').prop('disabled', false);
+    if (healthcheckJob.status === 'finished') {
+      $J('#healthcheck-results-view #healthcheck-total').text(healthcheckStatusResult?.totalWebhooks + ' webhook(s) / ');
+      $J('#healthcheck-results-view #healthcheck-total-inconsistencies').text(healthcheckStatusResult?.totalWithInconsistencies + ' with inconsistencies');
+      $J('#healthcheck-totals').show();
+      $J('#healthcheck-auto-remediation-list').empty();
+
+      var autoRemediationTotals = healthcheckStatusResult?.autoRemediationTotals || {total: 0};
+      if (autoRemediationTotals.total &gt; 0) {
+        // Inconsistencies that can be auto-resolved
+        addAutoRemediationItem(autoRemediationTotals.webhookDisabled, 'temporarily disabled webhook(s)');
+        addAutoRemediationItem(autoRemediationTotals.webhookConfigMismatch, 'webhook(s) with config params mismatch');
+        addAutoRemediationItem(autoRemediationTotals.webhookServiceMismatch, 'webhook(s) with service mismatch');
+        $J('#healthcheck-auto-remediation-totals').show();
+      } else if (healthcheckStatusResult?.totalCanBeMigrated &gt; 0) {
+        // Webhooks V2 available to be migrated
+        $J('#healthcheck-results-view #webhooks-can-be-migrated').text(healthcheckStatusResult?.totalCanBeMigrated);
+        $J('#healthcheck-migration-totals').show();
+      }
+      $J('#manual-intervention-table &gt; tbody').html('');
+      if (healthcheckStatusResult?.webhooks.length &gt; 0) {
+        renderTable(currentPage);
+      }
+    } else {
+      $J('#healthcheck-no-totals').show();
+      $J('#healthcheck-results-view #healthcheck-failed-notification-message').text('Job failed to execute: ' + healthcheckJob.executionErrors);
+      $J('#healthcheck-failed-notification').show();
+    }
+    var date = new Date(healthcheckJob.sysCreatedOn);
+    var formattedDate = date.toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true});
+    $J('#healthcheck-results-view #healthcheck-job-date').text('Last health check ran at ' + formattedDate);
+    $J('#healthcheck-results-view').show();
+  }
+}
+
+function fetchHealthCheckStatus (callback) {
+  var ga = new GlideAjax('PagerDutyWebhookManagementController');
+  ga.addParam('sysparm_name', 'getLastHealthCheck');
+  ga.getXMLAnswer(function (answer) {
+    var healthcheckStatus = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+    callback(healthcheckStatus);
+  });
+}
+
+function initPageLayoutAccordingToHealthCheckStatus () {
+  try {
+    hideAllViews();
+    $J('#loading-view').show();
+    fetchHealthCheckStatus(function (healthcheckStatus) {
+      $J('#loading-view').hide();
+      if (healthcheckStatus.error) {
+        showErrorToast('There was an error loading the webhook health check status.', healthcheckStatus.error);
+      } else {
+        handleHealthCheckStatus(healthcheckStatus);
+      }
+    });
+
+  } catch (ex) {
+    $J('#loading-view').hide();
+    showErrorToast('There was an error loading the webhook health check status.', ex.message);
+  }
+}
+
+pollRunningJobProgressInterval = null;
+function pollRunningJobProgress () {
+  try {
+    fetchHealthCheckStatus(function (healthcheckStatus) {
+      var healthcheckJob = healthcheckStatus?.result?.job;
+      if (healthcheckJob) {
+        updateHealthCheckProgressBar(healthcheckJob);
+        if (healthcheckJob.status !== 'running') {
+          // Stop the polling and dispose the interval object
+          clearInterval(pollRunningJobProgressInterval);
+          // wait some time before hiding the running view and showing the results view
+          setTimeout(function () {
+            hideAllViews();
+            handleHealthCheckStatus(healthcheckStatus);
+          }, 2000);
+        }
+      }
+    });
+  } catch (ex) {
+    showErrorToast('There was an error loading the webhook healthcheck status.', ex.message);
+  }
+}
+
+function updateHealthCheckProgressBar (job) {
+  var completionPercentage = job.data.completePercentage;
+  var jobStep = job.step;
+  var progressBar = $J('#healthcheck-running-progress-bar .progress-bar');
+  progressBar.css('width', completionPercentage + '%');
+  progressBar.attr('aria-valuenow', completionPercentage);
+  $(progressBar).find('span').text(completionPercentage + '%');
+
+  // Special case for webhooks step
+  if (jobStep === 'Processing webhooks') {
+    jobStep = 'Processing webhooks (' + job.data?.totalWebhooks + ')';
+  }
+  $J('#healthcheck-running-progress-bar .progress-step').text(jobStep);
+  if (completionPercentage === 100) {
+    $J('#healthcheck-running-progress-bar .progress-step').text('Finished.');
+  }
+}
+
+function showErrorToast (title, message) {
+  if (title) {
+    $J('#error-title').text(title);
+  }
+  if (message) {
+    $J('#error-message').text(message);
+  }
+  $J('#errors').show();
+}
+
+// Pagination events
+$J('#prev-page').on('click', function () {
+  if (currentPage &gt; 1) {
+    currentPage--;
+    renderTable(currentPage);
+  }
+});
+
+$J('#next-page').on('click', function () {
+  var maxPage = Math.ceil(healthcheckStatusResult?.webhooks.length / itemsPerPage);
+  if (currentPage &lt; maxPage) {
+    currentPage++;
+    renderTable(currentPage);
+  }
+});
+$J('#first-page').on('click', function () {
+  currentPage = 1;
+  renderTable(currentPage);
+});
+
+$J('#last-page').on('click', function () {
+  var totalPages = Math.ceil(healthcheckStatusResult?.webhooks.length / itemsPerPage);
+  currentPage = totalPages;
+  renderTable(currentPage);
+});
+
+$J('#records-per-page-select').on('change', function (event) {
+  itemsPerPage = parseInt($J(this).val(), 10);
+  currentPage = 1;
+  // Save the&lt; selected itemsPerPage value to local storage
+  localStorage.setItem('pd.HealthCheck.itemsPerPage', itemsPerPage.toString());
+  renderTable(currentPage);
+});
+
+function updateButtonStates (page) {
+  var totalPages = Math.ceil(healthcheckStatusResult?.webhooks.length / itemsPerPage);
+
+  // Disable/Enable First Page and Previous buttons
+  $J('#first-page, #prev-page').prop('disabled', page === 1);
+
+  // Disable/Enable Last Page and Next buttons
+  $J('#last-page, #next-page').prop('disabled', page === totalPages);
+}
+// End Pagination events
+
+function renderTable (page) {
+  var totalRecords = healthcheckStatusResult?.webhooks.length;
+  var startIndex = (page - 1) * itemsPerPage;
+  var endIndex = startIndex + itemsPerPage;
+  var paginatedItems = healthcheckStatusResult?.webhooks.slice(startIndex, endIndex);
+  $J('#manual-intervention-table tbody').empty(); // Clear previous rows
+
+  paginatedItems.forEach(function (webhook) {
+    var webhookRow = '&lt;tr&gt;';
+    if (webhook.snEntityName) {
+      webhookRow += '&lt;td&gt;&lt;a href="' + webhook.snTable + '.do?sys_id=' + webhook.snEntitySysId + '"&gt;' + webhook.snEntityName + '&lt;/a&gt;&lt;/td&gt;';
+    } else {
+      webhookRow += '&lt;td&gt; - &lt;/td&gt;';
+    }
+    if (webhook.pdServiceName) {
+      webhookRow += '&lt;td&gt;&lt;a href="' + webhook.pdServiceUrl + '" target="_blank"&gt;' + webhook.pdServiceName + '&lt;/a&gt;&lt;/td&gt;';
+    } else {
+      webhookRow += '&lt;td&gt; - &lt;/td&gt;';
+    }
+    webhookRow += '&lt;td&gt;' + (webhook.webhookId || '-') + '&lt;/td&gt;';
+    webhookRow += '&lt;td&gt;' + (webhook.webhookVersion || '-') + '&lt;/td&gt;';
+    webhookRow += '&lt;td&gt;';
+    webhook.errors.forEach(function (error) {
+      if (error.action_type === 'manual_remediation') {
+        webhookRow += '$[SP]&lt;span style="color: red;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]' + error.desc + '&lt;br /&gt;';
+      } else {
+        webhookRow += '$[SP]&lt;span style="color: orange;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]' + error.desc + '&lt;br /&gt;';
+      }
+    });
+    webhookRow += '&lt;/td&gt;';
+    webhookRow += '&lt;/tr&gt;';
+    $J('#manual-intervention-table &gt; tbody').append(webhookRow);
+  });
+  var infoStartIdx = startIndex + 1;
+  var infoEndIdx = (endIndex &gt; totalRecords) ? totalRecords : endIndex;
+
+  $J('#page-info').text('' + infoStartIdx + ' to ' + infoEndIdx + ' of ' + totalRecords);
+  updateButtonStates(page);
+  $J('#healthcheck-manual-intervention-table').show();
+}
+
+$J(function () {
+  var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+
+  $J('#run-auto-remediation').on('click', function () {
+    try {
+      $J('#healthcheck-auto-remediation-totals').hide();
+      var progressBar = $J('#auto-remediation-running-progress-bar .progress-bar');
+      progressBar.css('width', 0 + '%');
+      progressBar.attr('aria-valuenow', 0);
+      $(progressBar).find('span').text(0 + '%');
+      $J('#auto-remediation-running-progress-bar .progress-step').text('Initializing');
+      $J('#auto-remediation-view').show();
+
+      trackingApi.track('webhooks_healthcheck_clicked_run_auto_remediation_button', {}, function (error, _result) {
+        if (error) {
+          jslog('Tracking error: ' + error);
+        }
+      });
+
+      // Remove duplicates
+      webhooksAutoRemediationIds = webhooksAutoRemediationIds.filter(function (value, index, self) {
+        return index === self.indexOf(value);
+      });
+
+      // run auto-remediation for each webhook
+      if (webhooksAutoRemediationIds.length &gt; 0) {
+        webhooksAutoRemediationIds.forEach(function (webhookSysId, index) {
+          var ga = new GlideAjax('PagerDutyWebhookManagementController');
+          ga.addParam('sysparm_name', 'runWebhookRemediation');
+          ga.addParam('sysparm_webhook_sys_id', webhookSysId);
+          ga.getXMLAnswer(function (answer) {
+            var webhookRemediationStatus = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+            if (webhookRemediationStatus.error) {
+              $J('#loading-view').hide();
+              $J('#auto-remediation-view').hide();
+              $J('#healthcheck-auto-remediation-totals').show();
+              showErrorToast('There was an error running the webhook remediation.', webhookRemediationStatus.error);
+            } else {
+              var completePercentage = (index + 1) * 100 / webhooksAutoRemediationIds.length;
+              var progressBar = $J('#auto-remediation-running-progress-bar .progress-bar');
+              progressBar.css('width', completePercentage + '%');
+              progressBar.attr('aria-valuenow', completePercentage);
+              $(progressBar).find('span').text(completePercentage + '%');
+              $J('#auto-remediation-running-progress-bar .progress-step').text('Processing webhooks (' + (index + 1) + '/' + webhooksAutoRemediationIds.length + ')');
+            }
+          });
+        });
+
+        initPageLayoutAccordingToHealthCheckStatus();
+      }
+    } catch (ex) {
+      $J('#loading-view').hide();
+      $J('#auto-remediation-view').hide();
+      $J('#healthcheck-auto-remediation-totals').show();
+      showErrorToast('There was an error running the webhooks remediation.', ex.message);
+    }
+  });
+  $J('#run-migration').on('click', function () {
+    trackingApi.track('webhooks_healthcheck_clicked_run_migration_button', {}, function (error, _result) {
+      if (error) {
+        jslog('Tracking error: ' + error);
+      }
+    });
+
+    g_navigation.open('x_pd_integration_webhooks_migration.do');
+  });
+  $J('#run-healthcheck, #re-run-healthcheck').on('click', function () {
+    try {
+      hideAllViews();
+      $J('#loading-view').show();
+
+      var id = this.id.replaceAll('-', '_');
+      trackingApi.track('webhooks_healthcheck_clicked_' + id + '_button', {}, function (error, _result) {
+        if (error) {
+          jslog('Tracking error: ' + error);
+        }
+      });
+
+      var ga = new GlideAjax('PagerDutyWebhookManagementController');
+      ga.addParam('sysparm_name', 'runHealthCheck');
+      ga.getXMLAnswer(function (answer) {
+        $J('#loading-view').hide();
+        var payload = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+        if (payload.error) {
+          showErrorToast('There was an error running the webhook health check.', payload.error);
+        } else {
+          initPageLayoutAccordingToHealthCheckStatus();
+        }
+      });
+    } catch (ex) {
+      $J('#loading-view').hide();
+      showErrorToast('There was an error running the webhook health check.', ex.message);
+    }
+  });
+  initPageLayoutAccordingToHealthCheckStatus();
+});
+</client_script>
+        <description>Webhooks health check UI page</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_webhooks_healthcheck.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+  &lt;style&gt;
+    p {
+      margin: 0;
+    }
+    .container-fluid {
+      padding: 0 24px;
+      font-style: normal;
+      line-height: normal;
+    }
+    .header {
+      padding: 0 24px;
+      margin-bottom: 16px;
+    }
+    .header .header-primary {
+      color: var(--text-text-secondary, #2C323F);
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .header .header-secondary {
+      color: var(--text-text-tertiary, #454D5B);
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .divider {
+      background: var(--divider-divider-tertiary, #D3D6DC);
+      height: 1px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    .notification {
+      padding: 16px;
+    }
+    .notification-content {
+      display: flex;
+      gap: 8px;
+    }
+    .notification .close {
+      right: 5px;
+      top: 5px;
+    }
+    .notification-info .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M1.73242 10.6523C1.73242 6.04993 5.46338 2.31897 10.0658 2.31897C14.6681 2.31897 18.3991 6.04993 18.3991 10.6523C18.3991 15.2546 14.6681 18.9856 10.0658 18.9856C5.46338 18.9856 1.73242 15.2546 1.73242 10.6523ZM10.0658 17.319C6.38385 17.319 3.39909 14.3342 3.39909 10.6523C3.39909 6.9704 6.38385 3.98564 10.0658 3.98564C13.7477 3.98564 16.7324 6.9704 16.7324 10.6523C16.7324 14.3342 13.7477 17.319 10.0658 17.319ZM10.0658 5.69493C9.60551 5.69493 9.23242 6.06802 9.23242 6.52826C9.23242 6.98849 9.60551 7.36159 10.0658 7.36159C10.526 7.36159 10.8991 6.98849 10.8991 6.52826C10.8991 6.06802 10.526 5.69493 10.0658 5.69493ZM9.23242 9.8018C9.23242 9.34155 9.60551 8.96845 10.0658 8.96845C10.526 8.96845 10.8991 9.34155 10.8991 9.8018V14.8018C10.8991 15.2621 10.526 15.6351 10.0658 15.6351C9.60551 15.6351 9.23242 15.2621 9.23242 14.8018V9.8018Z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-success .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-error .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-warning .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+    }
+    .image, .message, .actions {
+      margin: 0 auto;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .image {
+      margin-top: 16px;
+    }
+    .message .message-primary {
+      color: var(--text-text-primary, #151920);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .message .message-secondary {
+      color: var(--text-text-tertiary, #454D5B);
+      font-size: 12px;
+      font-weight: 400;
+      margin: 0;
+    }
+    .footer-results {
+      font-size: 14px;
+      font-weight: 400;
+      margin: 16px 0px 16px 0px;
+    }
+    #healthcheck-never-ran-view,
+    #healthcheck-running-view,
+    #healthcheck-results-view,
+    #healthcheck-failed-notification,
+    #healthcheck-totals,
+    #healthcheck-no-totals,
+    #healthcheck-auto-remediation-totals,
+    #auto-remediation-view,
+    #healthcheck-migration-totals,
+    #healthcheck-manual-intervention-table,
+    #errors {
+      display: none;
+    }
+    #healthcheck-never-ran-view,
+    #healthcheck-running-view,
+    #healthcheck-results-view {
+      padding: 0px 24px 0px 24px;
+      margin-bottom: 16px;
+    }
+    .progress-step {
+      margin-bottom: 3px;
+    }
+    #healthcheck-running-progress-bar {
+      margin-top: 16px;
+    }
+    #healthcheck-job-date {
+      color: var(--text-text-tertiary, #454D5B);
+      text-align: right;
+    }
+    #healthcheck-totals {
+      line-height: 22px;
+    }
+    #re-run-healthcheck-col {
+      text-align: right;
+      margin-top: 30px;
+    }
+    .margins {
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    /* Center the pagination within the table foot */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #records-per-page-select {
+      margin-left: 5px;
+      background-color: RGB(var(--now-form-field--background-color,var(--now-color_background--primary,var(--now-color--neutral-0,255,255,255))));
+      border-radius: 4px;
+      border: 1px solid transparent;
+      border-color: RGB(var(--now-form-field--border-color,var(--now-color_border--primary,var(--now-color--neutral-7,135,147,148))));
+      text-align: center;
+    }
+  &lt;/style&gt;
+
+  &lt;div class="container-fluid"&gt;
+
+    &lt;div class="header"&gt;
+      &lt;div class="row"&gt;
+        &lt;div class="col-xs-14 col-md-10"&gt;
+          &lt;h1 class="header-primary"&gt;Webhooks Health Check&lt;/h1&gt;
+          &lt;p class="header-secondary"&gt;Check all webhooks to see if they have the right configuration and are ready to be migrated&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class="col-xs-4 col-md-2"&gt;
+          &lt;div id="re-run-healthcheck-col" class="actions"&gt;
+            &lt;button id="re-run-healthcheck" class="btn btn-default"&gt;Re-run health check&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class="divider"&gt;&lt;/div&gt;
+
+    &lt;div id="errors"&gt;
+      &lt;div class="notification notification-error"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;&lt;b id="error-title"&gt;There was an error loading the webhook health check status.&lt;/b&gt;&lt;/p&gt;
+            &lt;p id="error-message"&gt;Unexpected error.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="loading-view"&gt;
+      &lt;span class="icon icon-loading"&gt;&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div id="healthcheck-never-ran-view"&gt;
+      &lt;div class="image"&gt;
+        &lt;img src="x_pd_integration.run-healthcheck.svg"&gt;&lt;/img&gt;
+      &lt;/div&gt;
+
+      &lt;div class="message"&gt;
+        &lt;p class="message-primary"&gt;You never ran a health check&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;A health-check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;The process is asynchronous, so you can continue working with the instance or even close the tab.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;The results will be shown upon job completion.&lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div class="actions"&gt;
+        &lt;button id="run-healthcheck" class="btn btn-primary"&gt;Run health check&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="healthcheck-running-view"&gt;
+      &lt;div class="notification notification-info"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div id="healthcheck-running-progress-bar"&gt;
+        &lt;div class="progress-step"&gt;&lt;/div&gt;
+        &lt;div class="progress"&gt;
+          &lt;div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100"&gt;
+              &lt;span class="sr-only"&gt;&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="healthcheck-results-view"&gt;
+      &lt;div class="notification notification-error" id="healthcheck-failed-notification"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p id="healthcheck-failed-notification-message"&gt;&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="row footer-results"&gt;
+        &lt;div id="healthcheck-totals" class="col-xs-4"&gt;
+          &lt;p&gt;&lt;b id="healthcheck-total"&gt;&lt;/b&gt;&lt;span id="healthcheck-total-inconsistencies"&gt;&lt;/span&gt;&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div id="healthcheck-no-totals" class="col-xs-4"&gt;&lt;/div&gt;
+        &lt;div class="col-xs-14"&gt;&lt;p id="healthcheck-job-date"&gt;&lt;/p&gt;&lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div id="healthcheck-auto-remediation-totals"&gt;
+        &lt;div class="notification notification-warning"&gt;
+          &lt;div class="notification-content"&gt;
+            &lt;div class="notification-icon"&gt;&lt;/div&gt;
+            &lt;div&gt;
+              &lt;p&gt;Some inconsistencies can be solved automatically:&lt;/p&gt;
+              &lt;ul id="healthcheck-auto-remediation-list"&gt;
+              &lt;/ul&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class="close"&gt;
+            &lt;button id="run-auto-remediation" class="btn btn-primary"&gt;Auto resolve inconsistencies&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div id="auto-remediation-view"&gt;
+        &lt;div id="auto-remediation-running-progress-bar"&gt;
+          &lt;div class="progress-step"&gt;&lt;/div&gt;
+          &lt;div class="progress"&gt;
+            &lt;div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100"&gt;
+                &lt;span class="sr-only"&gt;&lt;/span&gt;
+              &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div id="healthcheck-migration-totals"&gt;
+        &lt;div class="notification notification-info"&gt;
+          &lt;div class="notification-content"&gt;
+            &lt;div class="notification-icon"&gt;&lt;/div&gt;
+            &lt;div&gt;
+              &lt;p&gt;From the last health-check run we identified $[SP]&lt;b id="webhooks-can-be-migrated"&gt;&lt;/b&gt;$[SP] webhooks v2 that can be migrated.&lt;/p&gt;
+              &lt;p&gt;Webhooks with inconsistencies will not be migrated.&lt;/p&gt;
+              &lt;p&gt;Upgrade existing v2 webhooks to v3 in order to gain access to new integration functionality.&lt;/p&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class="close"&gt;
+            &lt;button id="run-migration" class="btn btn-primary"&gt;Migrate webhooks to V3&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div id="healthcheck-manual-intervention-table"&gt;
+        &lt;div class="divider"&gt;&lt;/div&gt;
+
+        &lt;div class="margins"&gt;
+          &lt;p&gt;$[SP]&lt;span style="color: red;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]Require manual intervention $[SP]$[SP]$[SP]$[SP] $[SP]&lt;span style="color: orange;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]Additional review needed&lt;/p&gt;
+        &lt;/div&gt;
+
+        &lt;div class="notification notification-info"&gt;
+          &lt;div class="notification-content"&gt;
+            &lt;div class="notification-icon"&gt;&lt;/div&gt;
+            &lt;div&gt;              
+              &lt;p&gt;Please use our $[SP]&lt;a href="https://support.pagerduty.com/docs/servicenow-faq#how-do-i-resolve-the-inconsistencies-from-the-webhook-health-check?utm_source=servicenow_itsm&amp;amp;utm_content=webhooks_health_check_click_help_page" target="_blank" rel="noopener noreferrer"&gt;help page&lt;/a&gt;$[SP] to understand how each inconsistency can be solved manually&lt;/p&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+          &lt;/button&gt;
+        &lt;/div&gt;
+
+        &lt;table id="manual-intervention-table" class="margins table table-striped"&gt;
+          &lt;thead&gt;
+              &lt;tr&gt;
+                  &lt;th&gt;SNow Entity Name&lt;/th&gt;
+                  &lt;th&gt;PD Service Name&lt;/th&gt;
+                  &lt;th&gt;Webhook ID&lt;/th&gt;
+                  &lt;th&gt;Webhook version&lt;/th&gt;
+                  &lt;th&gt;Inconsistencies&lt;/th&gt;
+              &lt;/tr&gt;
+          &lt;/thead&gt;
+          &lt;tbody&gt;&lt;/tbody&gt;
+          &lt;tfoot&gt;
+            &lt;tr&gt;
+              &lt;td colspan="5"&gt;
+                &lt;div class="pagination-container"&gt;
+                  &lt;div&gt;&lt;/div&gt;
+                  &lt;div id="pagination"&gt;
+                      &lt;button id="first-page" name="vcr_first" class="list_nav  btn btn-icon h_flip_content" title="First page" aria-label="First page" disabled="" data-original-title="First page"&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
+                      &lt;button id="prev-page" name="vcr_back" class="list_nav  btn btn-icon h_flip_content" title="Previous page" aria-label="Previous page" disabled="" data-original-title="Previous page"&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
+                      &lt;span class="vcr_controls" id="page-info"&gt;&lt;/span&gt;
+                      &lt;button id="next-page" name="vcr_next" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Next page" data-original-title="Next page"&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
+                      &lt;button id="last-page" name="vcr_last" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Last page" data-original-title="Last page"&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
+                  &lt;/div&gt;
+                  &lt;div&gt;
+                    &lt;label for="records-per-page-select"&gt;Records per page&lt;/label&gt;
+                    &lt;select id="records-per-page-select"&gt;
+                      &lt;option value="5"&gt;5&lt;/option&gt;
+                      &lt;option value="10"&gt;10&lt;/option&gt;
+                      &lt;option value="15"&gt;15&lt;/option&gt;
+                      &lt;option value="20"&gt;20&lt;/option&gt;
+                      &lt;option value="50"&gt;50&lt;/option&gt;
+                      &lt;option value="100"&gt;100&lt;/option&gt;
+                    &lt;/select&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/tfoot&gt;
+       &lt;/table&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>webhooks_healthcheck</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-09-04 15:11:20</sys_created_on>
+        <sys_id>4747b9c647c13110607b7258946d43c3</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>webhooks_healthcheck</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_4747b9c647c13110607b7258946d43c3</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-04 15:13:15</sys_updated_on>
+    </sys_ui_page>
+</record_update>

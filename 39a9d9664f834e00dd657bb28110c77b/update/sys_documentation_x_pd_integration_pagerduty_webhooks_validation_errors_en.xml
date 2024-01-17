@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="validation_errors" label="Validation errors" language="en" table="x_pd_integration_pagerduty_webhooks">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>validation_errors</element>
+            <help/>
+            <hint/>
+            <label>Validation errors</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_webhooks</name>
+            <plural>Validation errors</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-07-31 16:28:45</sys_created_on>
+            <sys_id>070a31be47d03110607b7258946d43f1</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Validation errors</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_pagerduty_webhooks_validation_errors_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-07-31 16:28:45</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

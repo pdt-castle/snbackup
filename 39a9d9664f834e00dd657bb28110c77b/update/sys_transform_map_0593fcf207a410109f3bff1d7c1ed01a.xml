@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_transform_map">
+    <sys_transform_map action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copy_empty_fields>true</copy_empty_fields>
+        <create_new_record_on_empty_coalesce_fields>false</create_new_record_on_empty_coalesce_fields>
+        <enforce_mandatory_fields>No</enforce_mandatory_fields>
+        <name>PagerDuty Escalation Policies</name>
+        <order>100</order>
+        <run_business_rules>false</run_business_rules>
+        <run_script>false</run_script>
+        <script>(function transformRow(source, target, map, log, isUpdate) {
+
+	// Add your code here
+
+})(source, target, map, log, action==="update");</script>
+        <source_table>x_pd_integration_escalation_policies_import</source_table>
+        <sys_class_name>sys_transform_map</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-05-06 20:31:21</sys_created_on>
+        <sys_id>0593fcf207a410109f3bff1d7c1ed01a</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>PagerDuty Escalation Policies</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_transform_map_0593fcf207a410109f3bff1d7c1ed01a</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-07-07 12:07:14</sys_updated_on>
+        <target_table>x_pd_integration_escalation_policies</target_table>
+    </sys_transform_map>
+</record_update>

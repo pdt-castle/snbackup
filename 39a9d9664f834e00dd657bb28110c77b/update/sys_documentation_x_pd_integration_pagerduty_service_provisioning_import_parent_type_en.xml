@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="parent_type" label="Parent type" language="en" table="x_pd_integration_pagerduty_service_provisioning_import">
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>parent_type</element>
+            <help/>
+            <hint/>
+            <label>Parent type</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_service_provisioning_import</name>
+            <plural>Parent types</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-07-13 14:03:18</sys_created_on>
+            <sys_id>f84765a42f8ad0101bf7ffecf699b6ba</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Parent type</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_pagerduty_service_provisioning_import_parent_type_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-07-13 14:03:18</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

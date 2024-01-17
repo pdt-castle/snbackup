@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>jQuery(function () {
+  var $ = jQuery;
+  var modal = GlideModal.get();
+  var total = modal.getPreference('total');
+  var ids = modal.getPreference('ids');
+
+  $('#mappings-total').text(' ' + total + ' ');
+  $('#total').val(total);
+  $('#sysparm_sys_ids').val(ids);
+
+  $('.pd-activate-multiple-mapping-form button.submit-request').on('click', function (event) {
+    $('form')[0].submit();
+    trackEvent();
+  });
+
+  $('.pd-activate-multiple-mapping-form button.submit-cancel').on('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    modal.destroy();
+  });
+
+  function trackEvent () {
+    var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+    trackingApi.track('custom_fields_mapping_activate_multiple_button', {}, function (error, _result) {
+      if (error) {
+        jslog('Tracking error: ' + error);
+      }
+    });
+  }
+});
+</client_script>
+        <description>Multiple Custom Field Mapping activate confirmation dialog</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_custom_field_mapping_activate_multiple_dialog.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+
+  &lt;style&gt;
+    .pd-activate-multiple-mapping-form {
+      margin: 1rem;
+    }
+
+    .form_body {
+      background-color: #fff;
+    }
+  &lt;/style&gt;
+  &lt;div class="form_body form-horizontal pd-activate-multiple-mapping-form"&gt;
+    &lt;div id="content"&gt;
+      &lt;div class="row"&gt;
+        &lt;div class="col-sm-12"&gt;
+          &lt;div class="form-group"&gt;
+            &lt;div&gt;
+              &lt;label style="padding: 0.75rem 0;"&gt;
+                &lt;span class="label-text"&gt;Once activated, the mapping and bidirectional sync between &lt;b&gt;&lt;span id="mappings-total"&gt;&lt;/span&gt; ServiceNow field(s) and PagerDuty&lt;/b&gt;$[SP]will start. You can deactivate field mapping(s) at any time.&lt;/span&gt;
+              &lt;/label&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class="row" style="margin-top: 2rem"&gt;
+        &lt;div class="col-sm-12"&gt;
+          &lt;div class="pull-right"&gt;
+            &lt;g:ui_form&gt;
+              &lt;input type="hidden" id="sysparm_sys_ids" name="sysparm_sys_ids" /&gt;
+              &lt;input type="hidden" id="total" name="total" /&gt;
+              &lt;button class="btn btn-default submit-cancel" style="margin-right: 1rem"&gt;Cancel&lt;/button&gt;
+              &lt;button class="btn btn-primary submit-request"&gt;Activate&lt;/button&gt;
+            &lt;/g:ui_form&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;</html>
+        <name>custom_field_mapping_activate_multiple_dialog</name>
+        <processing_script>(function () {
+  try {
+    gs.debug('Activating field mapping(s): ' + this['sysparm_sys_ids']);
+    var customFieldsSupport = new x_pd_integration.PagerDutyCustomFieldsSupport();
+    customFieldsSupport.activateMappings(this['sysparm_sys_ids']);
+    gs.addInfoMessage(this['total'] + ' field mapping(s) successfully activated.');
+    response.sendRedirect('x_pd_integration_custom_field_mapping_list.do');
+  } catch (e) {
+    gs.error('Error activating field mapping(s): ' + e.message);
+    gs.addErrorMessage('Could not activate field mapping(s). Please try again.');
+    response.sendRedirect(gs.getSession().getUrlOnStack());
+  }
+})();
+</processing_script>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-02 11:49:44</sys_created_on>
+        <sys_id>d87f744947567110607b7258946d4344</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>custom_field_mapping_activate_multiple_dialog</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_d87f744947567110607b7258946d4344</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-02 11:49:44</sys_updated_on>
+    </sys_ui_page>
+</record_update>

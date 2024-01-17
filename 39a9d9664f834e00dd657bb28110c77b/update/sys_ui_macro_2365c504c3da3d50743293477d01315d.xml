@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_macro">
+    <sys_ui_macro action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category>general</category>
+        <description>Bootstrap form-group with label, input and help-block with support for popover element.&#13;
+supported input types: input, password, checkbox </description>
+        <media_type/>
+        <name>input_formgroup_popover</name>
+        <scoped_name>x_pd_integration_input_formgroup_popover</scoped_name>
+        <sys_class_name>sys_ui_macro</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-30 09:43:25</sys_created_on>
+        <sys_id>2365c504c3da3d50743293477d01315d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>input_formgroup_popover</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_macro_2365c504c3da3d50743293477d01315d</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-30 09:43:25</sys_updated_on>
+        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;j:if test="${HTML:jvar_show_popover_button == 'false'}"&gt;
+    &lt;j:set var="jvar_disable" value="disabled" /&gt;
+  &lt;/j:if&gt;
+  &lt;div class="form-group"&gt;
+    &lt;div class="checkbox"&gt;
+      &lt;label&gt;
+        &lt;j:if test="${HTML:jvar_value == 'true'}"&gt;
+          &lt;input type="${HTML:jvar_type}" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help" checked="checked" value="true" disabled="${HTML:jvar_disable}" /&gt;
+          &lt;j:if test="${HTML:jvar_disable == 'disabled'}"&gt;
+            &lt;input type="hidden" name="${HTML:jvar_name}" value="true" /&gt;
+          &lt;/j:if&gt;
+        &lt;/j:if&gt;
+        &lt;j:if test="${HTML:jvar_value != 'true'}"&gt;  
+          &lt;input type="${HTML:jvar_type}" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help" value="true" disabled="${HTML:jvar_disable}" /&gt;
+        &lt;/j:if&gt;
+        &lt;input type="hidden" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help"  value="false" /&gt;
+        ${HTML:jvar_label}
+      &lt;/label&gt;
+      &lt;j:if test="${HTML:jvar_show_popover_button == 'false'}"&gt;
+        &lt;span style="margin-left:5px;" type="button" data-placement="bottom" data-target="#${HTML:jvar_name}_popover" class="sn-popover-basic ${HTML:jvar_popover_icon}" data-toggle="popover"&gt;&lt;/span&gt;
+      &lt;/j:if&gt;
+    &lt;/div&gt;
+    &lt;span id="${HTML:jvar_name}_help" class="help-block"&gt;&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;j:if test="${HTML:jvar_show_popover_button == 'false'}"&gt;
+    &lt;div id="${HTML:jvar_name}_popover"&gt;
+      &lt;b&gt;${HTML:jvar_popover_header}&lt;/b&gt;
+      &lt;div class="popover-body"&gt; ${HTML:jvar_popover_body}&lt;br /&gt;
+        &lt;div class="pull-left"&gt;
+          &lt;button type="button" class="btn btn-default" data-dismiss="popover" onclick='g_navigation.open("${HTML:jvar_popover_onclick_url}", "_blank")'&gt; ${HTML:jvar_popover_button}&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/j:if&gt;
+&lt;/j:jelly&gt;
+</xml>
+    </sys_ui_macro>
+</record_update>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sysevent_script_action">
+    <sysevent_script_action action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition_script/>
+        <description/>
+        <event_name>x_pd_integration.update_v3_wh_subs</event_name>
+        <name>PD Update v3 WH (subscription)</name>
+        <order>100</order>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+gs.info('PagerDuty \'x_pd_integration.update_v3_wh_subs\' Webhook event fired from {0}', current.getDisplayValue());
+
+var webhookId = current.getValue('webhook_id');
+var taskType = current.getValue('task_type');
+var syncOption = current.getValue('sync_option');
+var v3wh = new x_pd_integration.v3webhook();
+
+var subsResponse = null;
+try {
+  subsResponse = v3wh.get(webhookId);
+} catch (e) {
+  gs.error('Error trying to get data from webhook subscription : {1} Error : {2} ', webhookId, e.message);
+}
+
+var url = subsResponse.webhook_subscription.delivery_method.url;
+var events = subsResponse.webhook_subscription.events;
+var index = events.indexOf('incident.triggered');
+
+if (index !== -1 &amp;&amp; syncOption === 'manual') {
+  // Exclude incident.triggered event type in the webhook subscription
+  events.splice(index, 1);
+} else if (index === -1 &amp;&amp; syncOption === 'auto') {
+  // Include incident.triggered event type in the webhook subscription
+  events.push('incident.triggered');
+}
+
+if (url) {
+  var updatedUrl = url.split('?')[0];
+
+  var params = [];
+  if (taskType) {
+    params.push('task_type=' + encodeURIComponent(taskType));
+  }
+  if (syncOption) {
+    params.push('sync_option=' + encodeURIComponent(syncOption));
+  }
+
+  var existingParams = url.split('?')[1];
+  if (existingParams) {
+    var paramArr = existingParams.split('&amp;');
+    paramArr.forEach(function (param) {
+      var paramParts = param.split('=');
+      if (paramParts[0] !== 'task_type' &amp;&amp; paramParts[0] !== 'sync_option') {
+        params.push(param);
+      }
+    });
+  }
+
+  updatedUrl += params.length &gt; 0 ? '?' + params.join('&amp;') : '';
+
+  var requestBody = {
+    webhook_subscription: {
+      delivery_method: {
+        url: updatedUrl
+      }
+    }
+  };
+
+  if (events) {
+    requestBody.webhook_subscription.events = events;
+  }
+
+  try {
+    v3wh.update(webhookId, requestBody);
+  } catch (e) {
+    gs.error('Error trying to update subscription: {0}', e.message);
+  }
+}
+</script>
+        <synchronous>false</synchronous>
+        <sys_class_name>sysevent_script_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-06-26 11:17:58</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>2523286bc363e510743293477d013117</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_name>PD Update v3 WH (subscription)</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysevent_script_action_2523286bc363e510743293477d013117</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-06-30 15:49:36</sys_updated_on>
+    </sysevent_script_action>
+</record_update>

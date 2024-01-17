@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="custom_query_params" label="Custom query params" language="en" table="x_pd_integration_pagerduty_webhooks">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>custom_query_params</element>
+            <help/>
+            <hint/>
+            <label>Custom query params</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_webhooks</name>
+            <plural>Custom query params</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-07-31 16:12:49</sys_created_on>
+            <sys_id>a5663d7e47d03110607b7258946d4338</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Custom query params</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_pagerduty_webhooks_custom_query_params_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-07-31 16:12:49</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

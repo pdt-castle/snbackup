@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition/>
+        <conditional>false</conditional>
+        <name>PagerDuty Refresh Responders</name>
+        <run_as/>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-01 00:00:30</run_period>
+        <run_start>2019-05-03 08:13:19</run_start>
+        <run_time>1970-01-01 08:00:00</run_time>
+        <run_type>periodically</run_type>
+        <script>var webhooksV2Identified = gs.getProperty('x_pd_integration.webhooks_v2_identified') === 'true';
+
+if (webhooksV2Identified) {
+  var isResponseMobilizerEnabled = gs.getProperty('x_pd_integration.enable_response_mobilizer') === 'true';
+  var isIncidentWorkflowsEnabled = gs.getProperty('x_pd_integration.enable_incident_workflows') === 'true';
+
+  if (isResponseMobilizerEnabled) {
+    // Gets incidents for the last week,
+    // Refreshes the most recent `maxRecords` of them
+    var maxRecords = 50;
+
+    var grs = new GlideRecordSecure('incident');
+    var gdt = new GlideDateTime();
+    gdt.subtract(7 * 24 * 60 * 60 * 1000);
+    grs.addQuery('sys_updated_on', '&gt;', gdt.getValue());
+
+    grs.addNotNullQuery('x_pd_integration_incident');
+    grs.addQuery('x_pd_integration_incident', 'DOES NOT CONTAIN', '---');
+
+    var resolvedState = 6;
+    grs.addQuery('state', '&lt;', resolvedState);
+
+    grs.orderByDesc('sys_updated_on');
+    grs.setLimit(maxRecords);
+    grs.query();
+
+    while (grs.next()) {
+      var fr = new x_pd_integration.FetchResponders();
+      var response = fr.fetchResponders({
+        snIncidentId: grs.sys_id.toString(),
+        incidentId: grs.x_pd_integration_incident.toString(),
+      });
+    }
+  }
+
+  if (isIncidentWorkflowsEnabled) {
+    try {
+      var iw = new x_pd_integration.IncidentWorkflows();
+      iw.fetchWorkflowResults();
+    } catch (e) {
+      gs.error(e.message);
+    }
+  }
+}
+</script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2019-05-03 08:14:31</sys_created_on>
+        <sys_id>9d6831bfdbc93300339cf26b6896198b</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>PagerDuty Refresh Responders</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysauto_script_9d6831bfdbc93300339cf26b6896198b</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2019-05-03 08:19:45</sys_updated_on>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>

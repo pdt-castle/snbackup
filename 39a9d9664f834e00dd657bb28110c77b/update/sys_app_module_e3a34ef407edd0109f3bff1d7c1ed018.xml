@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_app_module">
+    <sys_app_module action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <application display_value="PagerDuty">eeda99a64f834e00dd657bb28110c748</application>
+        <assessment/>
+        <device_type/>
+        <filter/>
+        <hint>Migrate Escalation Policies from the Assignment Group table [sys_user_group] to the Mapping table [x_pd_integration_map_priority_to_ep]</hint>
+        <homepage/>
+        <image/>
+        <link_type>SCRIPT</link_type>
+        <map_page/>
+        <mobile_title>Migrate</mobile_title>
+        <mobile_view_name>Mobile</mobile_view_name>
+        <name/>
+        <order>1600</order>
+        <override_menu_roles>false</override_menu_roles>
+        <query>migrateEscalationPolicies();&#13;
+function migrateEscalationPolicies() {&#13;
+  try {&#13;
+    gs.info('Migrating Escalation Policies from [sys_user_group] table'&#13;
+      + ' to the Mapping table [x_pd_integration_map_priority_to_ep_mapping]...');&#13;
+    var mig = new x_pd_integration.PagerDutyMigration();&#13;
+    mig.migrateEscalationPolicies();&#13;
+    gs.info('[\u2714] Completed migration of Escalation Policies.');&#13;
+  } catch (ex) {&#13;
+    gs.error('[\u2717] ServiceNow migration of Escalation Policies module failed:\n', ex);&#13;
+  }&#13;
+}&#13;
+</query>
+        <report/>
+        <roles>x_pd_integration.admin</roles>
+        <sys_class_name>sys_app_module</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-06-19 14:28:40</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>e3a34ef407edd0109f3bff1d7c1ed018</sys_id>
+        <sys_mod_count>27</sys_mod_count>
+        <sys_name>Migrate Escalation Policies to the Mapping table</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_app_module_e3a34ef407edd0109f3bff1d7c1ed018</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-15 20:05:40</sys_updated_on>
+        <timeline_page/>
+        <title>Migrate Escalation Policies to the Mapping table</title>
+        <uncancelable>false</uncancelable>
+        <view_name/>
+        <window_name/>
+    </sys_app_module>
+</record_update>

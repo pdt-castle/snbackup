@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_test">
+    <sys_atf_test action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Tests PagerDutyCustomFieldsSupport functions:&#13;
+- createMapping: Given a SNow field, creates a new PD Custom field and the associated mapping</description>
+        <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>true</fail_on_server_error>
+        <name>PD - CustomFields - PagerDutyCustomFieldsSupport</name>
+        <parameters/>
+        <remember/>
+        <sys_class_name>sys_atf_test</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-10 12:52:37</sys_created_on>
+        <sys_id>ca31722947f13510b15271e7826d432a</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PD - CustomFields - PagerDutyCustomFieldsSupport</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_test_ca31722947f13510b15271e7826d432a</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-11 08:50:47</sys_updated_on>
+    </sys_atf_test>
+    <sys_variable_value action="delete_multiple" query="document_key=ca31722947f13510b15271e7826d432a"/>
+</record_update>

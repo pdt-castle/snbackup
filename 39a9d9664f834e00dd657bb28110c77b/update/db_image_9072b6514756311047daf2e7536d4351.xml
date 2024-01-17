@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="db_image">
+    <db_image action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category/>
+        <format/>
+        <height/>
+        <image>12a276d94716311047daf2e7536d4333</image>
+        <name>x_pd_integration.arrow-bidirectional.svg</name>
+        <size_bytes>1108</size_bytes>
+        <sys_class_name>db_image</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-03 14:50:35</sys_created_on>
+        <sys_id>9072b6514756311047daf2e7536d4351</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>x_pd_integration.arrow-bidirectional.svg</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>db_image_9072b6514756311047daf2e7536d4351</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-03 14:50:47</sys_updated_on>
+        <thumbnail/>
+        <width/>
+    </db_image>
+    <sys_attachment action="INSERT_OR_UPDATE">
+        <average_image_color/>
+        <chunk_size_bytes>700000</chunk_size_bytes>
+        <compressed>true</compressed>
+        <content_type>image/svg+xml</content_type>
+        <file_name>image</file_name>
+        <hash>835173cac4129da742301c4999916c10d1d26b67d665c7dc8fd04925f95b65c5</hash>
+        <image_height/>
+        <image_width/>
+        <size_bytes>1108</size_bytes>
+        <size_compressed>479</size_compressed>
+        <state>pending</state>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-03 14:50:47</sys_created_on>
+        <sys_id>12a276d94716311047daf2e7536d4333</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-03 14:50:47</sys_updated_on>
+        <table_name>ZZ_YYdb_image</table_name>
+        <table_sys_id>9072b6514756311047daf2e7536d4351</table_sys_id>
+    </sys_attachment>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>H4sIAAAAAAAAAA==</data>
+        <length>16</length>
+        <position>0</position>
+        <sys_attachment display_value="image" sys_id="12a276d94716311047daf2e7536d4333">12a276d94716311047daf2e7536d4333</sys_attachment>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-03 14:50:47</sys_created_on>
+        <sys_id>52a276d94716311047daf2e7536d4333</sys_id>
+    </sys_attachment_doc>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>bZPLbtswEEX3+QqCAbILxRm+myiLaqv+QHcB7EoCXMtw1CifX75Gco1uCB/qcnjvDP368TmwdTosY8vBcTYep2Fcyu/P6bh+n79aLplk4Fja+zWdTi0/z+cjZ1+/T+ePlo/LcvnWNOu6ilWJ+To0KKVsYmH+9vA6sOnQ8vfrdV6f/1yeD/N63refHlHLl6dHMCGtGtNq/Qvr5tN8TbrL+zKyqPwBRnhAw4xAG4zrwAopnY8snVbAiLVwxjlkpNfCWNS2BywMhbvIFpyKrGySo1Dx/A2CNHpXgwgg4z5Vr4x0e9VjcdeDFmggxNs1WIk9Cm188MRdlHv0mjjWDfW7VcG7Gw5ZT2wEBATL6Lyp56l+5e3+jas/d5fH3eXxd3k8dbu2xwtttVeMunfDubue8v87rZ/0cOKkYwDJm7vRahOSh2i2V8JaKzcshTQL1Ukdc6hGK/qag9S+5jTJJibfeawmpbBhxxRSkbrHypDHbrrclPTwy9jZxmXsbNPnsSevlXPsdHu5LgWMbWLkZufilvQ1DJQ3TdmgPOldnZ+02RuFuVHUxUxdJKcMVEwlQ/kY248bpkBZWyk+vuy2HAU6uk/nv4Nshm2Jf/q3h7/AAFIMVAQAAA==</data>
+        <length>628</length>
+        <position>1</position>
+        <sys_attachment display_value="image" sys_id="12a276d94716311047daf2e7536d4333">12a276d94716311047daf2e7536d4333</sys_attachment>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-03 14:50:47</sys_created_on>
+        <sys_id>d2a276d94716311047daf2e7536d4333</sys_id>
+    </sys_attachment_doc>
+</record_update>

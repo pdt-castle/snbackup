@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Assert that the text 'ATF ServiceNow incident workflow has been run by' is on the page.
+With a failure timeout of 5 Seconds</description>
+        <display_name>Assert Text on Page (Custom UI)</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes/>
+        <order>34</order>
+        <snapshot display_value="e28e85fb900e7d8b5cf8e746d3a27a2b">cfda312f47cde110c03354f3836d43d4</snapshot>
+        <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:37:05</sys_created_on>
+        <sys_id>5c9689d7478da110c03354f3836d43b1</sys_id>
+        <sys_mod_count>14</sys_mod_count>
+        <sys_name>Assert Text on Page (Custom UI)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_5c9689d7478da110c03354f3836d43b1</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-23 10:55:17</sys_updated_on>
+        <table/>
+        <test display_value="PD: Incident Workflows - 1 - happy path">272daae1474d2910c03354f3836d43db</test>
+        <timeout>1970-01-01 00:00:05</timeout>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_475e0de3d732130089fca2285e610361^id=5c9689d7478da110c03354f3836d43b1"/>
+    <sys_variable_value action="delete_multiple" query="document_key=5c9689d7478da110c03354f3836d43b1"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>5c9689d7478da110c03354f3836d43b1</document_key>
+        <order>300</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:37:05</sys_created_on>
+        <sys_id>25a689d7478da110c03354f3836d438c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-21 12:37:05</sys_updated_on>
+        <value>20.2</value>
+        <variable display_value="Custom UI version">4a49b1d3b700101044026848ee11a980</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>5c9689d7478da110c03354f3836d43b1</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:37:05</sys_created_on>
+        <sys_id>61a689d7478da110c03354f3836d438c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-21 12:37:05</sys_updated_on>
+        <value>text_on_page</value>
+        <variable display_value="Assert Type">86e4f05cd703130089fca2285e610307</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>5c9689d7478da110c03354f3836d43b1</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:37:05</sys_created_on>
+        <sys_id>e5a689d7478da110c03354f3836d438c</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-23 10:00:57</sys_updated_on>
+        <value>ATF ServiceNow incident workflow has been run by</value>
+        <variable display_value="Text">1c267c5cd703130089fca2285e61035b</variable>
+    </sys_variable_value>
+</record_update>

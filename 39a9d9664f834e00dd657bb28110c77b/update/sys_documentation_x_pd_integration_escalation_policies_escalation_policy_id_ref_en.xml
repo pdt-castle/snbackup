@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_documentation element="escalation_policy_id_ref" label="Escalation Policy ID Ref" language="en" table="x_pd_integration_escalation_policies">
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>escalation_policy_id_ref</element>
+            <help/>
+            <hint/>
+            <label>Escalation Policy ID Ref</label>
+            <language>en</language>
+            <name>x_pd_integration_escalation_policies</name>
+            <plural>Escalation Policy ID Refs</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2020-07-15 11:00:23</sys_created_on>
+            <sys_id>b0905fc52f8250102a63b8e72799b6b5</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Escalation Policy ID Ref</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_documentation_x_pd_integration_escalation_policies_escalation_policy_id_ref_en</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2020-07-15 11:00:23</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+    </sys_documentation>
+</record_update>

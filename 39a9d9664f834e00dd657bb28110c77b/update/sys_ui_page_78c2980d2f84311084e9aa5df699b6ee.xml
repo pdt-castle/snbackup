@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>var $J = jQuery;
+
+function hideAllViews () {
+  $J('#healthcheck-run-view').hide();
+  $J('#migration-running-view').hide();
+  $J('#migration-no-webhooks-view').hide();
+  $J('#migration-run-view').hide();
+  $J('#migration-results-view').hide();
+  $J('#webhooks-migrated-success-notification').hide();
+  $J('#webhooks-migrated-failed-notification').hide();
+}
+
+function handleMigrationStatus (migrationStatus) {
+  var healthcheckJob = migrationStatus?.result?.healthCheckJob;
+  var migrationJob = migrationStatus?.result?.migrationJob;
+  var totalAvailableWebhooksV2 = migrationStatus?.result?.totalWebhooks | 0;
+
+  if (healthcheckJob?.status === 'running') {
+    $J('#healthcheck-is-running-view').show();
+  } else if (healthcheckJob?.status === 'finished') {
+    // if there is a migration job running, show the running view
+    if (migrationJob &amp;&amp; migrationJob.status === 'running') {
+      updateMigrationProgressBar(migrationJob);
+      $J('#migration-running-view').show();
+      pollRunningJobProgressInterval = setInterval(pollRunningJobProgress, 2000);
+      return;
+    }
+    // if there is a migration job finished, show the results view
+    if (migrationJob) {
+      if (migrationJob.status === 'finished') {
+        if (migrationJob.data?.totalWebhooksProcessedSuccess &gt; 0) {
+          $J('#migration-results-view #webhooks-migrated-success').text(migrationJob.data?.totalWebhooksProcessedSuccess + ' webhook(s) ');
+          $J('#webhooks-migrated-success-notification').show();
+        }
+        if (migrationJob.data?.totalWebhooksProcessedFailed &gt; 0) {
+          $J('#migration-results-view #webhooks-migrated-failed').text(migrationJob.data?.totalWebhooksProcessedFailed + ' webhook(s) ');
+          $J('#webhooks-migrated-failed-notification').show();
+        }
+      } else {
+        $J('#migration-results-view #webhooks-migrated-failed').text('Job failed to execute: ' + migrationJob.execution_errors);
+        $J('#webhooks-migrated-failed-notification').show();
+      }
+      var date = new Date(migrationJob.sys_created_on);
+      var formattedDate = date.toLocaleString('en-US', {month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true});
+      $J('#migration-results-view #migration-job-date').text('Last migration ran at ' + formattedDate);
+      $J('#migration-results-view').show();
+    }
+
+    if (totalAvailableWebhooksV2 === 0) {
+      $J('#migration-no-webhooks-view').show();
+    } else {
+      $J('#migration-run-view #webhooks-total').text(migrationStatus?.result?.totalWebhooks);
+      $J('#migration-run-view').show();
+    }
+  } else {
+    $J('#healthcheck-run-view').show();
+  }
+}
+
+function fetchMigrationStatus (callback) {
+  var ga = new GlideAjax('PagerDutyWebhookManagementController');
+  ga.addParam('sysparm_name', 'getMigrationStatus');
+  ga.getXMLAnswer(function (answer) {
+    var migrationStatus = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+    callback(migrationStatus);
+  });
+}
+
+function initPageLayoutAccordingToMigrationStatus () {
+  try {
+    hideAllViews();
+    $J('#loading-view').show();
+    fetchMigrationStatus(function (migrationStatus) {
+      $J('#loading-view').hide();
+      if (migrationStatus.error) {
+        showErrorToast('There was an error loading the webhook migration status.', migrationStatus.error);
+      } else {
+        handleMigrationStatus(migrationStatus);
+      }
+    });
+  } catch (ex) {
+    $J('#loading-view').hide();
+    showErrorToast('There was an error loading the webhook migration status.', ex.message);
+  }
+}
+
+pollRunningJobProgressInterval = null;
+function pollRunningJobProgress () {
+  try {
+    fetchMigrationStatus(function (migrationStatus) {
+      var migrationJob = migrationStatus?.result?.migrationJob;
+      if (migrationJob) {
+        updateMigrationProgressBar(migrationJob);
+        if (migrationJob.status !== 'running') {
+          // Stop the polling and dispose the interval object
+          clearInterval(pollRunningJobProgressInterval);
+          // wait some time before hiding the running view and showing the results view
+          setTimeout(function () {
+            hideAllViews();
+            handleMigrationStatus(migrationStatus);
+          }, 2000);
+        }
+      }
+    });
+  } catch (ex) {
+    showErrorToast('There was an error loading the webhook migration status.', ex.message);
+  }
+}
+
+function updateMigrationProgressBar (job) {
+  var completionPercentage = job.data.completePercentage;
+  var jobStep = job.step;
+  var progressBar = $J('#migration-running-progress-bar .progress-bar');
+  progressBar.css('width', completionPercentage + '%');
+  progressBar.attr('aria-valuenow', completionPercentage);
+  $(progressBar).find('span').text(completionPercentage + '%');
+
+  // Special case for webhooks step
+  if (jobStep === 'Processing webhooks') {
+    var totalProcessedWebhooks = job.data?.totalWebhooksProcessedSuccess + job.data?.totalWebhooksProcessedFailed;
+    jobStep = 'Processing webhooks (' + totalProcessedWebhooks + '/' + job.data?.totalWebhooks + ')';
+  }
+  $J('#migration-running-progress-bar .progress-step').text(jobStep);
+  if (completionPercentage === 100) {
+    $J('#migration-running-progress-bar .progress-step').text('Finished.');
+  }
+}
+
+function showErrorToast (title, message) {
+  if (title) {
+    $J('#error-title').text(title);
+  }
+  if (message) {
+    $J('#error-message').text(message);
+  }
+  $J('#errors').show();
+}
+
+$J(function () {
+  var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+
+  $J('#go-to-healthcheck').on('click', function () {
+    trackingApi.track('webhooks_migration_clicked_go_to_healthcheck_button', {}, function (error, _result) {
+      if (error) {
+        jslog('Tracking error: ' + error);
+      }
+    });
+
+    g_navigation.open('x_pd_integration_webhooks_healthcheck.do');
+  });
+  $J('#migrate-all').on('click', function () {
+    try {
+      hideAllViews();
+      $J('#loading-view').show();
+
+      trackingApi.track('webhooks_migration_clicked_migrate_all_button', {}, function (error, _result) {
+        if (error) {
+          jslog('Tracking error: ' + error);
+        }
+      });
+
+      var ga = new GlideAjax('PagerDutyWebhooksMigrationController');
+      ga.addParam('sysparm_name', 'runMigration');
+      ga.addParam('sysparm_ids', null);
+      ga.getXMLAnswer(function (answer) {
+        $J('#loading-view').hide();
+        var payload = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+        if (payload.error) {
+          showErrorToast('There was an error running the webhook migration.', payload.error);
+        } else {
+          initPageLayoutAccordingToMigrationStatus();
+        }
+      });
+    } catch (ex) {
+      $J('#loading-view').hide();
+      showErrorToast('There was an error running the webhook migration.', ex.message);
+    }
+  });
+  $J('#webhooks-migrated-failed-details-link').on('click', function () {
+    g_navigation.open('x_pd_integration_pagerduty_webhooks_list.do?sysparm_view=webhooks_migration_errors&amp;sysparm_query=migration_errorsISNOTEMPTY');
+  });
+  $J('#migrate-selected').on('click', function () {
+    trackingApi.track('webhooks_migration_clicked_migrate_selected_button', {}, function (error, _result) {
+      if (error) {
+        jslog('Tracking error: ' + error);
+      }
+    });
+
+    var popupWindow = g_navigation.openPopup(
+      'x_pd_integration_pagerduty_webhooks_list.do?sysparm_view=webhooks_migration&amp;sysparm_query=webhook_version=2',
+      'selective_webhooks_migration',
+      'resizable,scrollbars,width=1000,height=500'
+    );
+    var timer = setInterval(function () {
+      if (popupWindow.closed) {
+        clearInterval(timer);
+        initPageLayoutAccordingToMigrationStatus();
+      }
+    }, 500);
+  });
+  $J('#run-healthcheck, #re-run-healthcheck').on('click', function () {
+    try {
+      hideAllViews();
+      $J('#loading-view').show();
+
+      var id = this.id.replaceAll('-', '_');
+      trackingApi.track('webhooks_migration_clicked_' + id + '_button', {}, function (error, _result) {
+        if (error) {
+          jslog('Tracking error: ' + error);
+        }
+      });
+
+      var ga = new GlideAjax('PagerDutyWebhookManagementController');
+      ga.addParam('sysparm_name', 'runHealthCheck');
+      ga.getXMLAnswer(function (answer) {
+        var payload = JSON.parse(answer) || {error: 'Could not retrieve response from server'};
+        if (payload.error) {
+          $J('#loading-view').hide();
+          showErrorToast('There was an error loading the webhook migration status.', payload.error);
+        } else {
+          g_navigation.open('x_pd_integration_webhooks_healthcheck.do');
+        }
+      });
+    } catch (ex) {
+      $J('#loading-view').hide();
+      showErrorToast('There was an error loading the webhook migration status.', ex.message);
+    }
+  });
+  initPageLayoutAccordingToMigrationStatus();
+});
+</client_script>
+        <description>Webhooks migration UI page</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_webhooks_migration.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
+  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+  &lt;style&gt;
+    p {
+      margin: 0;
+    }
+    .container-fluid {
+      padding: 0 24px;
+      font-style: normal;
+      line-height: normal;
+    }
+    .header {
+      padding: 0 24px;
+      margin-bottom: 16px;
+    }
+    .header .header-primary {
+      color: var(--text-text-secondary, #2C323F);
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .header .header-secondary {
+      color: var(--text-text-tertiary, #454D5B);
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .divider {
+      background: var(--divider-divider-tertiary, #D3D6DC);
+      height: 1px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    .notification {
+      padding: 16px;
+    }
+    .notification-content {
+      display: flex;
+      gap: 8px;
+    }
+    .notification-info .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M1.73242 10.6523C1.73242 6.04993 5.46338 2.31897 10.0658 2.31897C14.6681 2.31897 18.3991 6.04993 18.3991 10.6523C18.3991 15.2546 14.6681 18.9856 10.0658 18.9856C5.46338 18.9856 1.73242 15.2546 1.73242 10.6523ZM10.0658 17.319C6.38385 17.319 3.39909 14.3342 3.39909 10.6523C3.39909 6.9704 6.38385 3.98564 10.0658 3.98564C13.7477 3.98564 16.7324 6.9704 16.7324 10.6523C16.7324 14.3342 13.7477 17.319 10.0658 17.319ZM10.0658 5.69493C9.60551 5.69493 9.23242 6.06802 9.23242 6.52826C9.23242 6.98849 9.60551 7.36159 10.0658 7.36159C10.526 7.36159 10.8991 6.98849 10.8991 6.52826C10.8991 6.06802 10.526 5.69493 10.0658 5.69493ZM9.23242 9.8018C9.23242 9.34155 9.60551 8.96845 10.0658 8.96845C10.526 8.96845 10.8991 9.34155 10.8991 9.8018V14.8018C10.8991 15.2621 10.526 15.6351 10.0658 15.6351C9.60551 15.6351 9.23242 15.2621 9.23242 14.8018V9.8018Z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-success .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/&gt;&lt;/svg&gt;');
+    }
+    .notification-error .notification-icon {
+      width: 21px;
+      height: 21px;
+      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+    }
+    .image, .message, .actions {
+      margin: 0 auto;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .image {
+      margin-top: 16px;
+    }
+    .message .message-primary {
+      color: var(--text-text-primary, #151920);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .message .message-secondary {
+      color: var(--text-text-tertiary, #454D5B);
+      font-size: 12px;
+      font-weight: 400;
+      margin: 0;
+    }
+    .footer-results {
+      text-align: left;
+      color: var(--text-text-tertiary, #454D5B);
+      font-size: 14px;
+      font-weight: 400;
+      margin: 16px 0px 16px 0px;
+    }
+    #healthcheck-run-view,
+    #healthcheck-is-running-view,
+    #migration-results-view,
+    #migration-run-view,
+    #migration-no-webhooks-view,
+    #migration-running-view,
+    #webhooks-migrated-success-notification,
+    #webhooks-migrated-failed-notification,
+    #errors {
+      display: none;
+    }
+    .progress-step {
+      margin-bottom: 3px;
+    }
+    #migration-running-progress-bar {
+      margin-top: 16px;
+    }
+    #webhooks-migrated-failed-details-link {
+      margin-left: 3px;
+    }
+  &lt;/style&gt;
+
+  &lt;div class="container-fluid"&gt;
+
+    &lt;div class="header"&gt;
+      &lt;h1 class="header-primary"&gt;Webhooks Migration&lt;/h1&gt;
+      &lt;j2:whitespace trim="false"&gt;
+        &lt;p class="header-secondary"&gt;Use this page to safely migrate to the most recent version of &lt;a href="https://support.pagerduty.com/docs/webhooks" target="_blank"&gt;PagerDuty webhooks&lt;/a&gt;&lt;/p&gt;
+      &lt;/j2:whitespace&gt;
+    &lt;/div&gt;
+
+    &lt;div class="divider"&gt;&lt;/div&gt;
+
+    &lt;div id="errors"&gt;
+      &lt;div class="notification notification-error"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;&lt;b id="error-title"&gt;There was an error loading the webhook migration status.&lt;/b&gt;&lt;/p&gt;
+            &lt;p id="error-message"&gt;Unexpected error.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="loading-view"&gt;
+      &lt;span class="icon icon-loading"&gt;&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div id="healthcheck-run-view"&gt;
+      &lt;div class="notification notification-info"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;Previous versions of the PagerDuty Incident Resolution Platform for ServiceNow used v2 webhooks.&lt;/p&gt;
+            &lt;p&gt;Upgrade existing v2 webhooks to v3 in order to gain access to new integration functionality.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="image"&gt;
+        &lt;img src="x_pd_integration.run-migration.svg"&gt;&lt;/img&gt;
+      &lt;/div&gt;
+
+      &lt;div class="message"&gt;
+        &lt;p class="message-primary"&gt;Before migrating webhooks to a new version we recommended you to run a health check&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;A health check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div class="actions"&gt;
+        &lt;button id="run-healthcheck" class="btn btn-primary"&gt;Run health check&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="healthcheck-is-running-view"&gt;
+      &lt;div class="image"&gt;
+        &lt;img src="x_pd_integration.run-migration.svg"&gt;&lt;/img&gt;
+      &lt;/div&gt;
+
+      &lt;div class="message"&gt;
+        &lt;p class="message-primary"&gt;You have a health check currently running&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;A health check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div class="actions"&gt;
+        &lt;button id="go-to-healthcheck" class="btn btn-primary"&gt;Go to health check&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="migration-results-view"&gt;
+      &lt;div class="notification notification-success" id="webhooks-migrated-success-notification"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;&lt;b id="webhooks-migrated-success"&gt;&lt;/b&gt;have been successfully migrated.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="notification notification-error" id="webhooks-migrated-failed-notification"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;&lt;b id="webhooks-migrated-failed"&gt;&lt;/b&gt;failed to be migrated.&lt;a id="webhooks-migrated-failed-details-link" href='#'&gt;Open detailed list&lt;/a&gt;&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="footer-results"&gt;
+        &lt;p id="migration-job-date"&gt;&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="migration-run-view"&gt;
+      &lt;div class="notification notification-info"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;From the last health-check run we identified $[SP]&lt;span id="webhooks-total"&gt;&lt;/span&gt;$[SP] webhooks v2 that can be migrated.&lt;/p&gt;
+            &lt;p&gt;Upgrade existing v2 webhooks to v3 in order to gain access to new integration functionality.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div class="image"&gt;
+        &lt;img src="x_pd_integration.run-migration.svg"&gt;&lt;/img&gt;
+      &lt;/div&gt;
+
+      &lt;div class="actions btn-toolbar"&gt;
+        &lt;button id="migrate-selected" class="btn btn-secondary"&gt;Migrate selected webhooks&lt;/button&gt;
+        &lt;button id="migrate-all" class="btn btn-primary"&gt;Migrate all webhooks&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="migration-no-webhooks-view"&gt;
+      &lt;div class="image"&gt;
+        &lt;img src="x_pd_integration.run-migration-all-done.svg"&gt;&lt;/img&gt;
+      &lt;/div&gt;
+
+      &lt;div class="message"&gt;
+        &lt;p class="message-primary"&gt;There are no webhooks to be migrated. All your webhooks are running the most recent version - V3.&lt;/p&gt;
+        &lt;p class="message-primary"&gt;You can run a health check to verify if they are well configured.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;A health check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.&lt;/p&gt;
+        &lt;p class="message-secondary"&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div class="actions"&gt;
+        &lt;button id="re-run-healthcheck" class="btn btn-primary"&gt;Run health check&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id="migration-running-view"&gt;
+      &lt;div class="notification notification-info"&gt;
+        &lt;div class="notification-content"&gt;
+          &lt;div class="notification-icon"&gt;&lt;/div&gt;
+          &lt;div&gt;
+            &lt;p&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
+            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;div id="migration-running-progress-bar"&gt;
+        &lt;div class="progress-step"&gt;&lt;/div&gt;
+        &lt;div class="progress"&gt;
+          &lt;div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100"&gt;
+              &lt;span class="sr-only"&gt;&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>webhooks_migration</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-07-13 12:13:31</sys_created_on>
+        <sys_id>78c2980d2f84311084e9aa5df699b6ee</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>webhooks_migration</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_78c2980d2f84311084e9aa5df699b6ee</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-07-13 12:24:12</sys_updated_on>
+    </sys_ui_page>
+</record_update>

@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_pd_integration.FetchResponders</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>FetchResponders</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var FetchResponders = Class.create();
+FetchResponders.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+  type: 'FetchResponders',
+  fetchResponders: function fetchResponders (payload) {
+    var error = '';
+    var warnings = [];
+
+    if (payload &amp;&amp; Boolean(Object.keys(payload).length)) {
+      var incident = new GlideRecordSecure('incident');
+      if (incident.get(payload.snIncidentId)) {
+        payload.incidentId = incident.x_pd_integration_incident.toString();
+      }
+    } else {
+      payload = {
+        snIncidentId: '' + current.sys_id,
+        incidentId: '' + current.x_pd_integration_incident
+      };
+    }
+
+    var snIncidentId = payload.snIncidentId;
+    var incidentId = payload.incidentId;
+
+    var states = {
+      'pending': 'Pending',
+      'joined': 'Accepted',
+      'declined': 'Declined'
+    };
+
+    var pdIncident = getIncidentFromPagerDuty(incidentId);
+
+    updateConferenceBridge(pdIncident, snIncidentId);
+
+    var rrList = fetchResponseRequestsList(pdIncident, states);
+
+    var rrHash = normalizeResponseRequestsList(rrList);
+
+    var logEntries = getLogEntries(incidentId);
+
+    // { 'channels': {}, 'notes': {} }
+    var channelsAndNotes = getChannelsAndNotes(logEntries);
+
+    for (var pdGroupId in rrHash) {
+      for (var pdUserId in rrHash[pdGroupId]) {
+        var rr = rrHash[pdGroupId][pdUserId];
+        var logEntryMessage = channelsAndNotes.notes[pdUserId];
+        if (logEntryMessage) {
+          rr.message = logEntryMessage;
+        }
+        actOnNormalizedRecord(snIncidentId, channelsAndNotes, rr);
+      }
+    }
+
+    return {
+      error: error,
+      warnings: warnings,
+      message: '',
+      pdIncident: pdIncident,
+      logEntries: logEntries
+    };
+  }
+});
+
+// -------------------------------
+
+function updateConferenceBridge (pdIncident, snIncidentId) {
+  var incident = new GlideRecordSecure('incident');
+  if (!incident.get(snIncidentId)) {
+    return;
+  }
+
+  var url = (pdIncident.metadata &amp;&amp; pdIncident.metadata.conference_url) || '';
+  var number = (pdIncident.metadata &amp;&amp; pdIncident.metadata.conference_number) || '';
+  var currentConfBridge = (number + ' ' + url).trim();
+
+  if ((incident.getValue('x_pd_integration_conf_bridge') || '') === currentConfBridge) {
+    return;
+  }
+
+  var note = 'PagerDuty Conference Bridge was removed.';
+  if (currentConfBridge) {
+    note = 'PagerDuty Conference Bridge: \n';
+    if (number) {
+      note = note + 'Dial-in number: ' + number + '\n';
+    }
+    if (url) {
+      note = note + 'URL: ' + url + '\n';
+    }
+  }
+
+  incident.x_pd_integration_conf_bridge = currentConfBridge;
+
+  var notesHelper = x_pd_integration.WorkNotesHelper;
+  if (notesHelper.isEnabled('show_note_on_conference_bridge_addition')) {
+    incident.work_notes = notesHelper.build(note);
+  }
+  incident.update();
+}
+
+function fetchResponseRequestsList (incident, states) {
+  var rrList = [];
+  incident.responder_requests.map(function (responderRequest) {
+    responderRequest.responder_request_targets.map(function (target) {
+      var pdGroupId = '';
+      if (target.responder_request_target.type == 'escalation_policy') {
+        pdGroupId = target.responder_request_target.id;
+      }
+      target.responder_request_target.incidents_responders.map(function (responder) {
+        var rr = {};
+        rr.message = responder.message || responderRequest.message || '';
+        if (rr.message.length &gt; 255) {
+          rr.message = rr.message.slice(0, 252) + '...';
+        }
+        rr.state = states[responder.state];
+        rr.pdGroupId = pdGroupId;
+        rr.pdUserId = responder.user.id;
+        rr.pdUserName = responder.user.summary;
+        rrList.push(rr);
+      });
+    });
+  });
+  return rrList;
+}
+
+function getIncidentFromPagerDuty (incidentId) {
+  var rest = new x_pd_integration.PagerDuty_REST();
+  var feature = 'incidents/' + incidentId + '?include%5B%5D=metadata';
+  var response = rest.getREST(feature, {});
+  if (rest.hasError()) {
+    throw new Error(rest.getError());
+  }
+  var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response)
+    : response.getBody();
+  var status = response.getStatusCode();
+  if (status == 200) {
+    var body = JSON.parse(responseBody);
+    return body.incident;
+  }
+  return {};
+}
+
+function normalizeResponseRequestsList (rrList) {
+  var rrHash = {};
+  rrList.map(function (rr) {
+    if (rrHash[rr.pdGroupId] === undefined) {
+      rrHash[rr.pdGroupId] = {};
+    }
+    rrHash[rr.pdGroupId][rr.pdUserId] = rr;
+  });
+
+  for (var pdGroupId in rrHash) {
+    for (var pdUserId in rrHash[pdGroupId]) {
+      var rr = rrHash[pdGroupId][pdUserId];
+      rr.groupRef = getGroupRef(rr.pdGroupId);
+      rr.groupName = getGroupName(rr.groupRef);
+      rr.userRef = getUserRef(rr.pdUserId);
+      if (rr.userRef == 'NULL') {
+        rr.email = getPDEmail(pdUserId);
+        rr.userRef = getUserRefByEmail(rr.email);
+      }
+      rr.userName = getUserName(rr.userRef);
+    }
+  }
+  return rrHash;
+}
+
+function getGroupRef (pdEpId) {
+  if (!pdEpId) {
+    return 'NULL';
+  }
+  var helper = new x_pd_integration.EscalationPolicyHelper();
+  return helper.getAssignmentGroupId(pdEpId);
+}
+
+function getGroupName (groupRef) {
+  var target = new GlideRecordSecure('sys_user_group');
+  target.addQuery('sys_id', groupRef);
+  target.query();
+  if (target.next()) {
+    return target.name;
+  }
+  return '';
+}
+
+function getUserRef (pdUserId) {
+  var target = new GlideRecordSecure('sys_user');
+  target.addQuery('x_pd_integration_pagerduty_id', pdUserId);
+  target.query();
+  if (target.next()) {
+    return target.sys_id;
+  }
+  return 'NULL';
+}
+
+function getUserRefByEmail (email) {
+  if (!email) {
+    return;
+  }
+  var target = new GlideRecordSecure('sys_user');
+  target.addQuery('email', email);
+  target.query();
+  if (target.next()) {
+    return target.sys_id;
+  }
+  return;
+}
+
+function getUserName (userRef) {
+  var target = new GlideRecordSecure('sys_user');
+  target.addQuery('sys_id', userRef);
+  target.query();
+  if (target.next()) {
+    return target.first_name + ' ' + target.last_name;
+  }
+  return;
+}
+
+function getPDEmail (userId) {
+  var feature = 'users/' + userId;
+  var rest = new x_pd_integration.PagerDuty_REST();
+  var params = {};
+  var response = rest.getREST(feature, params);
+  if (rest.hasError()) {
+    throw new Error(rest.getError());
+  }
+  var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response)
+    : response.getBody();
+  var status = response.getStatusCode();
+  if (status == 200) {
+    var body = JSON.parse(responseBody);
+    return body.user.email;
+  }
+  return;
+}
+
+function getLogEntries (incidentId) {
+  var feature = 'incidents/' + incidentId + '/log_entries';
+  var rest = new x_pd_integration.PagerDuty_REST();
+  var params = {};
+  var response = rest.getREST(feature, params);
+  if (rest.hasError()) {
+    throw new Error(rest.getError());
+  }
+  var responseBody = response.haveError() ? rest.extractPagerDutyErrorResponse(response)
+    : response.getBody();
+  var status = response.getStatusCode();
+  if (status == 200) {
+    var body = JSON.parse(responseBody);
+    return body.log_entries;
+  }
+  return;
+}
+
+function getChannelsAndNotes (logEntries) {
+  var channelsAndNotes = {
+    'channels': {},
+    'notes': {}
+  };
+  logEntries.map(function (entry) {
+    if (entry.type == 'responder_accept_log_entry' ||
+      entry.type == 'responder_decline_log_entry'
+    ) {
+      channelsAndNotes.channels[entry.agent.id] = entry.channel.type;
+      if (entry.message) {
+        channelsAndNotes.notes[entry.agent.id] = entry.message;
+      }
+    }
+  });
+  return channelsAndNotes;
+}
+
+function actOnNormalizedRecord (snIncidentId, channelsAndNotes, rr) {
+  var dbRow = getRowFromDatabase(snIncidentId, rr.pdGroupId, rr.pdUserId);
+
+  var notesHelper = x_pd_integration.WorkNotesHelper;
+  if (Object.keys(dbRow).length) {
+    if (rr.state != dbRow.state) {
+      updateResponseRequest(snIncidentId, rr);
+      if (notesHelper.isEnabled('show_note_with_responder_response')) {
+        addWorkNote(snIncidentId, getMessageForStateChange(channelsAndNotes, rr));
+      }
+    }
+  } else {
+    insertResponseRequest(snIncidentId, rr);
+    if (notesHelper.isEnabled('show_responder_request_related_notes')) {
+      addWorkNote(snIncidentId, getMessageForStateChange(channelsAndNotes, rr));
+    }
+  }
+}
+
+function getRowFromDatabase (snIncidentId, pdGroupId, pdUserId) {
+  var row = {};
+  var rec = new GlideRecordSecure('x_pd_integration_pagerduty_response_requests');
+  rec.addQuery('incident', snIncidentId);
+  rec.addQuery('pd_group_id', pdGroupId);
+  rec.addQuery('pd_user_id', pdUserId);
+  rec.query();
+  if (rec.next()) {
+    row.message = rec.message;
+    row.state = rec.state;
+  }
+  return row;
+}
+
+function updateResponseRequest (snIncidentId, rr) {
+  var rec = new GlideRecordSecure('x_pd_integration_pagerduty_response_requests');
+  rec.addQuery('incident', snIncidentId);
+  rec.addQuery('pd_group_id', rr.pdGroupId);
+  rec.addQuery('pd_user_id', rr.pdUserId);
+  rec.query();
+  if (rec.next()) {
+    rec.message = rr.message;
+    rec.state = rr.state;
+    rec.update();
+  }
+}
+
+function insertResponseRequest (snIncidentId, rr) {
+  var rec = new GlideRecordSecure('x_pd_integration_pagerduty_response_requests');
+  rec.initialize();
+  rec.assignment_group = rr.groupRef;
+  rec.assigned_to = rr.userRef;
+  rec.incident = snIncidentId;
+  rec.message = rr.message;
+  rec.state = rr.state;
+  rec.pd_group_id = rr.pdGroupId;
+  rec.pd_user_id = rr.pdUserId;
+  rec.insert();
+}
+
+function getMessageForStateChange (channelsAndNotes, rr) {
+  var userName = rr.userName || rr.pdUserName;
+
+  var groupMessage = '';
+
+  if (rr.groupName) {
+    groupMessage = ' as a member of the ' + rr.groupName + ' assignment group';
+  }
+
+  var state = addIsHas(rr.state.toLowerCase());
+
+  var byChannel = '';
+  var channel = channelsAndNotes.channels[rr.pdUserId];
+  if (channel) {
+    byChannel += ' by ' + channel;
+  }
+
+  var withMessage = '';
+  if (channelsAndNotes.notes &amp;&amp; channelsAndNotes.notes[rr.pdUserId]) {
+    withMessage = ' with a message: ' + channelsAndNotes.notes[rr.pdUserId];
+  }
+
+  var message = userName + groupMessage + ' ' +
+    state + ' the responder request' + byChannel + withMessage + '.';
+
+  if (rr.state == 'Pending') {
+    message = userName + ' was added as a responder via PagerDuty.';
+  }
+  return message;
+}
+
+function addIsHas (message) {
+  var ing = /ing$/;
+  var ed = /ed$/;
+  if (ing.test(message)) {
+    return 'is ' + message;
+  } else if (ed.test(message)) {
+    return 'has ' + message;
+  }
+  return message;
+}
+
+function addWorkNote (snIncidentId, message) {
+  var target = new GlideRecordSecure('incident');
+  target.addQuery('sys_id', snIncidentId);
+  target.query();
+  if (target.next()) {
+    target.work_notes = x_pd_integration.WorkNotesHelper.build(message);
+    target.update();
+  }
+}
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2019-04-12 08:47:58</sys_created_on>
+        <sys_id>c31639c1eb303300ba3f3c4fea887ecb</sys_id>
+        <sys_mod_count>95</sys_mod_count>
+        <sys_name>FetchResponders</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_c31639c1eb303300ba3f3c4fea887ecb</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-11 20:44:49</sys_updated_on>
+    </sys_script_include>
+</record_update>

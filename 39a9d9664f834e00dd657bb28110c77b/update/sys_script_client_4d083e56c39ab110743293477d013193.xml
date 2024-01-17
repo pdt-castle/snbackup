@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script_client">
+    <sys_script_client action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <applies_extended>false</applies_extended>
+        <condition/>
+        <description>Client script for CustomFieldMapping form on update traking</description>
+        <field>sys_updated_on</field>
+        <global>true</global>
+        <isolate_script>true</isolate_script>
+        <messages/>
+        <name>CustomFieldMapping Form on change</name>
+        <order/>
+        <script>function onSubmit() {
+   var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
+   // Traking event
+   trackingApi.track('custom_fields_mapping_update_click_button', {}, function (error, _result) {
+      if (error) {
+         jslog('Tracking error: ' + error);
+      }
+   });
+}</script>
+        <sys_class_name>sys_script_client</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-11-06 17:53:51</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>4d083e56c39ab110743293477d013193</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>CustomFieldMapping Form on change</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_client_4d083e56c39ab110743293477d013193</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-06 18:07:12</sys_updated_on>
+        <table>x_pd_integration_custom_field_mapping</table>
+        <type>onSubmit</type>
+        <ui_type>10</ui_type>
+        <view/>
+    </sys_script_client>
+</record_update>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Run Server Side Validation Script</description>
+        <display_name>Run Server Side Script</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes/>
+        <order>1</order>
+        <step_config display_value="Run Server Side Script">41de4a935332120028bc29cac2dc349a</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-10 12:55:04</sys_created_on>
+        <sys_id>6d81f62947f13510b15271e7826d43cd</sys_id>
+        <sys_mod_count>21</sys_mod_count>
+        <sys_name>Run Server Side Script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_6d81f62947f13510b15271e7826d43cd</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-10 15:46:05</sys_updated_on>
+        <table/>
+        <test display_value="PD - CustomFields - createMapping">ca31722947f13510b15271e7826d432a</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=6d81f62947f13510b15271e7826d43cd"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>6d81f62947f13510b15271e7826d43cd</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-10 12:55:04</sys_created_on>
+        <sys_id>1d0232a547f13510b15271e7826d4383</sys_id>
+        <sys_mod_count>21</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-10 15:46:05</sys_updated_on>
+        <value>(function(outputs, steps, params, stepResult, assertEqual) {&#13;
+    describe('PagerDutyCustomFieldsSupport', function() {&#13;
+        var pagerDutyCustomFieldsSupport;&#13;
+&#13;
+        beforeEach(function() {&#13;
+            pagerDutyCustomFieldsSupport = new x_pd_integration.PagerDutyCustomFieldsSupport();&#13;
+        });&#13;
+&#13;
+        describe('createMapping', function() {&#13;
+            it('should throw an error if ServiceNow field is not found or not eligible for mapping', function() {&#13;
+                var mapping = {&#13;
+                    snFieldId: 'invalid_field_id'&#13;
+                };&#13;
+                expect(function() {&#13;
+                        pagerDutyCustomFieldsSupport.createMapping(mapping);&#13;
+                    })&#13;
+                    .toThrowError(Error, 'ServiceNow field not found or not eligible for mapping');&#13;
+                //.toThrow();//.toThrowError('ServiceNow field not found or not eligible for mapping');&#13;
+            });&#13;
+        });&#13;
+&#13;
+        it('should create a custom field in PagerDuty and a custom field mapping in the mapping table', function() {&#13;
+            var mapping = {&#13;
+                snFieldId: 'valid_field_id',&#13;
+				pdFieldDisplayName: "Test Field",&#13;
+				pdFieldName: "test_field",&#13;
+				pdFieldDescription: "Test Field Description",&#13;
+                snFieldLanguage: 'en'&#13;
+            };&#13;
+            spyOn(pagerDutyCustomFieldsSupport, '_createCustomField').and.returnValue({&#13;
+                id: 'custom_field_id',&#13;
+                name: 'Custom Field',&#13;
+                display_name: 'Custom Field',&#13;
+                description: 'Custom Field Description',&#13;
+                field_type: 'Single Value Select (Fixed Options)',&#13;
+                data_type: 'String',&#13;
+                default_value: 'Default Value',&#13;
+                field_options: [{&#13;
+                    id: 'hardware_option_id',&#13;
+                    data: {&#13;
+                        value: 'Hardware'&#13;
+                    }&#13;
+                },&#13;
+				{&#13;
+                    id: 'software_option_id',&#13;
+                    data: {&#13;
+                        value: 'Software'&#13;
+                    }&#13;
+                }]&#13;
+            });&#13;
+            spyOn(pagerDutyCustomFieldsSupport, '_getEligibleFieldById').and.returnValue({&#13;
+                tableName: 'incident',&#13;
+                sysId: 'valid_field_id',&#13;
+                name: 'category',&#13;
+                displayName: 'Category',&#13;
+                type: 'single_value_fixed',&#13;
+                dataType: 'choice'&#13;
+            });&#13;
+            spyOn(pagerDutyCustomFieldsSupport, 'getSysChoiceOptions').and.returnValue([{&#13;
+                    label: 'Hardware',&#13;
+                    value: 'hardware'&#13;
+                },&#13;
+                {&#13;
+                    label: 'Software',&#13;
+                    value: 'software'&#13;
+                }&#13;
+            ]);&#13;
+            var expectedMapping = {&#13;
+                snFieldTable: 'incident',&#13;
+                snFieldId: 'valid_field_id',&#13;
+                snFieldName: 'category',&#13;
+                snFieldType: 'single_value_fixed',&#13;
+                snFieldDataType: 'choice',&#13;
+                pdFieldId: 'custom_field_id',&#13;
+                pdFieldName: 'Custom Field',&#13;
+                pdFieldType: 'Single Value Select (Fixed Options)',&#13;
+                pdFieldDataType: 'String',&#13;
+                defaultValue: 'Default Value',&#13;
+                options: {&#13;
+                    language: 'en',&#13;
+                    field_options: [{&#13;
+                        id: 'hardware_option_id',&#13;
+                        value: 'Hardware',&#13;
+                        snLabel: 'Hardware',&#13;
+                        snValue: 'hardware'&#13;
+                    },&#13;
+					{&#13;
+                        id: 'software_option_id',&#13;
+                        value: 'Software',&#13;
+                        snLabel: 'Software',&#13;
+                        snValue: 'software'&#13;
+                    }]&#13;
+                }&#13;
+            };&#13;
+            var grMapping = pagerDutyCustomFieldsSupport.createMapping(mapping);&#13;
+			var createdMapping = {&#13;
+				snFieldTable: grMapping.getValue('sn_table_name'),&#13;
+				snFieldId: grMapping.getValue('sn_field_id'),&#13;
+				snFieldName: grMapping.getValue('sn_field_name'),&#13;
+				snFieldType: grMapping.getValue('sn_field_type'),&#13;
+				snFieldDataType: grMapping.getValue('sn_field_data_type'),&#13;
+				pdFieldId: grMapping.getValue('pd_field_id'),&#13;
+				pdFieldName: grMapping.getValue('pd_field_name'),&#13;
+				pdFieldType: grMapping.getValue('pd_field_type'),&#13;
+				pdFieldDataType: grMapping.getValue('pd_field_data_type'),&#13;
+				defaultValue: grMapping.getValue('default_value'),&#13;
+				options: JSON.parse(grMapping.getValue('options')),&#13;
+			};&#13;
+			expect(createdMapping).toEqual(expectedMapping);&#13;
+        });&#13;
+    });&#13;
+&#13;
+})(outputs, steps, params, stepResult, assertEqual);&#13;
+// uncomment the next line to execute this script as a jasmine test&#13;
+jasmine.getEnv().execute();</value>
+        <variable display_value="Test script">989d9e235324220002c6435723dc3484</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>6d81f62947f13510b15271e7826d43cd</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-10 12:55:04</sys_created_on>
+        <sys_id>550232a547f13510b15271e7826d4383</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-10 12:55:04</sys_updated_on>
+        <value>3.1</value>
+        <variable display_value="Jasmine version">42f2564b73031300440211d8faf6a777</variable>
+    </sys_variable_value>
+</record_update>

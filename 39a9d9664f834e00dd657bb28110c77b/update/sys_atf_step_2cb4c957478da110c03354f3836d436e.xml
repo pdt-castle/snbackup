@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Click the component: 'Text &lt;span&gt;: Select a Workflow', Page area: 'default'</description>
+        <display_name>Click Component (Custom UI)</display_name>
+        <inputs/>
+        <mugshots_cache_json>{"be0002194ae0740a97a50408f9f58118":"{\"area\":\"Run a Workflow\",\"sn_atf_mugshot_short_description\":\"Text &lt;span&gt;: Select a Workflow\",\"inner_text\":\"Select a Workflow\",\"sn_atf_mugshot_long_description\":\"Text &lt;span&gt;: Select a Workflow in page area Run a Workflow\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"Select a Workflow\",\"index\":0,\"version\":\"20.2\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"div\",\"rendered_body\",\"form\",\"label\",\"span\"],\"get_value_result\":\"Select a Workflow\",\"sn_atf_mugshot_tag_display_name\":\"Text &lt;span&gt;\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"span\",\"isDisabled\":false,\"label_path\":[\"default\"],\"hash\":\"be0002194ae0740a97a50408f9f58118\"}"}</mugshots_cache_json>
+        <notes/>
+        <order>28</order>
+        <snapshot display_value="d089543aae8dde4a369729d6590c53c7">b9c54d97478da110c03354f3836d4321</snapshot>
+        <step_config display_value="Click Component (Custom UI)">def25c4b73730300c79260bdfaf6a700</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:29:16</sys_created_on>
+        <sys_id>2cb4c957478da110c03354f3836d436e</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>Click Component (Custom UI)</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_2cb4c957478da110c03354f3836d436e</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-21 13:15:51</sys_updated_on>
+        <table/>
+        <test display_value="PD: Incident Workflows - 1 - happy path">272daae1474d2910c03354f3836d43db</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=2cb4c957478da110c03354f3836d436e"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>2cb4c957478da110c03354f3836d436e</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-21 12:29:16</sys_created_on>
+        <sys_id>4fd40d57478da110c03354f3836d431e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-21 12:29:16</sys_updated_on>
+        <value>be0002194ae0740a97a50408f9f58118</value>
+        <variable display_value="Component">ee05588b73730300c79260bdfaf6a749</variable>
+    </sys_variable_value>
+</record_update>

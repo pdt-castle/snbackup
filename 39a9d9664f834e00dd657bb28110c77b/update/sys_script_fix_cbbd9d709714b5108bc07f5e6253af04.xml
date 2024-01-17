@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_fix">
+    <sys_script_fix action="INSERT_OR_UPDATE">
+        <before>false</before>
+        <description>Runs after installation (in some cases after upgrade) of the PagerDuty Integration App.&#13;
+The objective is to make sure that the PagerDuty Integration App is properly configured.&#13;
+Introduced in version 8.0.0.</description>
+        <name>PagerDuty Integration Fix Script: after</name>
+        <record_for_rollback>true</record_for_rollback>
+        <script>try {
+  gs.info('~~ Started running a PagerDuty Integration Fix Script');
+  if (gs.nil(gs.getProperty('x_pd_integration.api_key'))) {
+    gs.info('After installation');
+  } else {
+    gs.info('After upgrade');
+    var hc = new x_pd_integration.HealthcheckController();
+    var results = hc.check();
+  }
+} catch (ex) {
+  gs.error('[\u2717] Error when running PagerDuty Integration Fix Script: ' +
+    global.JSON.stringify(ex, null, 2));
+} finally {
+  gs.info('~~ Finished running a PagerDuty Integration Fix Script');
+}</script>
+        <sys_class_name>sys_script_fix</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-07-25 09:17:12</sys_created_on>
+        <sys_id>cbbd9d709714b5108bc07f5e6253af04</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>PagerDuty Integration Fix Script: after</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_fix_cbbd9d709714b5108bc07f5e6253af04</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-21 14:54:35</sys_updated_on>
+        <unloadable>false</unloadable>
+    </sys_script_fix>
+</record_update>

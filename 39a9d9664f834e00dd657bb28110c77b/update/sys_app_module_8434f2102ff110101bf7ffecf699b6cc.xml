@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_app_module">
+    <sys_app_module action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <application display_value="PagerDuty">eeda99a64f834e00dd657bb28110c748</application>
+        <assessment/>
+        <device_type/>
+        <filter/>
+        <hint/>
+        <homepage/>
+        <image/>
+        <link_type>SCRIPT</link_type>
+        <map_page/>
+        <mobile_title>MIGRATE WEBHOOKS to v7</mobile_title>
+        <mobile_view_name>Mobile</mobile_view_name>
+        <name/>
+        <order>1650</order>
+        <override_menu_roles>false</override_menu_roles>
+        <query>upgradeDatav7();&#13;
+function upgradeDatav7() {&#13;
+  try {&#13;
+    validateUserPassThrowable();&#13;
+    gs.info("Running PagerDuty Upgrade Data to v7");&#13;
+    var mig = new x_pd_integration.PagerDutyMigration();&#13;
+    mig.updateAllWebhooks("module");&#13;
+    var gr = new GlideRecord("sys_app_module");&#13;
+    if (gr.get("8434f2102ff110101bf7ffecf699b6cc")) {&#13;
+      gr.active = false;&#13;
+      gr.title = "Migrate Webhooks to v7";&#13;
+      gr.update();&#13;
+    }&#13;
+    gs.info("Completed PagerDuty Update Data to v7, module link will be disabled");&#13;
+  } catch (ex) {&#13;
+    gs.error('ServiceNow PagerDuty Upgrade Data to v7 module failed:\n', ex);&#13;
+  }&#13;
+}&#13;
+&#13;
+function validateUserPassThrowable() {&#13;
+  gs.info('Validating that the ServiceNow user name/pass is provided...');&#13;
+  var username = gs.getProperty('x_pd_integration.sn_auth_user');&#13;
+  var password = gs.getProperty('x_pd_integration.sn_auth_userpwd');&#13;
+  if (!gs.nil(username) &amp;&amp; !gs.nil(password)) {&#13;
+    gs.info('[\u2714] A ServiceNow user name/pass is provided.');&#13;
+  }&#13;
+  else {&#13;
+    if (gs.nil(username)) {&#13;
+      throw new Error('[\u2717] A ServiceNow user name is not provided.'&#13;
+        + '\nPlease set the user name on the PagerDuty Settings page before running this module.');&#13;
+    }&#13;
+    if (gs.nil(password)) {&#13;
+      throw new Error('[\u2717] A ServiceNow user password is not provided.'&#13;
+        + '\nPlease set the user password on the PagerDuty Settings page before running this module.');&#13;
+    }&#13;
+  }&#13;
+}&#13;
+</query>
+        <report/>
+        <roles>x_pd_integration.admin</roles>
+        <sys_class_name>sys_app_module</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-06-30 14:49:14</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>8434f2102ff110101bf7ffecf699b6cc</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_name>Migrate Webhooks to v7</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_app_module_8434f2102ff110101bf7ffecf699b6cc</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-11 16:49:45</sys_updated_on>
+        <timeline_page/>
+        <title>Migrate Webhooks to v7</title>
+        <uncancelable>false</uncancelable>
+        <view_name/>
+        <window_name/>
+    </sys_app_module>
+</record_update>

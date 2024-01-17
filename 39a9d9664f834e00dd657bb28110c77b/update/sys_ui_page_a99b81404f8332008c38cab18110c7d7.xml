@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script>function runTest() {
+	getPayloadFieldValue();
+}
+
+function getPayloadFieldValue() {
+	var ga = new GlideAjax('x_pd_integration.PagerDutyInboundFieldRuleClient');
+	ga.addParam('sysparm_name', 'getValueFromPayload');
+	// Set parameters for include script
+	ga.addParam('sysparm_payload_field',  gel('dial_payload_field').value);
+	ga.addParam('sysparm_payload', gel('dial_payload').value);
+	ga.addParam('sysparm_target_field', g_form.getValue('target_field'));
+	ga.addParam('sysparm_number', g_form.getValue('number'));
+	ga.getXML(processResponse);
+}
+
+function processResponse(response) {
+	var results = response.responseXML.getElementsByTagName('results');
+	gel('dial_value').value = results[0].getAttribute('value');
+	gel('dial_msg').value = results[0].getAttribute('msg');
+}</client_script>
+        <description>Custom dialog for 'Test Set From PagerDuty Webhook Payload' button.</description>
+        <direct>false</direct>
+        <endpoint>x_pd_integration_test_set_from_payload.do</endpoint>
+        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;g:ui_form&gt;
+    &lt;!-- Get the values from dialog preferences --&gt;
+    &lt;g:evaluate var="jvar_payload_field"
+    expression="RP.getWindowProperties().payload_field" /&gt;
+     &lt;!-- Set up form fields and labels --&gt;
+    &lt;div class="container"&gt;
+      &lt;form&gt;
+       &lt;g:ui_input_field name="dial_payload_field" id="dial_payload_field" label="PagerDuty Webhook Payload Field"
+          value="${HTML:jvar_payload_field}" mandatory="true" style="width: 100%" /&gt;
+       &lt;g:ui_multiline_input_field name="dial_payload" id="dial_payload" label="PagerDuty Webhook Payload"
+          mandatory="true" rows="10" /&gt;
+       &lt;g:ui_input_field name="dial_value" id="dial_value" label="Return Value"
+          mandatory="false" style="width: 100%" /&gt;
+       &lt;g:ui_multiline_input_field name="dial_msg" id="dial_msg" label="Error Message"
+          mandatory="false" rows="2" /&gt;
+       &lt;g:dialog_buttons_ok_cancel ok="return runTest()" ok_type="button" ok_text="Test" cancel_type="button" /&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/g:ui_form&gt;
+&lt;/j:jelly&gt;
+</html>
+        <name>test_set_from_payload</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-05-25 14:47:31</sys_created_on>
+        <sys_id>a99b81404f8332008c38cab18110c7d7</sys_id>
+        <sys_mod_count>69</sys_mod_count>
+        <sys_name>test_set_from_payload</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_page_a99b81404f8332008c38cab18110c7d7</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-01 12:42:07</sys_updated_on>
+    </sys_ui_page>
+</record_update>

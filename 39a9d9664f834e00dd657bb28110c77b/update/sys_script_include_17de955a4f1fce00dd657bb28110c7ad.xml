@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_pd_integration.PagerDutyInbound</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>/*** Changes made to this script are not supported by PagerDuty ***/
+Inbound processor handler for PagerDuty webhook callback
+</description>
+        <name>PagerDutyInbound</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var PagerDutyInbound = Class.create();
+PagerDutyInbound.prototype = {
+  initialize: function () {
+
+    //array helper
+    this.ArrayUtil = new global.ArrayUtil();
+    this.JSON = new global.JSON();
+    this.importTable = 'x_pd_integration_webhook_import';
+    this.sn2pdMappingCIAG = 'Configuration Items and Assignment Groups map to PagerDuty';
+    this.sn2pdMappingAG = 'Assignment Groups map to PagerDuty';
+    this.sn2pdMapping = gs.getProperty('x_pd_integration.sn2pd_mapping');
+
+    //handled webhook types
+    this.EVENTS = [
+      'incident.trigger',
+      'incident.acknowledge',
+      'incident.unacknowledge',
+      'incident.resolve',
+      'incident.assign',
+      'incident.escalate',
+      'incident.delegate',
+      'incident.annotate',
+      'incident.custom'
+    ];
+  },
+
+  /**
+   * process inbound processor request
+   * @param {GlideServletRequest} scripted processor request
+   * @param {GlideServletResponse} scripted processor response
+   * @param {GlideScriptedProcessor} scripted processor
+   * @return void
+   */
+  process: function (gRequest, gResponse, gProcessor) {
+    var me = 'process';
+    var messages = this._getMessages(gRequest);
+    gs.debug('{0} {1} messages', me, messages.length);
+
+    for (var i = 0; i &lt; messages.length; i++) {
+      gs.debug('{0} messages[{1}]: {2}', me, i, this.JSON.encode(messages[i]));
+      var type = messages[i].event;
+      var data = messages[i].incident;
+      var logEntries = messages[i].log_entries;
+      var webhook = messages[i].webhook;
+
+      this._processData(type, data, logEntries, messages[i], webhook);
+    }
+  },
+
+  /**
+   * process inbound processor request via scripted REST API - Ent v3.1
+   * @param {String} PagerDuty webhook message
+   * @return void
+   */
+  processRestWebhook: function (message) {
+    var me = 'processRestWebhook';
+
+    if (gs.nil(message)) {
+      gs.error('{0}: no value for \'message\' parameter', me);
+      return new sn_ws_err.BadRequestError('No messages found in request body');
+    }
+
+    gs.debug('{0} message: {1}', me, this.JSON.encode(message));
+    var type = message.event;
+    var data = message.incident;
+    var logEntries = message.log_entries;
+    var webhook = message.webhook;
+
+    if (this._shouldProcessWebhook(type)) {
+      this._processData(type, data, logEntries, message, webhook);
+    } else {
+      gs.debug('{0} webhook type={1} not supported; webhook={2}', me, type, this.JSON.encode(webhook));
+    }
+  },
+
+  _shouldProcessWebhook: function (webhookType) {
+    return ''.includes.call(this.EVENTS, webhookType);
+  },
+
+
+  /**
+   * process request data, create import set row with webhook callback data
+   * @param {String} PagerDuty message type
+   * @param {Object} request data object
+   * @param {Array}  PagerDuty log entries
+   * @return void
+   */
+  _processData: function (type, data, logEntries, message, webhook) {
+    try {
+      var me = '_processData';
+      var incidentData = data;
+      gs.debug('{0} creating import row with incident:{1}', me, this.JSON.encode(incidentData));
+      var importRow = new GlideRecordSecure(this.importTable);
+      importRow.incident_key = incidentData.incident_key; //v3.5 No longer coalesce on original incident sys_id
+      importRow.id = incidentData.id; // v3.5, coalesce on incident id
+
+      // Check if the webhook contains the config attribute called "task_type"
+      if (!gs.nil(webhook.config.task_type)) {
+        if (webhook.config.task_type === 'sn_si_incident') {
+          importRow.target_table = 'sn_si_incident';
+        } else if (webhook.config.task_type === 'incident') {
+          importRow.target_table = 'incident';
+        } else {
+          var taskRecord = new GlideRecordSecure('task');
+          if (taskRecord.get('x_pd_integration_incident_id', incidentData.id)) {
+            importRow.target_table = taskRecord.sys_class_name;
+          }
+        }
+      } else {
+        var taskRecord = new GlideRecordSecure('task');
+        if (taskRecord.get('x_pd_integration_incident_id', incidentData.id)) {
+          importRow.target_table = taskRecord.sys_class_name;
+        } else {
+          importRow.target_table = 'incident';
+        }
+      }
+
+      importRow.note = logEntries[0] &amp;&amp; logEntries[0].channel &amp;&amp; logEntries[0].channel.summary;
+      if (!gs.nil(logEntries[0].agent)) {
+        importRow.username = logEntries[0] &amp;&amp; logEntries[0].agent &amp;&amp; logEntries[0].agent.summary;
+      }
+      importRow.timestamp = logEntries[0] &amp;&amp; logEntries[0].created_at;
+
+      //Ent v3.1 - handle various subject/description attributes for use in short_description
+      if (!gs.nil(incidentData.title)) {
+        importRow.subject = incidentData.title;
+      } else if (!gs.nil(incidentData.description)) {
+        importRow.subject = incidentData.description;
+      }
+
+      //Ent v3.2 - add entire payload string to import row to make custom parsing of fields easier for customers
+      //importRow.setValue("payload", this.JSON.encode(data));
+      importRow.setValue('payload', this.JSON.encode(message));
+
+      // PD Service Name
+      if (this.sn2pdMapping == this.sn2pdMappingCIAG &amp;&amp; type == 'incident.trigger') {
+        importRow.service_name = incidentData.service.name;
+        importRow.service_id = incidentData.service.id;
+      }
+
+      // Assigned To User
+      gs.debug('_processData Assigned assignOnAckOnly ' + this.assignOnAckOnly);
+      var assignee_name;
+      var assignee_email;
+      var assignments = incidentData.assignments;
+      var pd = new x_pd_integration.PagerDuty();
+      if (assignments.length &gt; 0) {
+        assignments.sort(function (a, b) {
+          if (a.at &amp;&amp; b.at) return a.at.localeCompare(b.at);
+        });
+        var assignee = assignments[assignments.length - 1].assignee;
+        assignee_name = assignee.summary;
+        importRow.assigned_to_name = assignee_name;
+        importRow.assigned_to_pd_id = assignee.id;
+        gs.debug('_processData Assigned To ID={0}, Assigned To Name={1}', assignee.id, importRow.assigned_to_name);
+        //assignee_email = pd.getUserEmailByPDID(assignee.id);
+        //importRow.assigned_to_email = assignee_email;
+      }
+
+      // Message Type
+      importRow.message_type = type;
+
+      // Resolved By User
+      if (type == 'incident.resolve') {
+        var resolved_by_email = null;
+        var resolved_by_name = null;
+        var resolved_by_id = null;
+        for (var i = 0; i &lt; logEntries.length; i++) {
+          var entry = logEntries[i];
+          if (entry.type == 'resolve_log_entry') {
+            var agent = entry.agent || {};
+            if (agent.type == 'user_reference') {
+              //resolved_by_email = pd.getUserEmailByPDID(agent.id);
+              resolved_by_id = agent.id;
+              resolved_by_name = agent.summary;
+            }
+            break;
+          }
+        }
+
+        //importRow.resolved_by_email = resolved_by_email;
+        importRow.resolved_by_pd_id = resolved_by_id;
+        importRow.resolved_by_name = resolved_by_name;
+        gs.debug('_processData Resolved By Name={0}, Resolved By ID={1}', importRow.resolved_by_name, importRow.resolved_by_id);
+
+        // Pull resolved by Reason if not null
+
+        if (!gs.nil(incidentData.resolve_reason) &amp;&amp; incidentData.resolve_reason.hasOwnProperty('type')) {
+
+          var resolve_reason_type = incidentData.resolve_reason.type;
+          importRow.resolve_reason = resolve_reason_type;
+          //gs.debug("_processData resolve_reason_type is {0}",resolve_reason_type);
+          if (resolve_reason_type == 'merge_resolve_reason') {
+            if (incidentData.resolve_reason.hasOwnProperty('incident')) {
+              importRow.parent_pd_id = incidentData.resolve_reason.incident.id;
+              //gs.debug("_processData PD parent id is {0}",incidentData.resolve_reason.incident.id);
+            }
+          }
+
+        }
+
+      }
+
+
+      // Status
+      importRow.status = incidentData.status;
+
+      // URL
+      importRow.url = incidentData.html_url;
+
+      // PD Incident #
+      importRow.pagerduty_number = incidentData.incident_number;
+
+      // Last status changed By User
+      if (!gs.nil(incidentData.last_status_change_by)) {
+        importRow.updated_by_name = incidentData.last_status_change_by.summary;
+        var last_status_type = incidentData.last_status_change_by.type;
+        if (last_status_type == 'user_reference') {
+          //importRow.updated_by_email = pd.getUserEmailByPDID(incidentData.last_status_change_by.id);
+          importRow.updated_by_pd_id = incidentData.last_status_change_by.id;
+        }
+        gs.debug('Last Changed By Name={0}, Last Changed By ID={1}', importRow.updated_by_name, importRow.updated_by_pd_id);
+      }
+
+
+      // Escalation policy from webhook
+      var webhookURL = this._getWebhookURL(webhook);
+      if (!gs.nil(webhookURL)) {
+        var webhookGroupParam = this._getURLParameter(webhookURL, 'group');
+        if (!gs.nil(webhookGroupParam) &amp;&amp; type == 'incident.trigger') {
+          var ep = this._getGroupEscalationPolicy(webhookGroupParam, incidentData);
+          importRow.escalation_policy = ep.name;
+          importRow.escalation_policy_id = ep.id;
+        }
+
+        var webhookCIParam = this._getURLParameter(webhookURL, 'ci');
+        if (!gs.nil(webhookCIParam) &amp;&amp; type == 'incident.trigger') {
+          var passed_ci = webhookCIParam;
+          importRow.ci_sys_id = passed_ci;
+        }
+        gs.debug('_processData webhook url={0}, webhook group={1}, webhook group escalation policy={2}', webhookURL, webhookGroupParam, importRow.escalation_policy_id);
+      }
+
+      // Escalation policy from incident if not found on webhook URL
+      if (!gs.nil(incidentData.escalation_policy) &amp;&amp; gs.nil(importRow.escalation_policy_id)) {
+        importRow.escalation_policy = incidentData.escalation_policy.summary;
+        importRow.escalation_policy_id = incidentData.escalation_policy.id;
+      }
+
+      // Get message channel client
+      if (logEntries.length &gt; 0) {
+        var logEntry = logEntries[0];
+        if (!gs.nil(logEntry) &amp;&amp; logEntry.hasOwnProperty('channel')) {
+          var channel = logEntry.channel;
+          if (channel.hasOwnProperty('client')) {
+            importRow.message_channel_client = channel.client;
+          }
+        }
+      }
+
+      // Priority
+      if (!gs.nil(incidentData.priority) &amp;&amp; incidentData.priority.hasOwnProperty('id')) {
+        importRow.priority_id = incidentData.priority.id;
+      }
+
+      importRow.insert();
+      gs.debug('{0} inserted import row {1}', me, importRow.getDisplayValue());
+    } catch (e) {
+      gs.error('PagerDutyInbound._processData error: {0}', e);
+    }
+  },
+
+  /**
+   * get message object from request body
+   * @param {GlideServletRequest} scripted processor request
+   * @return {Array} array of message objects
+   */
+  _getMessages: function (request) {
+    var me = '_getMessages';
+    var messageParm = request.getParameter('messages');
+    if (gs.nil(messageParm)) {
+      gs.error('{0}: no value for \'messages\' parameter', me);
+      return;
+    }
+    gs.debug('{0}: messages string = {1}', me, this.JSON.encode(messageParm));
+    //get object from JSON string
+    //var messages = this.JSON.decode(messageParm);
+    var messages = messageParm;
+    return messages;
+  },
+
+  /**
+   * get the webhook URL
+   * @param (String) webhook field from payload
+   * @return (String) webhook URL
+   */
+  _getWebhookURL: function (webhook) {
+    if (!gs.nil(webhook)) {
+      var webhookURL = webhook.config.target;
+      if (gs.nil(webhookURL)) {
+        webhookURL = webhook.endpoint_url;
+      }
+      return webhookURL;
+    }
+  },
+
+  /**
+   * get the URL query parameter value
+   * @param (String) URL
+   * @param (String) name of the parameter
+   * @return (String) query parameter value
+   */
+  _getURLParameter: function (URL, name) {
+    if (!gs.nil(URL)) {
+      var params = [],
+        hash;
+      var queryString = URL.split('?')[1];
+      if (!gs.nil(queryString)) {
+        var queryParams = queryString.split('&amp;');
+        for (var i = 0; i &lt; queryParams.length; i++) {
+          hash = queryParams[i].split('=');
+          params.push(hash[1]);
+          params[hash[0]] = hash[1];
+        }
+      }
+      if (params.length &gt; 0) {
+        return unescape(params[name]);
+      }
+    }
+  },
+
+  /**
+   * find the group and return the escalation policy id
+   * @param (String) group name
+   * @return (String) group escalation policy id
+   */
+  _getGroupEscalationPolicy: function (name, incidentData) {
+    var agId = null;
+    var gr = new GlideRecordSecure('sys_user_group');
+    gr.addQuery('name', name);
+    gr.addQuery('active', true);
+    gr.query();
+    if (gr.next()) {
+      agId = gr.getValue('sys_id');
+    }
+
+    var epHelper = new x_pd_integration.EscalationPolicyHelper();
+    var snPriId = null;
+    if (incidentData.priority) snPriId = epHelper.convertPriToSn(incidentData.priority.id);
+    var pdEpId = epHelper.getPDEscalationPolicyIdWithPriority(agId, snPriId);
+    var pdEpName = epHelper.getEpNameById(pdEpId);
+    return {id: pdEpId, name: pdEpName};
+  },
+
+  type: 'PagerDutyInbound'
+};
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-26 14:04:05</sys_created_on>
+        <sys_id>17de955a4f1fce00dd657bb28110c7ad</sys_id>
+        <sys_mod_count>141</sys_mod_count>
+        <sys_name>PagerDutyInbound</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_17de955a4f1fce00dd657bb28110c7ad</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-12-14 22:26:02</sys_updated_on>
+    </sys_script_include>
+</record_update>

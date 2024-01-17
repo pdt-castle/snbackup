@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_macro">
+    <sys_ui_macro action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category>general</category>
+        <description>Bootstrap form-group with label, input and help-block with support for tooltip.&#13;
+supported input types: input, password, checkbox &#13;
+</description>
+        <media_type/>
+        <name>input_formgroup_tooltip</name>
+        <scoped_name>x_pd_integration_input_formgroup_tooltip</scoped_name>
+        <sys_class_name>sys_ui_macro</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-01-25 17:25:08</sys_created_on>
+        <sys_id>8285cfae97602110b21577d71153afc9</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>input_formgroup_tooltip</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_ui_macro_8285cfae97602110b21577d71153afc9</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-01-25 17:25:56</sys_updated_on>
+        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+  &lt;div class="form-group"&gt;
+    &lt;j:if test="${HTML:jvar_type != 'checkbox'}"&gt;
+      &lt;j:if test="${HTML:jvar_name == 'instance_url'}"&gt;
+        &lt;label class="control-label" for="${HTML:jvar_name}"&gt;PagerDuty account URL (https://&lt;strong&gt;subdomain&lt;/strong&gt;.pagerduty.com)&lt;/label&gt;
+      &lt;/j:if&gt;
+      &lt;j:if test="${HTML:jvar_name != 'instance_url'}"&gt;
+        &lt;label class="control-label" for="${HTML:jvar_name}"&gt;${HTML:jvar_label}&lt;/label&gt;
+      &lt;/j:if&gt;
+      &lt;j:if test="${HTML:jvar_name == 'api_key' || jvar_name == 'sn_auth_userpwd'}"&gt;
+        &lt;input type="${HTML:jvar_type}" class="form-control" name="${HTML:jvar_name}" placeholder="${HTML:jvar_placeholder}" aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" autocomplete="off"/&gt;
+      &lt;/j:if&gt;
+      &lt;j:if test="${HTML:jvar_name != 'api_key' &amp;amp;&amp;amp; jvar_name != 'sn_auth_userpwd' }"&gt;
+        &lt;input type="${HTML:jvar_type}" class="form-control" name="${HTML:jvar_name}" placeholder="${HTML:jvar_placeholder}" aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}"/&gt;
+      &lt;/j:if&gt;
+    &lt;/j:if&gt;
+    &lt;j:if test="${HTML:jvar_type == 'checkbox'}"&gt;
+      &lt;div class="checkbox"&gt;
+        &lt;label&gt;
+          &lt;j:if test="${HTML:jvar_value == 'true'}"&gt;
+            &lt;input type="${HTML:jvar_type}" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help" checked="" value="true" /&gt;
+          &lt;/j:if&gt;
+          &lt;j:if test="${HTML:jvar_value != 'true'}"&gt;
+            &lt;input type="${HTML:jvar_type}" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help" value="true" /&gt;
+          &lt;/j:if&gt;
+          &lt;input type="hidden" name="${HTML:jvar_name}" aria-describedby="${HTML:jvar_name}_help"  value="false" /&gt;
+          ${HTML:jvar_label}
+          &lt;div class="sn-tooltip-basic pull-right" style="margin-left: 8px;" title="${HTML:jvar_tooltip_title}" data-toggle="tooltip" data-placement="auto"&gt;
+            &lt;a target="${HTML:jvar_tooltip_target}" style="color: #222" href="${HTML:jvar_tooltip_href}"&gt;
+              &lt;i class="${HTML:jvar_tooltip_icon}"&gt;&lt;/i&gt;
+            &lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/label&gt;
+      &lt;/div&gt;
+    &lt;/j:if&gt;
+    &lt;span id="${HTML:jvar_name}_help" class="help-block"&gt;&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/j:jelly&gt;
+</xml>
+    </sys_ui_macro>
+</record_update>

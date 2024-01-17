@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>false</active>
+        <api_name>x_pd_integration.ResponsePlayController_DEPRECATED</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>ResponsePlayController_DEPRECATED</name>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var ResponsePlayController_DEPRECATED = x_pd_integration.AjaxHelper.createAjaxController({
+  type: 'ResponsePlayController_DEPRECATED',
+
+  checkMapping: function checkMapping (userId) {
+    var pd = new x_pd_integration.PagerDuty();
+    var grs = new GlideRecordSecure('sys_user');
+    var snUserPdId, snUserEmail;
+    grs.addQuery('sys_id', userId);
+    grs.setLimit(1);
+    grs.query();
+    if (grs.next()) {
+      snUserPdId = grs.getValue('x_pd_integration_pagerduty_id');
+      snUserEmail = grs.getValue('email');
+    } else {
+      gs.debug('ResponsePlayController_DEPRECATED: mapping check. There is no user with sys_id {0} in the sys_user table', userId);
+      return false;
+    }
+
+    if (!snUserPdId) return false;
+    var pdUserEmail = pd.getUserEmailFromPagerDuty(snUserPdId);
+    return (snUserEmail.toLowerCase() === pdUserEmail.toLowerCase());
+  },
+
+  fetchResponsePlays: function fetchResponsePlays (userId) {
+    var pd = new x_pd_integration.PagerDuty();
+    var items = [];
+    try {
+      var currentPdUserId = pd.getUserIDFromFieldData(userId, 'sys_id', false);
+      gs.debug('fetchResponsePlays currentPdUserId: ' + currentPdUserId);
+
+      var from = pd.getUserEmailByPDID(currentPdUserId);
+      gs.debug('fetchResponsePlays from: ' + from);
+
+      var responsePlays = pd.getResponsePlays(from);
+      if (responsePlays) {
+        responsePlays.forEach(function (play) {
+          items.push({
+            id: '' + play.id,
+            text: '' + play.name,
+            description: '' + play.description
+          });
+        });
+      }
+    } catch (e) {
+      return {
+        items: [],
+        errorMessage: e.message
+      };
+    }
+    return {items: items};
+  },
+  /**
+   * Run response play
+   * @deprecated 2023/09/28
+   * https://pagerduty.atlassian.net/browse/ITS-7486
+   */
+  runResponsePlay: function runResponsePlay (data) {
+    var pd = new x_pd_integration.PagerDuty();
+    var rest = new x_pd_integration.PagerDuty_REST();
+    var feature = 'response_plays/' + data.responsePlayId + '/run';
+    var currentPdUserId = pd.getUserIDFromFieldData(data.userId, 'sys_id', false);
+    var from = pd.getUserEmailByPDID(currentPdUserId);
+
+    var incident = new GlideRecordSecure('incident');
+
+    if (!incident.get(data.snIncidentId)) {
+      throw new Error('You cannot use this form out of context of existing incident.');
+    }
+
+    if (gs.nil(incident.x_pd_integration_incident)) {
+      throw new Error('Current incident is not linked to PagerDuty.');
+    }
+
+    var pdIncidentId = incident.x_pd_integration_incident.toString();
+
+    var body = {
+      incident: {
+        id: pdIncidentId,
+        type: 'incident_reference'
+      }
+    };
+
+    var response = rest.postREST(feature, body, from);
+
+    if (rest.hasError()) {
+      throw new Error(rest.getError());
+    }
+
+    if (response.haveError()) {
+      throw new Error('' + response.getErrorMessage());
+    }
+
+    var responsePlayName = data.responsePlayName;
+    var personWhoRanResponsePlay = gs.getUserDisplayName();
+
+    var note = '"' + responsePlayName + '" Response Play has been run by ' + personWhoRanResponsePlay;
+
+    if (gs.getProperty('x_pd_integration.show_note_on_response_play_run') === 'true') {
+      var target = new GlideRecordSecure('incident');
+      target.addQuery('sys_id', data.snIncidentId);
+      target.query();
+      if (target.next()) {
+        target.work_notes = x_pd_integration.WorkNotesHelper.build(note);
+        target.update();
+      }
+    }
+
+    return {
+      response: response.getBody(),
+      message: 'Response Play has been successfully run.'
+    };
+  }
+});
+</script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-03-20 22:07:08</sys_created_on>
+        <sys_id>727603632fab00101bf7ffecf699b677</sys_id>
+        <sys_mod_count>16</sys_mod_count>
+        <sys_name>ResponsePlayController_DEPRECATED</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_include_727603632fab00101bf7ffecf699b677</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-09-28 15:47:27</sys_updated_on>
+    </sys_script_include>
+</record_update>

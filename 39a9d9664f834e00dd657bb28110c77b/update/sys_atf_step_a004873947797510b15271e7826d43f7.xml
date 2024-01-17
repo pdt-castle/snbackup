@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_step">
+    <sys_atf_step action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <copied_from/>
+        <description>Run Server Side Validation Script</description>
+        <display_name>Run Server Side Script</display_name>
+        <inputs/>
+        <mugshots_cache_json/>
+        <notes/>
+        <order>1</order>
+        <step_config display_value="Run Server Side Script">41de4a935332120028bc29cac2dc349a</step_config>
+        <sys_class_name>sys_atf_step</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:52:56</sys_created_on>
+        <sys_id>a004873947797510b15271e7826d43f7</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_name>Run Server Side Script</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_atf_step_a004873947797510b15271e7826d43f7</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-06 15:25:11</sys_updated_on>
+        <table/>
+        <test display_value="PD - CustomFields - PagerDutyCustomFieldsInboundSync">45c3cff547797510b15271e7826d438f</test>
+        <timeout/>
+        <warning_message/>
+    </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=a004873947797510b15271e7826d43f7"/>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>a004873947797510b15271e7826d43f7</document_key>
+        <order>100</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:52:56</sys_created_on>
+        <sys_id>0c34873947797510b15271e7826d43c0</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-11 08:52:56</sys_updated_on>
+        <value>3.1</value>
+        <variable display_value="Jasmine version">42f2564b73031300440211d8faf6a777</variable>
+    </sys_variable_value>
+    <sys_variable_value action="INSERT_OR_UPDATE">
+        <document>sys_atf_step</document>
+        <document_key>a004873947797510b15271e7826d43f7</document_key>
+        <order>200</order>
+        <sys_class_name>sys_variable_value</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-11 08:52:56</sys_created_on>
+        <sys_id>c034873947797510b15271e7826d43c1</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-11-06 15:25:11</sys_updated_on>
+        <value>(function(outputs, steps, params, stepResult, assertEqual) {&#13;
+    // add test script here&#13;
+    describe('PagerDutyCustomFieldsInboundSync', function() {&#13;
+        var pagerDutyCustomFieldsInboundSync;&#13;
+&#13;
+        var generateDescriptor = function(isChoice, maxLength) {&#13;
+            return {&#13;
+                isChoiceTable: function() {&#13;
+                    return isChoice;&#13;
+                },&#13;
+                getLength: function() {&#13;
+                    return maxLength || 40;&#13;
+                }&#13;
+            };&#13;
+        };&#13;
+        beforeEach(function() {&#13;
+            pagerDutyCustomFieldsInboundSync = new x_pd_integration.PagerDutyCustomFieldsInboundSync();&#13;
+        });&#13;
+&#13;
+        describe('_convertValue', function() {&#13;
+            it('should convert choice option', function() {&#13;
+                var mapping = {&#13;
+                    options: {&#13;
+                        field_options: [{&#13;
+                                value: 'pd_value_1',&#13;
+                                snValue: 'sn_value_1'&#13;
+                            },&#13;
+                            {&#13;
+                                value: 'pd_value_2',&#13;
+                                snValue: 'sn_value_2'&#13;
+                            }&#13;
+                        ]&#13;
+                    },&#13;
+                    snFieldDataType: 'string'&#13;
+                };&#13;
+                var field = {&#13;
+                    getED: function() {&#13;
+                        return {&#13;
+                            isChoiceTable: function() {&#13;
+                                return true;&#13;
+                            }&#13;
+                        };&#13;
+                    },&#13;
+                    getDisplayValue: function() {&#13;
+                        return 'sn_value_1';&#13;
+                    }&#13;
+                };&#13;
+&#13;
+                var value = 'pd_value_2';&#13;
+                var currentValue = 'sn_value_1';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(true), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('sn_value_2');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should convert string', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'string'&#13;
+                };&#13;
+                var field = {};&#13;
+                var descriptor = {};&#13;
+                var value = 'pd_value';&#13;
+                var currentValue = 'sn_value';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('pd_value');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should convert url', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'url'&#13;
+                };&#13;
+                var field = {};&#13;
+                var value = 'https://www.pagerduty.com';&#13;
+                var currentValue = 'https://www.servicenow.com';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('https://www.pagerduty.com');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should convert date', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'glide_date'&#13;
+                };&#13;
+                var field = {};&#13;
+                var descriptor = {};&#13;
+                var value = '2022-01-01';&#13;
+                var currentValue = '2021-12-31';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('2022-01-01');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should convert datetime', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'glide_date_time'&#13;
+                };&#13;
+                var field = {};&#13;
+                var value = '2022-01-01T00:00:00Z';&#13;
+                var currentValue = '2021-12-31T23:59:59Z';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('2022-01-01 00:00:00');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should ignore null value', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'string'&#13;
+                };&#13;
+                var field = {};&#13;
+                var value = null;&#13;
+                var currentValue = 'sn_value';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should ignore undefined value', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'string'&#13;
+                };&#13;
+                var field = {};&#13;
+                var value = undefined;&#13;
+                var currentValue = 'sn_value';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+&#13;
+            it('should ignore unchanged value', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'string'&#13;
+                };&#13;
+                var field = {&#13;
+                    getValue: function() {&#13;
+                        return 'sn_value';&#13;
+                    }&#13;
+                };&#13;
+                var value = 'sn_value';&#13;
+                var currentValue = 'sn_value';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.apply).toBe(false);&#13;
+            });&#13;
+&#13;
+            it('should ignore unsupported data type', function() {&#13;
+                var mapping = {&#13;
+                    snFieldDataType: 'unsupported'&#13;
+                };&#13;
+                var field = {};&#13;
+                var value = 'pd_value';&#13;
+                var currentValue = 'sn_value';&#13;
+                var result = pagerDutyCustomFieldsInboundSync._convertValue(mapping, field, generateDescriptor(false), value, currentValue);&#13;
+                expect(result.convertedValue).toEqual('pd_value');&#13;
+                expect(result.apply).toBe(true);&#13;
+            });&#13;
+        });&#13;
+    });&#13;
+})(outputs, steps, params, stepResult, assertEqual);&#13;
+// uncomment the next line to execute this script as a jasmine test&#13;
+jasmine.getEnv().execute();</value>
+        <variable display_value="Test script">989d9e235324220002c6435723dc3484</variable>
+    </sys_variable_value>
+</record_update>

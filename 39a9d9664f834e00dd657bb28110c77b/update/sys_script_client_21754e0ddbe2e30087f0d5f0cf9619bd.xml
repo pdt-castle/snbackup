@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script_client">
+    <sys_script_client action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <applies_extended>false</applies_extended>
+        <condition/>
+        <description/>
+        <field>active</field>
+        <global>true</global>
+        <messages/>
+        <name>GroupHideErrorMessageField</name>
+        <order/>
+        <script>function onLoad() {
+   if (!g_user.hasRoleFromList('x_pd_integration.admin,x_pd_integration.incident_response,x_pd_integration.services_provisioning')) {
+     return;
+   }
+   g_form.setDisplay('x_pd_integration_pd_error_message', false);
+ }
+ </script>
+        <sys_class_name>sys_script_client</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2018-12-21 13:30:53</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path/>
+        <sys_id>21754e0ddbe2e30087f0d5f0cf9619bd</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>GroupHideErrorMessageField</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_script_client_21754e0ddbe2e30087f0d5f0cf9619bd</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2018-12-21 13:30:53</sys_updated_on>
+        <table>sys_user_group</table>
+        <type>onLoad</type>
+        <ui_type>10</ui_type>
+        <view/>
+    </sys_script_client>
+</record_update>

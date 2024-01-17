@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>Obsolete starting from v4.0. PagerDuty key used to validate security token on inbound webhook REST API requests. This should be a unique key. Any changes after setup will require you to update the webhook URLs in PagerDuty services. (Value will be encrypted on save)</description>
+        <ignore_cache>false</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_pd_integration.webhook_key</name>
+        <read_roles>admin,x_pd_integration.admin</read_roles>
+        <suffix>webhook_key</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2015-10-26 16:59:38</sys_created_on>
+        <sys_id>4eed42164f5fce00dd657bb28110c7fc</sys_id>
+        <sys_mod_count>22</sys_mod_count>
+        <sys_name>x_pd_integration.webhook_key</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_properties_4eed42164f5fce00dd657bb28110c7fc</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-09-06 22:00:45</sys_updated_on>
+        <type>password2</type>
+        <value/>
+        <write_roles>admin,x_pd_integration.admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=4eed42164f5fce00dd657bb28110c7fc"/>
+</record_update>

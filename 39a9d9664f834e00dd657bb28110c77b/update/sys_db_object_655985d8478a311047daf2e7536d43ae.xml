@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_db_object">
+    <sys_db_object action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <actions_access>false</actions_access>
+        <alter_access>false</alter_access>
+        <caller_access/>
+        <client_scripts_access>false</client_scripts_access>
+        <configuration_access>false</configuration_access>
+        <create_access>false</create_access>
+        <create_access_controls>true</create_access_controls>
+        <delete_access>false</delete_access>
+        <is_extendable>false</is_extendable>
+        <label>PagerDuty Custom Field Mappings Control</label>
+        <live_feed_enabled>false</live_feed_enabled>
+        <name>x_pd_integration_custom_field_mapping_control</name>
+        <number_ref/>
+        <provider_class/>
+        <read_access>true</read_access>
+        <scriptable_table>false</scriptable_table>
+        <super_class/>
+        <sys_class_name>sys_db_object</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-10-18 18:22:49</sys_created_on>
+        <sys_id>655985d8478a311047daf2e7536d43ae</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>PagerDuty Custom Field Mappings Control</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sys_db_object_655985d8478a311047daf2e7536d43ae</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-10-18 18:22:49</sys_updated_on>
+        <update_access>false</update_access>
+        <user_role display_value="x_pd_integration.admin" name="x_pd_integration.admin">f2d919a64f834e00dd657bb28110c7fd</user_role>
+        <ws_access>true</ws_access>
+    </sys_db_object>
+</record_update>

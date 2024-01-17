@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_user">
+    <sys_user action="INSERT_OR_UPDATE">
+        <accumulated_roles/>
+        <active>true</active>
+        <avatar/>
+        <building/>
+        <calendar_integration>1</calendar_integration>
+        <city/>
+        <company/>
+        <cost_center/>
+        <country/>
+        <date_format/>
+        <default_perspective/>
+        <department/>
+        <edu_status>faculty</edu_status>
+        <email>request.receiver@example.com</email>
+        <employee_number/>
+        <enable_multifactor_authn>false</enable_multifactor_authn>
+        <failed_attempts/>
+        <first_name>Request</first_name>
+        <gender/>
+        <hashed_user_id>23064f675dfc0d0ae54b1ce5473fb303280d3de87cd2e43dc93f8651e51c7274</hashed_user_id>
+        <home_phone/>
+        <internal_integration_user>false</internal_integration_user>
+        <introduction/>
+        <last_login/>
+        <last_login_device/>
+        <last_login_time/>
+        <last_name>Receiver</last_name>
+        <last_password/>
+        <ldap_server/>
+        <location/>
+        <locked_out>false</locked_out>
+        <manager/>
+        <middle_name/>
+        <mobile_phone/>
+        <name>Request Receiver</name>
+        <notification>2</notification>
+        <password_needs_reset>false</password_needs_reset>
+        <phone/>
+        <photo/>
+        <preferred_language/>
+        <roles/>
+        <schedule/>
+        <source/>
+        <state/>
+        <street/>
+        <sys_class_name>sys_user</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-04-22 14:26:49</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>dbbedae21b5265106911dc6cdc4bcb4c</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-04-22 14:33:39</sys_updated_on>
+        <time_format/>
+        <time_zone/>
+        <title/>
+        <user_name>request.receiver</user_name>
+        <user_password>$s$n/qOo/z5kK8+i4OUYeRQqiPbWqHrXPInwgZVxJnMUcA=$S2CFsmumSg9ciRhcgLgx4+14NKBL/jQiZiDemTnxAHA=</user_password>
+        <vip>false</vip>
+        <web_service_access_only>false</web_service_access_only>
+        <x_pd_integration_pagerduty_id/>
+        <zip/>
+    </sys_user>
+</record_update>

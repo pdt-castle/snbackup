@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sysevent_script_action">
+    <sysevent_script_action action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition_script/>
+        <description/>
+        <event_name>x_pd_integration.post_worknote</event_name>
+        <name>PagerDuty Post Work Note</name>
+        <order>100</order>
+        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+var createdBy = String(event.parm1);
+
+gs.debug('PagerDuty event \'x_pd_integration.post_worknote\' fired from {0} by {1}', current.getDisplayValue(), createdBy);
+var pd = new x_pd_integration.PagerDuty();
+
+if (createdBy !== 'system') {
+
+  var pdNotes = [];
+  var rawNotes = pd.getIncidentNotes(current.x_pd_integration_incident);
+  rawNotes.forEach(function (note) {
+    pdNotes.push(note.content);
+  });
+
+  var snNotes = pd.getSNWorknotes(current.getUniqueValue(), createdBy);
+
+  pdNotes = pdNotes.map(function (note) {
+    return note.trim();
+  });
+  snNotes = snNotes.map(function (note) {
+    return note.trim();
+  });
+  pdNotes.reverse();
+  snNotes.reverse();
+
+  // only interested in the notes that came from ServiceNow and a certain user (createdBy)
+  pdNotes = pdNotes.filter(function (pdNote) {
+    return pdNote.indexOf('(from ServiceNow:' + createdBy + ') ') &gt;= 0;
+  });
+
+  // only interested in a content
+  for (var i in pdNotes) {
+    if (pdNotes.hasOwnProperty(i)) {
+      pdNotes[i] = pdNotes[i].replace('(from ServiceNow:' + createdBy + ') ', '');
+    }
+  }
+
+  // filter out repeating notes in chronological order
+  pdNotes.forEach(function (pdNote) {
+    var snNoteIndex = snNotes.indexOf(pdNote);
+    if (snNoteIndex &gt;= 0) {
+      // not interested in unique notes before the repeating one
+      snNotes.splice(0, snNoteIndex + 1);
+    }
+  });
+
+  snNotes.forEach(function (snNote) {
+    var index = snNote.indexOf('(PagerDuty:');
+    if (index === -1) {
+      var note = '(from ServiceNow:' + createdBy + ') ' + snNote;
+      pd.postIncidentNote(x_pd_integration.TaskEntityHelper.getPdId(current), note, createdBy, false, current.getUniqueValue());
+    }
+  });
+
+}
+</script>
+        <synchronous>false</synchronous>
+        <sys_class_name>sysevent_script_action</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2016-04-01 19:41:55</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>c84e10d14f221200dd657bb28110c751</sys_id>
+        <sys_mod_count>59</sys_mod_count>
+        <sys_name>PagerDuty Post Work Note</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_update_name>sysevent_script_action_c84e10d14f221200dd657bb28110c751</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-11-23 16:52:08</sys_updated_on>
+    </sysevent_script_action>
+</record_update>

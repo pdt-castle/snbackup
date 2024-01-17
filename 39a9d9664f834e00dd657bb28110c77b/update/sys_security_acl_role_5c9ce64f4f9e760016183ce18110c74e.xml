@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl_role">
+    <sys_security_acl_role action="INSERT_OR_UPDATE">
+        <sys_class_name>sys_security_acl_role</sys_class_name>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2017-04-27 22:39:42</sys_created_on>
+        <sys_id>5c9ce64f4f9e760016183ce18110c74e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_pd_integration_pagerduty_ci_import.x_pd_integration.admin</sys_name>
+        <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+        <sys_security_acl display_value="x_pd_integration_pagerduty_ci_import">d89ce64f4f9e760016183ce18110c74b</sys_security_acl>
+        <sys_update_name>sys_security_acl_role_5c9ce64f4f9e760016183ce18110c74e</sys_update_name>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2017-04-27 22:39:42</sys_updated_on>
+        <sys_user_role display_value="x_pd_integration.admin" name="x_pd_integration.admin">f2d919a64f834e00dd657bb28110c7fd</sys_user_role>
+        <transaction_id/>
+    </sys_security_acl_role>
+</record_update>
