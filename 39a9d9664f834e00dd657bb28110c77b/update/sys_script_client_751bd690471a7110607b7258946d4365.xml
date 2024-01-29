@@ -10,7 +10,7 @@
         <messages/>
         <name>CustomFieldMapping Form Header</name>
         <order/>
-        <script>function onLoad() {
+        <script><![CDATA[function onLoad() {
 	ScriptLoader.getScripts('x_pd_integration.AjaxHelper.jsdbx?v='+new Date().getTime(), function() {
 		var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
 		var customFieldsApi = x_pd_integration.AjaxHelper.ajaxClientFor('PagerDutyCustomFieldsController');
@@ -19,7 +19,7 @@
 				jslog('Error on Client Script for CustomFieldMapping Form with error: ' + error);
 			} else if (result.error) {
 				// add error message
-				g_form.addFormMessage(result.error_reason.replace(/\n/g, "&lt;br /&gt;"), 'error');
+				g_form.addFormMessage(result.error_reason.replace(/\n/g, "<br />"), 'error');
 				// change header position
 				var elem = document.getElementById("output_messages");
 				jQuery('.form-group').first().append(elem);
@@ -40,7 +40,7 @@
 			}
 		});
 	});
-}</script>
+}]]></script>
         <sys_class_name>sys_script_client</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-10-31 10:39:23</sys_created_on>

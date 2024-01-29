@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_relationship">
     <sys_relationship action="INSERT_OR_UPDATE">
         <advanced>true</advanced>
-        <apply_to>answer = true;</apply_to>
+        <apply_to><![CDATA[answer = true;]]></apply_to>
         <basic_apply_to>sys_user_group</basic_apply_to>
         <basic_query_from>x_pd_integration_map_priority_to_ep</basic_query_from>
-        <insert_callback>if (!current.priority) {
+        <insert_callback><![CDATA[if (!current.priority) {
   var gr = new GlideRecordSecure('sys_user_group');
   if (gr.get(current.assignment_group)) {
     var epHelper = new x_pd_integration.EscalationPolicyHelper();
     var existingEpName = epHelper.getEpNameById(gr.x_pd_integration_pagerduty_escalation);
     if (existingEpName)
-      gs.addInfoMessage('A new record with escalation policy [&lt;b&gt;'
+      gs.addInfoMessage('A new record with escalation policy [<b>'
         + current.escalation_policy.escalation_policy_name
-        + '&lt;/b&gt;] will override the existing one [&lt;b&gt;' + existingEpName + '&lt;/b&gt;].');
+        + '</b>] will override the existing one [<b>' + existingEpName + '</b>].');
     gr.setValue('x_pd_integration_pagerduty_escalation', current.escalation_policy.escalation_policy_id);
     gr.update();
     epHelper.removeObsoleteDefaultRows(current.sys_id, current.assignment_group);
   }
 }
-</insert_callback>
+]]></insert_callback>
         <name>PagerDuty Escalation Policies</name>
-        <query_from>answer = 'x_pd_integration_map_priority_to_ep';</query_from>
-        <query_with>(function refineQuery(current, parent) {
+        <query_from><![CDATA[answer = 'x_pd_integration_map_priority_to_ep';]]></query_from>
+        <query_with><![CDATA[(function refineQuery(current, parent) {
 
 	// Add your code here, such as current.addQuery(field, value);
 
 	current.addQuery('assignment_group', parent.sys_id);
 	current.addNotNullQuery('priority');
 
-})(current, parent);</query_with>
+})(current, parent);]]></query_with>
         <reference_field>assignment_group</reference_field>
         <related_list/>
         <simple_reference>false</simple_reference>
@@ -48,9 +48,9 @@
     <sys_translated_text action="delete_multiple" query="documentkey=4b0718cddbb110103541d426ca9619bf"/>
     <sys_ui_related_list_relationship_entry action="INSERT_OR_UPDATE">
         <filter/>
-        <list_id display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">c3874291983100107f2c2ed01a1f168c</list_id>
+        <list_id display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">d3a6ffea772210100afbf62ad91061c0</list_id>
         <order_by/>
-        <position>3</position>
+        <position>4</position>
         <related_list>REL:4b0718cddbb110103541d426ca9619bf</related_list>
         <sys_class_name>sys_ui_related_list_relationship_entry</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -58,7 +58,7 @@
         <sys_id>9cc954cddbb110103541d426ca961991</sys_id>
         <sys_mod_count>0</sys_mod_count>
         <sys_relationship display_value="PagerDuty Escalation Policies">4b0718cddbb110103541d426ca9619bf</sys_relationship>
-        <sys_ui_related_list display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">c3874291983100107f2c2ed01a1f168c</sys_ui_related_list>
+        <sys_ui_related_list display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">d3a6ffea772210100afbf62ad91061c0</sys_ui_related_list>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-07-02 11:25:56</sys_updated_on>
     </sys_ui_related_list_relationship_entry>

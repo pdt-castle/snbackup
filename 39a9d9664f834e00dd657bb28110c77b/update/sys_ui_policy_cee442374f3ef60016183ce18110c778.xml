@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_policy">
     <sys_ui_policy action="INSERT_OR_UPDATE">
         <active>true</active>
-        <conditions table="x_pd_integration_pagerduty_inbound_field_rule">type=set_from_payload^EQ<item endquery="false" field="type" goto="false" newquery="false" operator="=" or="false" value="set_from_payload"/>
+        <conditions table="x_pd_integration_pagerduty_inbound_field_rule">type=set_from_payload^EQ<item display_value="Set From PagerDuty Webhook Payload" endquery="false" field="type" goto="false" newquery="false" operator="=" or="false" value="set_from_payload"/>
             <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
         </conditions>
         <description/>
         <global>true</global>
         <inherit>false</inherit>
+        <isolate_script>false</isolate_script>
         <model_id/>
         <model_table/>
         <on_load>true</on_load>
         <order>100</order>
         <reverse_if_false>true</reverse_if_false>
         <run_scripts>true</run_scripts>
-        <script_false>function onCondition() {
+        <script_false><![CDATA[function onCondition() {
 	var items = $$('BUTTON').each(function(item){
-		if (item.innerHTML.indexOf('Test Set From PagerDuty Webhook Payload') &gt; -1) {
+		if (item.innerHTML.indexOf('Test Set From PagerDuty Webhook Payload') > -1) {
 			item.hide();
 		}
 	});
-}</script_false>
-        <script_true>function onCondition() {
+}]]></script_false>
+        <script_true><![CDATA[function onCondition() {
 	var items = $$('BUTTON').each(function(item){
-		if (item.innerHTML.indexOf('Test Set From PagerDuty Webhook Payload') &gt; -1) {
+		if (item.innerHTML.indexOf('Test Set From PagerDuty Webhook Payload') > -1) {
 			item.show();
 		}
 	});
-}</script_true>
+}]]></script_true>
         <set_values/>
         <short_description>PD IFR hide or show set from payload fields</short_description>
         <sys_class_name>sys_ui_policy</sys_class_name>

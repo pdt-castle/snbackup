@@ -3,9 +3,9 @@
         <action_name>sysverb_new</action_name>
         <active>true</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>Custom UI action for button New on x_pd_integration_custom_field_mapping </comments>
         <condition/>
         <form_action>false</form_action>
@@ -30,9 +30,9 @@
         <name>New</name>
         <onclick>openNewFormCustomFieldMapping()</onclick>
         <order>100</order>
-        <script>function openNewFormCustomFieldMapping() {
+        <script><![CDATA[function openNewFormCustomFieldMapping() {
   g_navigation.open('x_pd_integration_custom_field_mapping_create.do');
-}</script>
+}]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

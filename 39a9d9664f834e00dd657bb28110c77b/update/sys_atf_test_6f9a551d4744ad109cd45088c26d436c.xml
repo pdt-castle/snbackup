@@ -6,6 +6,7 @@
 Before the test you should put rest_api_endpoint. rest_api_endpoint - should be valid.&#13;
 Test will be success if rest_api_endpoint - valid</description>
         <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Settings page - Enable Response Mobilizer feature (rest_api_endpoint is correct)</name>
         <parameters/>
         <remember/>

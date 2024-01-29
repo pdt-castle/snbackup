@@ -3,9 +3,9 @@
         <action_name>provision_change_event_int</action_name>
         <active>true</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_pagerduty_service) &amp;&amp; gs.nil(current.x_pd_integration_pagerduty_change_event_token)</condition>
         <form_action>true</form_action>
@@ -30,7 +30,7 @@
         <name>Provision PD Change Event Integration</name>
         <onclick/>
         <order>900</order>
-        <script>gs.info("I'm in the Provision PD Change Event Integration now....");
+        <script><![CDATA[gs.info("I'm in the Provision PD Change Event Integration now....");
 var me = "Provision PD Change Event Integration";
 
 var pdce = new x_pd_integration.PagerDuty_Change_Events();
@@ -55,7 +55,7 @@ while (grCI.next()) {
 }
 
 gs.info('{0} added integration token for ci {1} with service: {2} and id: {3}', me, ciSysId, ciName, ciPdServiceId);
-</script>
+]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

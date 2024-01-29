@@ -3,8 +3,9 @@
         <active>true</active>
         <description/>
         <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_pd_integration.PdSelect</name>
-        <script>/*jshint esnext: true */
+        <script><![CDATA[/*jshint esnext: true */
 
 var x_pd_integration = x_pd_integration || {};
 
@@ -127,50 +128,50 @@ x_pd_integration.PdSelect = (function() {
         this.props.initValue = null;
 
       element.innerHTML = `
-        &lt;div class="pds-container"&gt;
-          &lt;div class="pds-body"&gt;
-            &lt;div class="loader"&gt;
-              &lt;span class="icon icon-loading"&gt;&lt;/span&gt;
-            &lt;/div&gt;
-            &lt;ul&gt;
-              &lt;li&gt;&lt;input id="pds-input" value="Select..."&gt;&lt;/li&gt;
-            &lt;/ul&gt;
-          &lt;/div&gt;
-          &lt;div class="pds-error-message"&gt;
-          &lt;/div&gt;
-          &lt;div class="pds-suggestions"&gt;
-            &lt;div&gt;
-              &lt;ul&gt;&lt;/ul&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
+        <div class="pds-container">
+          <div class="pds-body">
+            <div class="loader">
+              <span class="icon icon-loading"></span>
+            </div>
+            <ul>
+              <li><input id="pds-input" value="Select..."></li>
+            </ul>
+          </div>
+          <div class="pds-error-message">
+          </div>
+          <div class="pds-suggestions">
+            <div>
+              <ul></ul>
+            </div>
+          </div>
+        </div>
       `;
 
       const i = element.querySelector('.pds-body input');
-      i.onfocus = e =&gt; this.onInputFocus(e);
-      i.onclick = e =&gt; this.onInputFocus(e);
+      i.onfocus = e => this.onInputFocus(e);
+      i.onclick = e => this.onInputFocus(e);
 
-      window.addEventListener('mousedown', (e) =&gt; {
+      window.addEventListener('mousedown', (e) => {
         if (!element.contains(e.target)){
           this.onInputBlur(e);
         }
       });
 
-      i.onchange = e =&gt; this.onInputEvent(e);
-      i.onkeypress = e =&gt; this.onInputEvent(e);
-      i.onkeydown = e =&gt; this.onInputEvent(e);
-      i.onpaste = e =&gt; this.onInputEvent(e);
-      i.oninput = e =&gt; this.onInputEvent(e);
+      i.onchange = e => this.onInputEvent(e);
+      i.onkeypress = e => this.onInputEvent(e);
+      i.onkeydown = e => this.onInputEvent(e);
+      i.onpaste = e => this.onInputEvent(e);
+      i.oninput = e => this.onInputEvent(e);
 
-      element.querySelector('.pds-body').onclick = e =&gt; this.onMainAreaClick(e);
+      element.querySelector('.pds-body').onclick = e => this.onMainAreaClick(e);
       this.lastInputValue = '';
       this.typingTimeout = null;
       this.loadedSuggestions = [];
 
       if (initValues) {
-        initValues(initValue, (result) =&gt; {
+        initValues(initValue, (result) => {
           const items = result.items || [];
-          for (var i = 0; i &lt; items.length; i++) {
+          for (var i = 0; i < items.length; i++) {
             this.addElementToSelection(items[i].id, items[i].text, { focus: false });
           }
         });
@@ -191,11 +192,11 @@ x_pd_integration.PdSelect = (function() {
       const { element, minSearchLength } = this.props;
       let suggestions = element.querySelector('.pds-suggestions ul');
 
-      if (this.getInputValue().length &lt; minSearchLength) {
+      if (this.getInputValue().length < minSearchLength) {
         this.hideLoader();
         this.suggestionsHide();
       }
-      else if (!this.selectionId() &amp;&amp; suggestions.children.length) {
+      else if (!this.selectionId() && suggestions.children.length) {
         this.hideLoader();
         this.suggestionsShow();
       }
@@ -229,7 +230,7 @@ x_pd_integration.PdSelect = (function() {
 
       if (e.key === 'Backspace') {
         const ul = element.querySelector('.pds-container .pds-body ul');
-        if (ul.children.length &gt; 1) {
+        if (ul.children.length > 1) {
           ul.removeChild(ul.children[ul.children.length - 2]);
           this.renderLoadedSuggestions();
           this.updateSelections();
@@ -376,16 +377,16 @@ x_pd_integration.PdSelect = (function() {
     updateSuggestions(filter) {
       const { load, minSearchLength } = this.props;
 
-      if (filter &amp;&amp; filter.length &lt; minSearchLength) {
+      if (filter && filter.length < minSearchLength) {
         this.hideLoader();
         this.suggestionsHide();
         return;
       }
 
       clearTimeout(this.typingTimeout);
-      this.typingTimeout = setTimeout(() =&gt; {
+      this.typingTimeout = setTimeout(() => {
         this.typingTimeout = null;
-        load(filter, (result) =&gt; {
+        load(filter, (result) => {
           const items = result.items || [];
           this.mergeIntoSuggestions(items);
           this.hideLoader();
@@ -424,7 +425,7 @@ x_pd_integration.PdSelect = (function() {
 
       if (!this.loadedSuggestions.length) {
         element.querySelector('.pds-suggestions').style.height = 'auto';
-        element.querySelector('.pds-suggestions ul').innerHTML = '&lt;li&gt;(no items)&lt;/li&gt;';
+        element.querySelector('.pds-suggestions ul').innerHTML = '<li>(no items)</li>';
         return;
       }
       element.querySelector('.pds-suggestions').style.height = height + 'px';
@@ -432,26 +433,26 @@ x_pd_integration.PdSelect = (function() {
       element.querySelector('.pds-suggestions ul').innerHTML =
         this.loadedSuggestions
           .filter(
-            i =&gt; selected !== i.id &amp;&amp; (
+            i => selected !== i.id && (
               i.text.toLowerCase().includes(filter.toLowerCase())
               ||
-              (i.description &amp;&amp; i.description.toLowerCase().includes(filter.toLowerCase()))
+              (i.description && i.description.toLowerCase().includes(filter.toLowerCase()))
             )
           )
-          .map(i =&gt; {
-            if (i.description &amp;&amp; i.description !== 'null' &amp;&amp; i.description !== 'undefined') {
+          .map(i => {
+            if (i.description && i.description !== 'null' && i.description !== 'undefined') {
               return (
-                '&lt;li data-id=' + i.id + '&gt;' + i.text +
-                  '&lt;div class="description"&gt;' + i.description + '&lt;/div&gt;' +
-                '&lt;/li&gt;'
+                '<li data-id=' + i.id + '>' + i.text +
+                  '<div class="description">' + i.description + '</div>' +
+                '</li>'
               )}
-              return '&lt;li data-id=' + i.id + '&gt;' + i.text + '&lt;/li&gt;'
+              return '<li data-id=' + i.id + '>' + i.text + '</li>'
           }).join('');
 
       var els = element.querySelector('.pds-suggestions ul').children;
-      for(var i = 0; i &lt; els.length; i++) {
+      for(var i = 0; i < els.length; i++) {
         let el = els[i];
-        el.onclick = () =&gt; this.addElementToSelection(el.getAttribute('data-id'), el.firstChild.textContent);  }
+        el.onclick = () => this.addElementToSelection(el.getAttribute('data-id'), el.firstChild.textContent);  }
     }
 
     mergeIntoSuggestions(list) {
@@ -460,7 +461,7 @@ x_pd_integration.PdSelect = (function() {
       this.loadedSuggestions =
         this.loadedSuggestions
           .sort(cmp)
-          .filter((val, index, arr) =&gt; index === 0 || val.id !== arr[index - 1].id);
+          .filter((val, index, arr) => index === 0 || val.id !== arr[index - 1].id);
     }
 
     addElementToSelection(id, text) {
@@ -478,7 +479,7 @@ x_pd_integration.PdSelect = (function() {
 
   return PdSelect;
 })();
-</script>
+]]></script>
         <script_name>PdSelect</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

@@ -18,9 +18,9 @@
         <sys_update_name>sys_ui_macro_8ea0516b2f231010926d59a72799b69e</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-12-07 18:09:58</sys_updated_on>
-        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;style&gt;
+        <xml><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <style>
     #provision-service-btn {
       display: none;
       width: 170px;
@@ -33,36 +33,36 @@
       margin-left: 0.5rem;
       min-width: 32px;
     }
-  &lt;/style&gt;
-  &lt;div id="default-service-div"&gt;
-    &lt;label class="control-label" for="${HTML:jvar_name}"&gt;${HTML:jvar_label}&lt;/label&gt;
-    &lt;j2:set_if var="jvar_class" test="${HTML:jvar_value == ''}" true="input-group" false="" /&gt;
-    &lt;div class="${HTML:jvar_class} flex"&gt;
+  </style>
+  <div id="default-service-div">
+    <label class="control-label" for="${HTML:jvar_name}">${HTML:jvar_label}</label>
+    <j2:set_if var="jvar_class" test="${HTML:jvar_value == ''}" true="input-group" false="" />
+    <div class="${HTML:jvar_class} flex">
 
-      &lt;j:if test="${HTML:jvar_enabled == 'yes'}"&gt;
-        &lt;input type="${HTML:jvar_type}" class="form-control" id="${HTML:jvar_name}"
+      <j:if test="${HTML:jvar_enabled == 'yes'}">
+        <input type="${HTML:jvar_type}" class="form-control" id="${HTML:jvar_name}"
           name="${HTML:jvar_name}" placeholder="${HTML:jvar_placeholder}"
-          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" mandatory="mandatory" /&gt;
-        &lt;span class="input-group-btn"&gt;
-          &lt;button class="btn btn-info" id="provision-service-btn"&gt;Provision default service&lt;/button&gt;
-        &lt;/span&gt;
-      &lt;/j:if&gt;
+          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" mandatory="mandatory" />
+        <span class="input-group-btn">
+          <button class="btn btn-info" id="provision-service-btn">Provision default service</button>
+        </span>
+      </j:if>
 
-      &lt;j:if test="${HTML:jvar_enabled != 'yes'}"&gt;
-        &lt;input type="${HTML:jvar_type}" class="form-control" name="${HTML:jvar_name}"
-          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" disabled="disabled" /&gt;
-        &lt;span class="input-group-btn"&gt;
-          &lt;button class="btn btn-info" id="provision-service-btn" disabled="disabled"&gt;Provision default service&lt;/button&gt;
-        &lt;/span&gt;
-      &lt;/j:if&gt;
+      <j:if test="${HTML:jvar_enabled != 'yes'}">
+        <input type="${HTML:jvar_type}" class="form-control" name="${HTML:jvar_name}"
+          aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}" disabled="disabled" />
+        <span class="input-group-btn">
+          <button class="btn btn-info" id="provision-service-btn" disabled="disabled">Provision default service</button>
+        </span>
+      </j:if>
 
-      &lt;g:evaluate var="jvar_pd_base_url" expression="gs.getProperty('x_pd_integration.instance_url')" /&gt;
-      &lt;button type="button" class="btn btn-default icon-link linky-btn"
+      <g:evaluate var="jvar_pd_base_url" expression="gs.getProperty('x_pd_integration.instance_url')" />
+      <button type="button" class="btn btn-default icon-link linky-btn"
         id="${HTML:jvar_name}-linky-btn"
         onclick="openPagerDuty_${HTML:jvar_name}();"
-        title="${HTML:gs.getMessage('Open in PagerDuty')}"&gt;
-      &lt;/button&gt;
-      &lt;script&gt;
+        title="${HTML:gs.getMessage('Open in PagerDuty')}">
+      </button>
+      <script>
         function openPagerDuty_${HTML:jvar_name}() {
           var go = confirm("${HTML:gs.getMessage('PagerDuty will open in a new window')}");
           if (!go) {
@@ -72,12 +72,12 @@
           var pdUrl = "${HTML:jvar_pd_base_url}/service-directory/" + id;
           g_navigation.open(pdUrl, "_blank");
         }
-      &lt;/script&gt;
+      </script>
 
-    &lt;/div&gt;
-  &lt;/div&gt;
-  &lt;span id="${HTML:jvar_name}_help" class="help-block"&gt;&lt;/span&gt;
-&lt;/j:jelly&gt;
-</xml>
+    </div>
+  </div>
+  <span id="${HTML:jvar_name}_help" class="help-block"></span>
+</j:jelly>
+]]></xml>
     </sys_ui_macro>
 </record_update>

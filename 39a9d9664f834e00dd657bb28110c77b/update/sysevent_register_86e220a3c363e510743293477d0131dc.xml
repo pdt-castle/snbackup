@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sysevent_register">
     <sysevent_register action="INSERT_OR_UPDATE">
         <caller_access/>
+        <derived_priority/>
         <description>Process changes to configuration params of a Webhook V3</description>
         <event_name>x_pd_integration.update_v3_wh_subs</event_name>
         <fired_by/>
+        <priority/>
         <queue/>
         <suffix>update_v3_wh_subs</suffix>
         <sys_class_name>sysevent_register</sys_class_name>

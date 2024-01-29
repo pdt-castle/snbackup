@@ -8,7 +8,6 @@
         <mugshots_cache_json>{"be0002194ae0740a97a50408f9f58118":"{\"area\":\"Run a Workflow\",\"sn_atf_mugshot_short_description\":\"Text &lt;span&gt;: Select a Workflow\",\"inner_text\":\"Select a Workflow\",\"sn_atf_mugshot_long_description\":\"Text &lt;span&gt;: Select a Workflow in page area Run a Workflow\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"Select a Workflow\",\"index\":0,\"version\":\"20.2\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"div\",\"rendered_body\",\"form\",\"label\",\"span\"],\"get_value_result\":\"Select a Workflow\",\"sn_atf_mugshot_tag_display_name\":\"Text &lt;span&gt;\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"span\",\"isDisabled\":false,\"label_path\":[\"default\"],\"hash\":\"be0002194ae0740a97a50408f9f58118\"}"}</mugshots_cache_json>
         <notes/>
         <order>28</order>
-        <snapshot display_value="d089543aae8dde4a369729d6590c53c7">b9c54d97478da110c03354f3836d4321</snapshot>
         <step_config display_value="Click Component (Custom UI)">def25c4b73730300c79260bdfaf6a700</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

@@ -7,7 +7,7 @@
         <insert_callback/>
         <name>PagerDuty Status Updates</name>
         <query_from/>
-        <query_with>current.addQuery('incident', parent.sys_id);</query_with>
+        <query_with><![CDATA[current.addQuery('incident', parent.sys_id);]]></query_with>
         <reference_field>incident</reference_field>
         <related_list/>
         <simple_reference>true</simple_reference>
@@ -27,9 +27,9 @@
     <sys_translated_text action="delete_multiple" query="documentkey=4c6dedd42f2b001068ca56e62799b6e0"/>
     <sys_ui_related_list_relationship_entry action="INSERT_OR_UPDATE">
         <filter/>
-        <list_id display_value="Incident - Default view" name="incident" related_list="NULL" sys_domain="global" view="Default view">97be62a10f130000b12e6903cfe01258</list_id>
+        <list_id display_value="Incident - Default view" name="incident" related_list="NULL" sys_domain="global" view="Default view">b88be7db53453010ae50ddeeff7b12fe</list_id>
         <order_by/>
-        <position>2</position>
+        <position>8</position>
         <related_list>REL:4c6dedd42f2b001068ca56e62799b6e0</related_list>
         <sys_class_name>sys_ui_related_list_relationship_entry</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -37,7 +37,7 @@
         <sys_id>60cd21182f2b001068ca56e62799b617</sys_id>
         <sys_mod_count>0</sys_mod_count>
         <sys_relationship display_value="PagerDuty Status Updates">4c6dedd42f2b001068ca56e62799b6e0</sys_relationship>
-        <sys_ui_related_list display_value="Incident - Default view" name="incident" related_list="NULL" sys_domain="global" view="Default view">97be62a10f130000b12e6903cfe01258</sys_ui_related_list>
+        <sys_ui_related_list display_value="Incident - Default view" name="incident" related_list="NULL" sys_domain="global" view="Default view">b88be7db53453010ae50ddeeff7b12fe</sys_ui_related_list>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-03-10 13:16:14</sys_updated_on>
     </sys_ui_related_list_relationship_entry>

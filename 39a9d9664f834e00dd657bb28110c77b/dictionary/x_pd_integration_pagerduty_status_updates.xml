@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="19d9a1542f2b001068ca56e62799b6ec" label="PagerDuty Status Updates" max_length="40" name="x_pd_integration_pagerduty_status_updates" type="collection">
+        <element label="Author" max_length="128" name="author" type="string_full_utf8"/>
+        <element attributes="ignore_filter_on_new=true" label="Id" max_length="30" name="id" type="string"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Incident" max_length="32" name="incident" reference="incident" type="reference"/>
+        <element attributes="ignore_filter_on_new=true" label="Message" max_length="10000" name="message" type="string_full_utf8"/>
+        <index name="index">
+            <element name="incident"/>
+        </index>
+    </element>
+</database>

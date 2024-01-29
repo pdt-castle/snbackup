@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>var $J = jQuery;
+        <client_script><![CDATA[var $J = jQuery;
 var loading = false;
 var colors = {
   validated: '#2e2e2e',
@@ -110,12 +110,12 @@ $J(function () {
           $J(this.vars.containerId).hide(800);
         }
       }
-      if (record.attribute_name === 'aria-activedescendant' &amp;&amp;
+      if (record.attribute_name === 'aria-activedescendant' &&
         (record.element_id === 'sys_display.first-table' || record.element_id === 'sys_display.second-table')) {
         this.vars.table = record.element_id === 'sys_display.first-table' ? 'first_table' : 'second_table';
         this.vars.containerId = '#' + record.element_id.split('.')[1] + '-filtering-container';
-        if (!record.new_value &amp;&amp; record.old_value &amp;&amp; record.old_value.slice(10) === this[this.vars.table + '_new_value'] &amp;&amp;
-          this[this.vars.table + '_old_value'] &amp;&amp;
+        if (!record.new_value && record.old_value && record.old_value.slice(10) === this[this.vars.table + '_new_value'] &&
+          this[this.vars.table + '_old_value'] &&
           this[this.vars.table + '_new_value'] === this[this.vars.table + '_old_value']) {
           this.first_table.table = true;
           $J(this.vars.containerId).show(800);
@@ -125,9 +125,9 @@ $J(function () {
           });
         }
       }
-      if (record.attribute_name === 'value' &amp;&amp;
+      if (record.attribute_name === 'value' &&
         (record.element_id === 'first-table' || record.element_id === 'second-table')) {
-        if (record.new_value &amp;&amp; record.new_value === record.input_value) {
+        if (record.new_value && record.new_value === record.input_value) {
           this.vars.table = record.element_id === 'first-table' ? 'first_table' : 'second_table';
           this.vars.containerId = '#' + record.element_id + '-filtering-container';
           this[this.vars.table + '_new_value'] = record.new_value;
@@ -138,7 +138,7 @@ $J(function () {
           });
           if (record.element_id === 'first-table') {
             this.first_table.table = true;
-            validation.cmdb_rel.configuration_items.value = this.first_table.table &amp;&amp; this.first_table.column || this.single_ci;
+            validation.cmdb_rel.configuration_items.value = this.first_table.table && this.first_table.column || this.single_ci;
             if (input.use_cmdb_relationships.val() === 'false') {
               this.vars.color = this.first_table.table ? colors.validated : colors.not_validated;
               marker.first_table.css({color: this.vars.color});
@@ -166,7 +166,7 @@ $J(function () {
       }
       if (record.element_id === 'first-table-column') {
         this.first_table.column = record.new_value;
-        this.vars.isValidated = this.first_table.table &amp;&amp; this.first_table.column || this.single_ci;
+        this.vars.isValidated = this.first_table.table && this.first_table.column || this.single_ci;
         this.vars.color = this.vars.isValidated ? colors.validated : colors.not_validated;
         marker.cmdb_rel_provisioning.css({color: this.vars.color});
         validation.cmdb_rel.configuration_items.value = this.vars.isValidated;
@@ -178,7 +178,7 @@ $J(function () {
       }
       if (record.element_id === 'ci') {
         this.single_ci = record.new_value;
-        this.vars.isValidated = this.single_ci || this.first_table.table &amp;&amp; this.first_table.column;
+        this.vars.isValidated = this.single_ci || this.first_table.table && this.first_table.column;
         this.vars.color = this.vars.isValidated ? colors.validated : colors.not_validated;
         marker.cmdb_rel_provisioning.css({color: this.vars.color});
         validation.cmdb_rel.configuration_items.value = this.vars.isValidated;
@@ -267,7 +267,7 @@ $J(function () {
   });
 
   input.single_ci.on('input keydown', function (event) {
-    var color = (!event.target.value || event.key === 'Escape') &amp;&amp;
+    var color = (!event.target.value || event.key === 'Escape') &&
       !input.first_table_column.val() ? colors.not_validated : colors.validated;
     marker.cmdb_rel_provisioning.css({color: color});
   });
@@ -294,7 +294,7 @@ $J(function () {
     if (validationErrors.length) {
       var list = '';
       validationErrors.forEach(function (obj) {
-        list += '&lt;li&gt;' + obj.error + '&lt;/li&gt;';
+        list += '<li>' + obj.error + '</li>';
         ids.push(obj.id);
       });
       $J('#notification-error .outputmsg_text ul').append(list);
@@ -423,7 +423,7 @@ $J(function () {
     ga.getXML(callback);
     function callback (response) {
       var answer = JSON.parse(response.responseXML.documentElement.getAttribute('answer'));
-      if (answer &amp;&amp; answer.hadValidationWarnings) {
+      if (answer && answer.hadValidationWarnings) {
         showNoteStep2();
       }
       restoreButton();
@@ -431,7 +431,7 @@ $J(function () {
     function showLoadingButton () {
       $J('#revalidate-services').attr('disabled', 'disabled');
       // eslint-disable-next-line es5/no-es6-methods
-      $J('#revalidate-services').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt;' + '$[SP]'.repeat(2) + 'Revalidating...');
+      $J('#revalidate-services').html('<span class="icon icon-loading"></span>' + '$[SP]'.repeat(2) + 'Revalidating...');
     }
     function restoreButton () {
       $J('#revalidate-services').removeAttr('disabled');
@@ -615,7 +615,7 @@ function changeAppClick () {
   xhr.open('PUT', '/api/now/ui/concoursepicker/application', true);
   xhr.setRequestHeader('Content-type', 'application/json');
   xhr.onreadystatechange = function () {
-    if (xhr.readyState === XMLHttpRequest.DONE &amp;&amp; xhr.status === 200) {
+    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
       location.reload();
     }
   };
@@ -645,7 +645,7 @@ function sortCIs () {
 
   // eslint-disable-next-line array-callback-return, consistent-return
   leftBucket.sort(function (a, b) {
-    if (a.text &lt; b.text) {
+    if (a.text < b.text) {
       return -1;
     }
   }).forEach(function (ciClass) {
@@ -653,7 +653,7 @@ function sortCIs () {
   });
   // eslint-disable-next-line array-callback-return, consistent-return
   rightBucket.sort(function (a, b) {
-    if (a.text &lt; b.text) {
+    if (a.text < b.text) {
       return -1;
     }
   }).forEach(function (ciClass) {
@@ -663,7 +663,7 @@ function sortCIs () {
 
 function popupSavedConfigurations () {
   var tableName = 'x_pd_integration_pagerduty_service_provisioning';
-  var url = tableName + '_list.do?sysparm_view=sys_popup&amp;sysparm_query=GROUPBYparent_ci_name^provisioned=false';
+  var url = tableName + '_list.do?sysparm_view=sys_popup&sysparm_query=GROUPBYparent_ci_name^provisioned=false';
   window.g_navigation.openPopup(url, '', '');
 }
 
@@ -719,14 +719,14 @@ function executeWithConfig (config, callback) {
     }
   });
 }
-</client_script>
+]]></client_script>
         <description>Services Provisioning</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_services_provisioning.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
 
-  &lt;g:evaluate&gt;
+  <g:evaluate>
     var columns = [
       'use_cmdb_relationships',
       'use_service_classification',
@@ -747,9 +747,9 @@ function executeWithConfig (config, callback) {
 
     var session = gs.getSession();
     var isWrongScope = session.getCurrentApplicationId() != '39a9d9664f834e00dd657bb28110c77b';
-  &lt;/g:evaluate&gt;
+  </g:evaluate>
 
-  &lt;style&gt;
+  <style>
     #use-cmdb-relationships {
       margin-bottom: 15px;
     }
@@ -886,9 +886,9 @@ function executeWithConfig (config, callback) {
     .form-control[disabled] {
       border: 1px solid rgb(var(--now-form-field--border-color, 203, 203, 203));
     }
-  &lt;/style&gt;
+  </style>
 
-  &lt;style&gt;
+  <style>
     .error { color: #c83c36; }
     .sticky-banner { position: absolute; left: 0px; top: -5px; z-index: 25; width: 100%; }
     .sticky-banner .border { border: 1px solid; }
@@ -897,371 +897,371 @@ function executeWithConfig (config, callback) {
     .sticky-banner .icon-loading { width: 13px; height: 13px; font-size: 13px; margin-top: 2px; margin-left: 4px; }
     .sticky-banner .width100 { width: 100%; }
     .sticky-banner.slider.opened { max-height: 280px; }
-  &lt;/style&gt;
+  </style>
 
-  &lt;div class="col-sm-8"&gt;
-    &lt;div id="sticky-banner" class="sticky-banner slider closed"&gt;
-      &lt;div class="outputmsg_div "&gt;
-        &lt;div id="output_messages" class="outputmsg_container"&gt;
-          &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
-          &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeStickyBanner()"&gt;
-          &lt;/button&gt;
-          &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
-            &lt;div role="alert" class="outputmsg outputmsg_info notification notification-info border"&gt;
-              &lt;span class="notification-icon icon-info"&gt;&lt;span class="sr-only"&gt;Info Message&lt;/span&gt;&lt;/span&gt;
-              &lt;div class="outputmsg_text"&gt;
-                &lt;j2:whitespace trim="false"&gt;
-                  &lt;p&gt;&lt;span id="provisioned"&gt;Some of the services have&lt;/span&gt; been provisioned.&lt;/p&gt;
-                  &lt;p&gt;&lt;span id="skipped"&gt;Some of the services have&lt;/span&gt; been skipped due to provisioning errors.&lt;/p&gt;
-                  &lt;p&gt;Click the &lt;a class="view-services-link" href="#"&gt;&lt;strong&gt;[View Services]&lt;/strong&gt;&lt;/a&gt; link to view the services.&lt;/p&gt;
-                  &lt;p&gt;
+  <div class="col-sm-8">
+    <div id="sticky-banner" class="sticky-banner slider closed">
+      <div class="outputmsg_div ">
+        <div id="output_messages" class="outputmsg_container">
+          <h2 class="sr-only">Notifications</h2>
+          <button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeStickyBanner()">
+          </button>
+          <div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false">
+            <div role="alert" class="outputmsg outputmsg_info notification notification-info border">
+              <span class="notification-icon icon-info"><span class="sr-only">Info Message</span></span>
+              <div class="outputmsg_text">
+                <j2:whitespace trim="false">
+                  <p><span id="provisioned">Some of the services have</span> been provisioned.</p>
+                  <p><span id="skipped">Some of the services have</span> been skipped due to provisioning errors.</p>
+                  <p>Click the <a class="view-services-link" href="#"><strong>[View Services]</strong></a> link to view the services.</p>
+                  <p>
                     Note:
                     The Provisioned flag will take time to be turned to [true] based on the number of services being provisioned.
                     Please wait a few minutes and refresh.
-                  &lt;/p&gt;
-                  &lt;p id="sticky-banner-progress"&gt;
-                    &lt;label for="progress-bar"&gt;Associating services... &lt;/label&gt;
-                    &lt;span class="services-text"&gt;&lt;/span&gt;
-                    &lt;span class="icon icon-loading color-black right"&gt;&lt;/span&gt;
-                    &lt;span class="relation right"&gt;&lt;/span&gt;
-                    &lt;span class="timeleft right"&gt;&lt;/span&gt;
-                  &lt;/p&gt;
-                  &lt;p&gt;
-                    &lt;progress id="progress-bar" class="width100" value="0" max="100"&gt;&lt;/progress&gt;
-                  &lt;/p&gt;
-                  &lt;p id="sticky-banner-error" class="error"&gt;&lt;/p&gt;
-                &lt;/j2:whitespace&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
+                  </p>
+                  <p id="sticky-banner-progress">
+                    <label for="progress-bar">Associating services... </label>
+                    <span class="services-text"></span>
+                    <span class="icon icon-loading color-black right"></span>
+                    <span class="relation right"></span>
+                    <span class="timeleft right"></span>
+                  </p>
+                  <p>
+                    <progress id="progress-bar" class="width100" value="0" max="100"></progress>
+                  </p>
+                  <p id="sticky-banner-error" class="error"></p>
+                </j2:whitespace>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  &lt;div class="col-sm-8"&gt;
-    &lt;j:if test="${HTML:isWrongScope}"&gt;
-      &lt;div id="wrong_scope_msg" class="outputmsg_nav"&gt;
-        &lt;img src="images/icon_nav_info.png"/&gt;
-        &lt;span class="outputmsg_nav_inner"&gt;$[SP]This settings available only in the
-        &lt;a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b"&gt;
-        &lt;strong&gt;PagerDuty Incident Resolution Platform&lt;/strong&gt;$[SP]application&lt;/a&gt;,$[SP]to change the application click$[SP]
-        &lt;a id="change-app"&gt;here&lt;/a&gt;.&lt;/span&gt;
-      &lt;/div&gt;
-    &lt;/j:if&gt;
+  <div class="col-sm-8">
+    <j:if test="${HTML:isWrongScope}">
+      <div id="wrong_scope_msg" class="outputmsg_nav">
+        <img src="images/icon_nav_info.png"/>
+        <span class="outputmsg_nav_inner">$[SP]This settings available only in the
+        <a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b">
+        <strong>PagerDuty Incident Resolution Platform</strong>$[SP]application</a>,$[SP]to change the application click$[SP]
+        <a id="change-app">here</a>.</span>
+      </div>
+    </j:if>
 
-    &lt;div class="panel panel-body"&gt;
-      &lt;div class="provisioning-info"&gt;
-        &lt;p&gt;
+    <div class="panel panel-body">
+      <div class="provisioning-info">
+        <p>
           This section is intended for Configuration Items (CI) provisioning based on relationships set in the
-          &lt;a href="/x_pd_integration_pagerduty_service_provisioning_list.do" target="_blank"&gt;
+          <a href="/x_pd_integration_pagerduty_service_provisioning_list.do" target="_blank">
             $[SP]PagerDuty Service Provisioning$[SP]
-          &lt;/a&gt;
+          </a>
           table.
-        &lt;/p&gt;
-        &lt;p&gt;
+        </p>
+        <p>
           Actions below allow to overview dependency map and trigger CIs provisioning into PagerDuty.
-        &lt;/p&gt;
-        &lt;p class="note"&gt;
+        </p>
+        <p class="note">
           Note: The relationship would only provision services matching the criteria at present.
           It will not provision any future services matching this criteria.
-        &lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class="provisioning-info step-container"&gt;
-        &lt;p class="step-header"&gt;
+        </p>
+      </div>
+      <div class="provisioning-info step-container">
+        <p class="step-header">
           Step 1
-        &lt;/p&gt;
-        &lt;p&gt;
+        </p>
+        <p>
           You can add multiple set of services relationships to be provisioned in PagerDuty.
           Select a relationship information and Save relationship before adding a new relationship.
           This will continuously add the new relationships to be taken for services provisioning.
-        &lt;/p&gt;
-        &lt;p class="note"&gt;
+        </p>
+        <p class="note">
           Note: PagerDuty does not handle the circular dependencies available in ServiceNow.
-        &lt;/p&gt;
-      &lt;/div&gt;
+        </p>
+      </div>
 
-      &lt;div id="notification"&gt;
-        &lt;div id="notification-info" class="slider closed"&gt;
-          &lt;div class="outputmsg_div"&gt;
-            &lt;div id="output_messages" class="outputmsg_container"&gt;
-              &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
-              &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeInfoNotification()"&gt;
-              &lt;/button&gt;
-              &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
-                &lt;div role="alert" class="outputmsg outputmsg_info notification notification-info"&gt;
-                  &lt;span class="notification-icon icon-info"&gt;
-                    &lt;span class="sr-only"&gt;Info Message&lt;/span&gt;
-                  &lt;/span&gt;
-                  &lt;span class="outputmsg_text"&gt;Configuration saved and CIs that met the criteria have been added into the table&lt;/span&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div id="notification-error" class="slider closed"&gt;
-          &lt;div class="outputmsg_div"&gt;
-            &lt;div id="output_messages" class="outputmsg_container"&gt;
-              &lt;h2 class="sr-only"&gt;Notifications&lt;/h2&gt;
-              &lt;button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeErrorNotification()"&gt;
-              &lt;/button&gt;
-              &lt;div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false"&gt;
-                &lt;div role="alert" class="outputmsg outputmsg_error notification notification-error"&gt;
-                  &lt;span class="notification-icon icon-cross-circle"&gt;
-                    &lt;span class="sr-only"&gt;Error Message&lt;/span&gt;
-                  &lt;/span&gt;
-                  &lt;span class="outputmsg_text"&gt;
+      <div id="notification">
+        <div id="notification-info" class="slider closed">
+          <div class="outputmsg_div">
+            <div id="output_messages" class="outputmsg_container">
+              <h2 class="sr-only">Notifications</h2>
+              <button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeInfoNotification()">
+              </button>
+              <div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false">
+                <div role="alert" class="outputmsg outputmsg_info notification notification-info">
+                  <span class="notification-icon icon-info">
+                    <span class="sr-only">Info Message</span>
+                  </span>
+                  <span class="outputmsg_text">Configuration saved and CIs that met the criteria have been added into the table</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="notification-error" class="slider closed">
+          <div class="outputmsg_div">
+            <div id="output_messages" class="outputmsg_container">
+              <h2 class="sr-only">Notifications</h2>
+              <button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="closeErrorNotification()">
+              </button>
+              <div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false">
+                <div role="alert" class="outputmsg outputmsg_error notification notification-error">
+                  <span class="notification-icon icon-cross-circle">
+                    <span class="sr-only">Error Message</span>
+                  </span>
+                  <span class="outputmsg_text">
                     Required fields are not filled in. Please complete the configuration:
-                    &lt;ul&gt;&lt;/ul&gt;
-                  &lt;/span&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+                    <ul></ul>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       
-      &lt;div class="custom-provisioning-configuration"&gt;
-        &lt;g:ui_form&gt;
-          &lt;div id="use-cmdb-relationships"&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+      <div class="custom-provisioning-configuration">
+        <g:ui_form>
+          <div id="use-cmdb-relationships">
+            <g:macro_invoke macro="x_pd_integration_select_formgroup"
               label="Provision using CMDB relationship table"
               name="use_cmdb_relationships"
               value="${HTML:props.use_cmdb_relationships}"
               values="${HTML:['true', 'false']}"
               options="${HTML:['Yes (Default)', 'No (Custom Relationships)']}"
-            /&gt;
-          &lt;/div&gt;
+            />
+          </div>
 
-          &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-          &lt;div id="ci-classes-to-service-types-mapping-container"&gt;
-            &lt;p class="section-label"&gt;&lt;span id="ci-classes-mapping-section-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+          <div class="vertical-indent"></div>
+          <div id="ci-classes-to-service-types-mapping-container">
+            <p class="section-label"><span id="ci-classes-mapping-section-marker" class="asterisk">&#xFF0A;</span>
               Choose CI classes to be provisioned
-            &lt;/p&gt;
-            &lt;div id="ci-classes-to-service-types-mapping"&gt;
-            &lt;div id="use-service-classification"&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            </p>
+            <div id="ci-classes-to-service-types-mapping">
+            <div id="use-service-classification">
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Use service classification where applicable"
                   type="checkbox"
                   name="use_service_classification"
                   value="${HTML:props.use_service_classification}"
-                /&gt;
-            &lt;/div&gt;
+                />
+            </div>
 
-            &lt;div class="panel panel-default"&gt;
-              &lt;div class="panel-heading" role="tab"&gt;
-                &lt;h4 class="panel-title"&gt;
-                  &lt;a role="button" href="#ci-business-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-business-services"&gt;
+            <div class="panel panel-default">
+              <div class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a role="button" href="#ci-business-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-business-services">
                     Select CI Classes which will be provisioned as Business Service
-                  &lt;/a&gt;
-                &lt;/h4&gt;
-              &lt;/div&gt;
+                  </a>
+                </h4>
+              </div>
 
-              &lt;div id="ci-classes-business-services-mapping" class="panel-collapse collapse" role="tabpanel"&gt;
-                &lt;div class="panel-body"&gt;
-                  &lt;g:ui_slushbucket name="ci_classes_bs" left_header="CI Classes" right_header="Business Services" up_down="false"/&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
+              <div id="ci-classes-business-services-mapping" class="panel-collapse collapse" role="tabpanel">
+                <div class="panel-body">
+                  <g:ui_slushbucket name="ci_classes_bs" left_header="CI Classes" right_header="Business Services" up_down="false"/>
+                </div>
+              </div>
+            </div>
 
-            &lt;div class="panel panel-default"&gt;
-              &lt;div class="panel-heading" role="tab"&gt;
-                &lt;h5 class="panel-title"&gt;
-                  &lt;a role="button" href="#ci-technical-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-technical-services"&gt;
+            <div class="panel panel-default">
+              <div class="panel-heading" role="tab">
+                <h5 class="panel-title">
+                  <a role="button" href="#ci-technical-services" aria-expanded="true" data-toggle="collapse" aria-controls="ci-technical-services">
                     Select CI Classes which will be provisioned as Technical Service
-                  &lt;/a&gt;
-                &lt;/h5&gt;
-              &lt;/div&gt;
+                  </a>
+                </h5>
+              </div>
 
-              &lt;div id="ci-classes-technical-services-mapping" class="panel-collapse collapse" role="tabpanel"&gt;
-                &lt;div class="panel-body"&gt;
-                  &lt;g:ui_slushbucket name="ci_classes_ts" left_header="CI Classes" right_header="Technical Services" up_down="false"/&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
+              <div id="ci-classes-technical-services-mapping" class="panel-collapse collapse" role="tabpanel">
+                <div class="panel-body">
+                  <g:ui_slushbucket name="ci_classes_ts" left_header="CI Classes" right_header="Technical Services" up_down="false"/>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
 
-          &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-          &lt;div id="cmdb-rel-provisioning-section-label"&gt;
-            &lt;p class="section-label"&gt;&lt;span id="cmdb-rel-provisioning-section-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+          <div class="vertical-indent"></div>
+          <div id="cmdb-rel-provisioning-section-label">
+            <p class="section-label"><span id="cmdb-rel-provisioning-section-marker" class="asterisk">&#xFF0A;</span>
               Choose Table with CIs or a single CI to be provisioned along with dependencies
-            &lt;/p&gt;
-          &lt;/div&gt;
-          &lt;div id="cmdb-rel-provisioning"&gt;
-            &lt;div id="bulk-provisioning"&gt;
-              &lt;div id="first-ci-table"&gt;
-                &lt;label for="first-table"&gt;
-                  &lt;div&gt;&lt;span id="first-table-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+            </p>
+          </div>
+          <div id="cmdb-rel-provisioning">
+            <div id="bulk-provisioning">
+              <div id="first-ci-table">
+                <label for="first-table">
+                  <div><span id="first-table-marker" class="asterisk">&#xFF0A;</span>
                     Select CI Table containing services
-                  &lt;/div&gt;
-                &lt;/label&gt;
-                &lt;g:ui_reference name="first-table" id="first-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('first-table', 'first-table-column')" label="" /&gt;
+                  </div>
+                </label>
+                <g:ui_reference name="first-table" id="first-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('first-table', 'first-table-column')" label="" />
 
-                &lt;div id="first-table-filtering-container" style="display: none"&gt;
-                  &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                  &lt;a href="#" id="open-first-table-in-modal"&gt;Open selected table to set and save filter&lt;/a&gt;
-                  &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                  &lt;label for="first-table-filtering"&gt;
+                <div id="first-table-filtering-container" style="display: none">
+                  <div class="vertical-indent"></div>
+                  <a href="#" id="open-first-table-in-modal">Open selected table to set and save filter</a>
+                  <div class="vertical-indent"></div>
+                  <label for="first-table-filtering">
                     Select filter
-                  &lt;/label&gt;
-                  &lt;g:ui_reference name="first-table-filtering" id="first-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" /&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
+                  </label>
+                  <g:ui_reference name="first-table-filtering" id="first-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" />
+                </div>
+              </div>
 
-              &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-              &lt;div id="first-service-type-and-column"&gt;
-                &lt;div id="first-service-type-container" class="col-xs-6 left-input-field" style="display: none"&gt;
-                  &lt;div class="form-group"&gt;
-                    &lt;label class="control-label" for="first_service_type"&gt;
-                      &lt;div&gt;
-                        &lt;span id="first-service-type-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+              <div class="vertical-indent"></div>
+              <div id="first-service-type-and-column">
+                <div id="first-service-type-container" class="col-xs-6 left-input-field" style="display: none">
+                  <div class="form-group">
+                    <label class="control-label" for="first_service_type">
+                      <div>
+                        <span id="first-service-type-marker" class="asterisk">&#xFF0A;</span>
                         Select the type of service to be provisioned
-                      &lt;/div&gt;
-                    &lt;/label&gt;
-                    &lt;select id="first-service-type" class="form-control" name="first_service_type"&gt;
-                      &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
-                      &lt;option value="business_service"&gt;Business Service&lt;/option&gt;
-                      &lt;option value="technical_service"&gt;Technical Service&lt;/option&gt;
-                    &lt;/select&gt;
-                    &lt;span id="first_service_type_help" class="help-block"&gt;&lt;/span&gt;
-                  &lt;/div&gt;
-                &lt;/div&gt;
-                &lt;div id="first-service-column"&gt;
-                  &lt;label for="first-table-column"&gt;
-                    &lt;div&gt;
-                      &lt;span id="first-table-column-marker" class="asterisk"&gt;&amp;#xFF0A;&lt;/span&gt;
+                      </div>
+                    </label>
+                    <select id="first-service-type" class="form-control" name="first_service_type">
+                      <option disabled="disabled" hidden="hidden" selected="selected" value=""></option>
+                      <option value="business_service">Business Service</option>
+                      <option value="technical_service">Technical Service</option>
+                    </select>
+                    <span id="first_service_type_help" class="help-block"></span>
+                  </div>
+                </div>
+                <div id="first-service-column">
+                  <label for="first-table-column">
+                    <div>
+                      <span id="first-table-column-marker" class="asterisk">&#xFF0A;</span>
                       Select column for service name
-                    &lt;/div&gt;
-                  &lt;/label&gt;
-                  &lt;g:ui_reference name="first-table-column" id="first-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" /&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
+                    </div>
+                  </label>
+                  <g:ui_reference name="first-table-column" id="first-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" />
+                </div>
+              </div>
 
-              &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-              &lt;div id="additional-fields-to-set-custom-relationships" style="display: none; clear: both"&gt;
-                &lt;div id="relationship"&gt;
-                  &lt;div class="form-group"&gt;
-                    &lt;label class="control-label" for="relationship"&gt;
+              <div class="vertical-indent"></div>
+              <div id="additional-fields-to-set-custom-relationships" style="display: none; clear: both">
+                <div id="relationship">
+                  <div class="form-group">
+                    <label class="control-label" for="relationship">
                       Select relationship between services to be provisioned
-                    &lt;/label&gt;
-                    &lt;select class="form-control" name="relationship"&gt;
-                      &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
-                      &lt;option value="consumes"&gt;consumes&lt;/option&gt;
-                      &lt;option value="consumed_by"&gt;consumed by&lt;/option&gt;
-                    &lt;/select&gt;
-                    &lt;span id="relationship_help" class="help-block"&gt;&lt;/span&gt;
-                  &lt;/div&gt;
-                &lt;/div&gt;
-                &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                &lt;div id="second-ci-table"&gt;
-                  &lt;label for="second-table"&gt;
+                    </label>
+                    <select class="form-control" name="relationship">
+                      <option disabled="disabled" hidden="hidden" selected="selected" value=""></option>
+                      <option value="consumes">consumes</option>
+                      <option value="consumed_by">consumed by</option>
+                    </select>
+                    <span id="relationship_help" class="help-block"></span>
+                  </div>
+                </div>
+                <div class="vertical-indent"></div>
+                <div id="second-ci-table">
+                  <label for="second-table">
                     Select CI Table containing services
-                  &lt;/label&gt;
-                  &lt;g:ui_reference name="second-table" id="second-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('second-table', 'second-table-column')" label="" /&gt;
+                  </label>
+                  <g:ui_reference name="second-table" id="second-table" table="sys_db_object" show_popup="false" onchange="getTableColumns('second-table', 'second-table-column')" label="" />
 
-                  &lt;div id="second-table-filtering-container" style="display: none"&gt;
-                    &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                    &lt;a href="#" id="open-second-table-in-modal"&gt;Open selected table to set and save filter&lt;/a&gt;
-                    &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                    &lt;label for="second-table-filtering"&gt;
+                  <div id="second-table-filtering-container" style="display: none">
+                    <div class="vertical-indent"></div>
+                    <a href="#" id="open-second-table-in-modal">Open selected table to set and save filter</a>
+                    <div class="vertical-indent"></div>
+                    <label for="second-table-filtering">
                       Select filter
-                    &lt;/label&gt;
-                    &lt;g:ui_reference name="second-table-filtering" id="second-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" /&gt;
-                  &lt;/div&gt;
-                &lt;/div&gt;
+                    </label>
+                    <g:ui_reference name="second-table-filtering" id="second-table-filtering" table="sys_filter" show_popup="false" label="If you saved a filter name in the previous step, select the same or any other filter criteria you would like to apply to the table" />
+                  </div>
+                </div>
 
-                &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-                &lt;div id="second-service-type-and-column"&gt;
-                  &lt;div id="second-service-type" class="col-xs-6 left-input-field"&gt;
-                    &lt;div class="form-group"&gt;
-                      &lt;label class="control-label" for="second_service_type"&gt;
+                <div class="vertical-indent"></div>
+                <div id="second-service-type-and-column">
+                  <div id="second-service-type" class="col-xs-6 left-input-field">
+                    <div class="form-group">
+                      <label class="control-label" for="second_service_type">
                         Select the type of service to be provisioned
-                      &lt;/label&gt;
-                      &lt;select class="form-control" name="second_service_type"&gt;
-                        &lt;option disabled="disabled" hidden="hidden" selected="selected" value=""&gt;&lt;/option&gt;
-                        &lt;option value="business_service"&gt;Business Service&lt;/option&gt;
-                        &lt;option value="technical_service"&gt;Technical Service&lt;/option&gt;
-                      &lt;/select&gt;
-                      &lt;span id="second_service_type_help" class="help-block"&gt;&lt;/span&gt;
-                    &lt;/div&gt;
-                  &lt;/div&gt;
-                  &lt;div id="second-service-column" class="col-xs-6 right-input-field"&gt;
-                    &lt;label for="second-table-column"&gt;
+                      </label>
+                      <select class="form-control" name="second_service_type">
+                        <option disabled="disabled" hidden="hidden" selected="selected" value=""></option>
+                        <option value="business_service">Business Service</option>
+                        <option value="technical_service">Technical Service</option>
+                      </select>
+                      <span id="second_service_type_help" class="help-block"></span>
+                    </div>
+                  </div>
+                  <div id="second-service-column" class="col-xs-6 right-input-field">
+                    <label for="second-table-column">
                       Select column for service name
-                    &lt;/label&gt;
-                    &lt;g:ui_reference name="second-table-column" id="second-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" /&gt;
-                  &lt;/div&gt;
-                &lt;/div&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
+                    </label>
+                    <g:ui_reference name="second-table-column" id="second-table-column" table="sys_dictionary" completer="AJAXTableCompleter" columns="name" show_popup="false" label="If the column for service name isn't chosen, the name column would be used to set the names for services" />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-            &lt;div id="enable-ci-provisioning"&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            <div class="vertical-indent"></div>
+            <div id="enable-ci-provisioning">
+              <g:macro_invoke macro="x_pd_integration_input_formgroup"
                 label="Provisioning single CI along with its dependencies"
                 type="checkbox"
                 name="enable_ci_provisioning"
                 value="${HTML:props.enable_ci_provisioning}"
-              /&gt;
-            &lt;/div&gt;
+              />
+            </div>
 
-            &lt;div class="vertical-indent"&gt;&lt;/div&gt;
-            &lt;div id="ci-provisioning" style="display: none"&gt;
-              &lt;label for="ci"&gt;Select CI&lt;/label&gt;
-              &lt;g:ui_reference name="ci" id="ci" table="cmdb_ci" completer="AJAXTableCompleter" columns="sys_class_name;x_pd_integration_pagerduty_service" show_popup="false" label="" /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/g:ui_form&gt;
-        &lt;button id="save-config" class="btn btn-primary btn-custom"&gt;
+            <div class="vertical-indent"></div>
+            <div id="ci-provisioning" style="display: none">
+              <label for="ci">Select CI</label>
+              <g:ui_reference name="ci" id="ci" table="cmdb_ci" completer="AJAXTableCompleter" columns="sys_class_name;x_pd_integration_pagerduty_service" show_popup="false" label="" />
+            </div>
+          </div>
+        </g:ui_form>
+        <button id="save-config" class="btn btn-primary btn-custom">
           Save Configuration
-          &lt;span class="sr-only"&gt;Save Configuration&lt;/span&gt;
-        &lt;/button&gt;
-      &lt;/div&gt;
+          <span class="sr-only">Save Configuration</span>
+        </button>
+      </div>
 
-      &lt;div class="provisioning-info step-container"&gt;
-        &lt;p class="step-header"&gt;
+      <div class="provisioning-info step-container">
+        <p class="step-header">
           Step 2
-        &lt;/p&gt;
-        &lt;p&gt;
+        </p>
+        <p>
           The list of services based on all the relationship configurations you selected above
           will be displayed by clicking View Services. Please review the services and relationships
           that will be provisioned and accept it before proceeding to Provisioning.
-        &lt;/p&gt;
-        &lt;div id="note-step-2" class="closed slider"&gt;
-          &lt;p class="note"&gt;
+        </p>
+        <div id="note-step-2" class="closed slider">
+          <p class="note">
             Note: Please click the "View Services" button to check for validation warnings before provisioning.
-          &lt;/p&gt;
-        &lt;/div&gt;
-        &lt;button id="view-services" class="btn btn-primary btn-custom"&gt;
+          </p>
+        </div>
+        <button id="view-services" class="btn btn-primary btn-custom">
           View Services
-        &lt;/button&gt;
-        &lt;button id="revalidate-services" class="btn btn-custom"&gt;
+        </button>
+        <button id="revalidate-services" class="btn btn-custom">
           Revalidate Services
-        &lt;/button&gt;
-      &lt;/div&gt;
-      &lt;div class="provisioning-info step-container"&gt;
-        &lt;p class="step-header"&gt;
+        </button>
+      </div>
+      <div class="provisioning-info step-container">
+        <p class="step-header">
           Step 3
-        &lt;/p&gt;
-        &lt;p&gt;
+        </p>
+        <p>
           The list of services that you have reviewed will be now provisioned in this step.
           Click on Provision Services to provision the services in PagerDuty account.
-        &lt;/p&gt;
-        &lt;p class="note"&gt;
+        </p>
+        <p class="note">
           Note: Once these services are provisioned you would be able to deprovision
           only on the CI details page per service.
-        &lt;/p&gt;
-        &lt;button id="provision-services" class="btn btn-primary btn-custom" disabled="disabled"&gt;
+        </p>
+        <button id="provision-services" class="btn btn-primary btn-custom" disabled="disabled">
           Provision Services
-        &lt;/button&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
+        </button>
+      </div>
+    </div>
+  </div>
 
-&lt;/j:jelly&gt;
-</html>
+</j:jelly>
+]]></html>
         <name>services_provisioning</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

@@ -14,7 +14,7 @@
         <sys_update_name>sys_atf_test_suite_test_232a61d94784ad109cd45088c26d4376</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2022-12-27 17:02:05</sys_updated_on>
-        <test display_value="PD: Settings page (Use PagerDuty teams checkbox  test 3 - no api_key) copy copy copy copy">b07a111d4744ad109cd45088c26d432f</test>
-        <test_suite display_value="PD: Settings page - checkbox 5">63b265154784ad109cd45088c26d437e</test_suite>
+        <test display_value="PD: Settings page - Enable Status Update feature (no api_key)">b07a111d4744ad109cd45088c26d432f</test>
+        <test_suite display_value="PD: Settings page - Enable Status Update feature">63b265154784ad109cd45088c26d437e</test_suite>
     </sys_atf_test_suite_test>
 </record_update>

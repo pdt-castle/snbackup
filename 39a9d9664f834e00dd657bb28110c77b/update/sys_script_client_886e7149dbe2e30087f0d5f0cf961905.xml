@@ -6,10 +6,11 @@
         <description/>
         <field>x_pd_integration_pd_error_message</field>
         <global>true</global>
+        <isolate_script>false</isolate_script>
         <messages/>
         <name>GroupErrorMessage</name>
         <order/>
-        <script>function onChange(control, oldValue, newValue, isLoading, isTemplate) {
+        <script><![CDATA[function onChange(control, oldValue, newValue, isLoading, isTemplate) {
    if (!g_user.hasRoleFromList('x_pd_integration.admin,x_pd_integration.incident_response,x_pd_integration.services_provisioning')) {
      return;
    }
@@ -21,7 +22,7 @@
      g_form.clearValue('x_pd_integration_pd_error_message');
    }
  }
- </script>
+ ]]></script>
         <sys_class_name>sys_script_client</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2018-12-21 13:01:14</sys_created_on>

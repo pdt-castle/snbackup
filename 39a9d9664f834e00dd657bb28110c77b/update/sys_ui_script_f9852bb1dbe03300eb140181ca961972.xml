@@ -3,8 +3,9 @@
         <active>true</active>
         <description/>
         <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_pd_integration.PdMultiselect</name>
-        <script>    /*jshint esnext: true */
+        <script><![CDATA[    /*jshint esnext: true */
 
     var x_pd_integration = x_pd_integration || {};
 
@@ -158,52 +159,52 @@
           document.body.appendChild(css);
 
           element.innerHTML = `
-          &lt;div class="pdms-container"&gt;
-            &lt;div class="pdms-body"&gt;
-                &lt;div class="pdms-loading-spinner"&gt;&lt;span class="icon-loading"&gt;&lt;/span&gt;&lt;/div&gt;
-                &lt;ul&gt;
-                    &lt;li&gt;&lt;input&gt;&lt;/li&gt;
-                &lt;/ul&gt;
-            &lt;/div&gt;
-            &lt;div class="pdms-error-message"&gt;
-            &lt;/div&gt;
-            &lt;div class="pdms-loading-spinner"&gt;
-              &lt;ul&gt;&lt;li&gt;&lt;span class="icon-loading"&gt;&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;
-            &lt;/div&gt;
-            &lt;div class="pdms-suggestions"&gt;
-                &lt;ul&gt;
-                &lt;/ul&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
+          <div class="pdms-container">
+            <div class="pdms-body">
+                <div class="pdms-loading-spinner"><span class="icon-loading"></span></div>
+                <ul>
+                    <li><input></li>
+                </ul>
+            </div>
+            <div class="pdms-error-message">
+            </div>
+            <div class="pdms-loading-spinner">
+              <ul><li><span class="icon-loading"></span></li></ul>
+            </div>
+            <div class="pdms-suggestions">
+                <ul>
+                </ul>
+            </div>
+          </div>
           `;
 
           const i = element.querySelector('.pdms-body input');
-          i.onfocus = e =&gt; this.onInputFocus(e);
-          i.onclick = e =&gt; this.onInputFocus(e);
+          i.onfocus = e => this.onInputFocus(e);
+          i.onclick = e => this.onInputFocus(e);
 
-          window.addEventListener('mousedown', (e) =&gt; {
+          window.addEventListener('mousedown', (e) => {
             if (!element.contains(e.target)){
               this.onInputBlur(e);
             }
           });
 
-          i.onchange = e =&gt; this.onInputEvent(e);
-          i.onkeypress = e =&gt; this.onInputEvent(e);
-          i.onkeydown = e =&gt; this.onInputEvent(e);
-          i.onpaste = e =&gt; this.onInputEvent(e);
-          i.oninput = e =&gt; this.onInputEvent(e);
+          i.onchange = e => this.onInputEvent(e);
+          i.onkeypress = e => this.onInputEvent(e);
+          i.onkeydown = e => this.onInputEvent(e);
+          i.onpaste = e => this.onInputEvent(e);
+          i.oninput = e => this.onInputEvent(e);
 
-          element.querySelector('.pdms-body ').onclick = e =&gt; this.onMainAreaClick(e);
+          element.querySelector('.pdms-body ').onclick = e => this.onMainAreaClick(e);
           this.lastInputValue = '';
           this.typingTimeout = null;
           this.loadedSuggestions = [];
           this.bsConfigured = true;
 
           if (initValues) {
-            initValues(null, (result) =&gt; {
+            initValues(null, (result) => {
               hideLoader(element);
               const items = result.items || [];
-              for (var i = 0; i &lt; items.length; i++) {
+              for (var i = 0; i < items.length; i++) {
                 this.addElementToSelection(items[i].id, items[i].text, { focus: false });
               }
               this.bsConfigured = result.bsConfigured;
@@ -255,9 +256,9 @@
             this.updateSuggestions(newVal);
           }
 
-          if (e.key === 'Backspace' &amp;&amp; !this.lastInputValue) {
+          if (e.key === 'Backspace' && !this.lastInputValue) {
             const ul = element.querySelector('.pdms-container .pdms-body ul');
-            if (ul.children.length &gt; 1) {
+            if (ul.children.length > 1) {
               ul.removeChild(ul.children[ul.children.length - 2]);
               this.renderLoadedSuggestions();
               this.updateSelections();
@@ -332,9 +333,9 @@
             this.showLoaderForSuggestions();
           }
           clearTimeout(this.typingTimeout);
-          this.typingTimeout = setTimeout(() =&gt; {
+          this.typingTimeout = setTimeout(() => {
             this.typingTimeout = null;
-            this.props.load(filter, (result) =&gt; {
+            this.props.load(filter, (result) => {
               const items = result.items || [];
               this.mergeIntoSuggestions(items);
               this.renderLoadedSuggestions();
@@ -367,7 +368,7 @@
           const { element } = this.props;
           const ul = element.querySelector('.pdms-container .pdms-body ul');
           var selection = [];
-          for(var i = 0; i &lt; ul.children.length - 1; i++) {
+          for(var i = 0; i < ul.children.length - 1; i++) {
             const item = ul.children[i];
             selection.push(item.getAttribute('data-id'));
           }
@@ -381,15 +382,15 @@
 
           element.querySelector('.pdms-suggestions ul').innerHTML =
             this.loadedSuggestions
-              .filter(i =&gt; i.text.toLowerCase().includes(filter.toLowerCase()) &amp;&amp; selected.indexOf(i.id) === -1)
-              .map(i =&gt; "&lt;li data-id=" + i.id + "&gt;" + i.text + "&lt;/li&gt;").join('');
+              .filter(i => i.text.toLowerCase().includes(filter.toLowerCase()) && selected.indexOf(i.id) === -1)
+              .map(i => "<li data-id=" + i.id + ">" + i.text + "</li>").join('');
 
           var els = element.querySelector('.pdms-suggestions ul').children;
-          for(var i = 0; i &lt; els.length; i++) {
+          for(var i = 0; i < els.length; i++) {
             let el = els[i];
             let id = el.getAttribute('data-id');
             if (id.length) {
-              el.onclick = () =&gt; this.addElementToSelection(id, el.innerText);
+              el.onclick = () => this.addElementToSelection(id, el.innerText);
             }
           }
         }
@@ -400,7 +401,7 @@
           this.loadedSuggestions =
             this.loadedSuggestions
               .sort(cmp)
-              .filter((val, index, arr) =&gt; index === 0 || val.id !== arr[index - 1].id);
+              .filter((val, index, arr) => index === 0 || val.id !== arr[index - 1].id);
         }
 
         addElementToSelection(id, text, opts) {
@@ -440,9 +441,9 @@
           let offsetTop = activeRect.top + window.scrollY;
 
           if (
-            offsetTop &lt; viewportRectTop
+            offsetTop < viewportRectTop
             ||
-            offsetTop &gt; (viewportRectBottom - activeRect.height)
+            offsetTop > (viewportRectBottom - activeRect.height)
           ) {
             if (direction === 'down') {
               list.scrollTop = offsetTop - list.clientHeight - offsetTopInitial + activeRect.height + padding * 2;
@@ -456,7 +457,7 @@
       }
       return PdMultiselect;
     })();
-</script>
+]]></script>
         <script_name>PdMultiselect</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

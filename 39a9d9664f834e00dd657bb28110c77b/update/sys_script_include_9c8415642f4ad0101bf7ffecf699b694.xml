@@ -7,7 +7,7 @@
         <client_callable>true</client_callable>
         <description/>
         <name>ServiceProvisioningController</name>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 var ServiceProvisioningController = Class.create();
 ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
   initialize: function (request, responseXML, gc) {
@@ -50,7 +50,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
       return savedClassNames.indexOf(obj.value) === -1;
     });
     classesLeft.sort(function (a, b) {
-      if (a.label &lt; b.label) return -1;
+      if (a.label < b.label) return -1;
     });
 
     return JSON.stringify({result: true, left_bucket: classesLeft, right_bucket: classesRight});
@@ -65,7 +65,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
     var filter = this.getFilter(data.first_table_filter_sys_id);
 
     if (data.config.use_cmdb_relationships) {
-      if (data.first_table &amp;&amp; data.first_table_column) {
+      if (data.first_table && data.first_table_column) {
         var ciSet = this.getCiSet({
           table: data.first_table,
           filter: filter,
@@ -124,7 +124,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
     pdProvisioning.customProvisioning();
     var stats = pdProvisioning.getProvisioningStats();
     return JSON.stringify({
-      error: pdProvisioning.getErrors().join('&lt;br /&gt;'),
+      error: pdProvisioning.getErrors().join('<br />'),
       result: {
         provisioned: stats.provisioned,
         skipped: stats.skipped,
@@ -181,7 +181,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
     var columnName;
     var error;
     try {
-      if (!(tableName &amp;&amp; columnLabel)) {
+      if (!(tableName && columnLabel)) {
         tableName = this.getParameter('sysparm_table_name');
         columnLabel = this.getParameter('sysparm_column_label');
       }
@@ -212,7 +212,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
     var errors = [];
     var results = {};
 
-    if (config.first_table_sys_id &amp;&amp; config.first_table_column_label) {
+    if (config.first_table_sys_id && config.first_table_column_label) {
       answer =
         JSON.parse(this.getTableName(config.first_table_sys_id));
       if (answer.result) {
@@ -230,7 +230,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
       }
     }
 
-    if (config.second_table_sys_id &amp;&amp; config.second_table_column_label) {
+    if (config.second_table_sys_id && config.second_table_column_label) {
       answer =
         JSON.parse(this.getTableName(config.second_table_sys_id));
       if (answer.result) {
@@ -317,8 +317,8 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
       if (isService) {
         ciSc = this.getCiServiceClassification(ciClass, childCi.sys_id);
       }
-      if (bsCiClasses.indexOf(ciClass) !== -1 &amp;&amp; tsCiClasses.indexOf(ciClass) !== -1) {
-        if (!useSc || isService &amp;&amp; useSc &amp;&amp;
+      if (bsCiClasses.indexOf(ciClass) !== -1 && tsCiClasses.indexOf(ciClass) !== -1) {
+        if (!useSc || isService && useSc &&
           ['Business Service', 'Technical Service'].indexOf(ciSc) === -1) {
           if (parentCi) {
             this.addRowIntoTable({
@@ -342,9 +342,9 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
           return;
         }
       }
-      if (bsCiClasses &amp;&amp; bsCiClasses.indexOf(ciClass) !== -1) {
-        if (!useSc || useSc &amp;&amp; !isService ||
-          isService &amp;&amp; useSc &amp;&amp; ['', 'Business Service'].indexOf(ciSc) !== -1) {
+      if (bsCiClasses && bsCiClasses.indexOf(ciClass) !== -1) {
+        if (!useSc || useSc && !isService ||
+          isService && useSc && ['', 'Business Service'].indexOf(ciSc) !== -1) {
           if (parentCi) {
             this.addRowIntoTable({
               parent_ci: parentCi.sys_id,
@@ -365,9 +365,9 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
           return;
         }
       }
-      if (tsCiClasses &amp;&amp; tsCiClasses.indexOf(ciClass) !== -1) {
-        if (!useSc || useSc &amp;&amp; !isService ||
-          isService &amp;&amp; useSc &amp;&amp; ['', 'Technical Service'].indexOf(ciSc) !== -1) {
+      if (tsCiClasses && tsCiClasses.indexOf(ciClass) !== -1) {
+        if (!useSc || useSc && !isService ||
+          isService && useSc && ['', 'Technical Service'].indexOf(ciSc) !== -1) {
           if (parentCi) {
             this.addRowIntoTable({
               parent_ci: parentCi.sys_id,
@@ -645,7 +645,7 @@ ServiceProvisioningController.prototype = Object.extendsObject(global.AbstractAj
 
   type: 'ServiceProvisioningController'
 });
-</script>
+]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-07-13 12:45:10</sys_created_on>

@@ -7,7 +7,7 @@
         <client_callable>false</client_callable>
         <description>Script to support webhooks management module</description>
         <name>PagerDutyWebhooksManagement</name>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 /* eslint-disable no-underscore-dangle */
 var PagerDutyWebhooksManagement = Class.create();
 PagerDutyWebhooksManagement.prototype = {
@@ -65,15 +65,15 @@ PagerDutyWebhooksManagement.prototype = {
 
     if (current.operation() === 'update') {
       if (pdServiceId.changes()) {
-        // empty -&gt; id
-        if (previous.x_pd_integration_pagerduty_service.nil() &amp;&amp; !isRegistered) {
+        // empty -> id
+        if (previous.x_pd_integration_pagerduty_service.nil() && !isRegistered) {
           this.addRecord(grPdWh, pdServiceId, pdWebhookId);
-          // id -&gt; empty
-        } else if (pdServiceId.nil() &amp;&amp; isRegistered) {
+          // id -> empty
+        } else if (pdServiceId.nil() && isRegistered) {
           grPdWh.deleteRecord();
-          // id -&gt; new_id
+          // id -> new_id
         } else {
-          if (!previous.x_pd_integration_pagerduty_service.nil() &amp;&amp; isRegistered) {
+          if (!previous.x_pd_integration_pagerduty_service.nil() && isRegistered) {
             grPdWh.setValue('pd_service_id', String(pdServiceId));
             grPdWh.update();
           } else if (!isRegistered) {
@@ -81,7 +81,7 @@ PagerDutyWebhooksManagement.prototype = {
           }
         }
       }
-      if (!pdServiceId.nil() &amp;&amp; pdWebhookId.changes()) {
+      if (!pdServiceId.nil() && pdWebhookId.changes()) {
         grPdWh.setValue('webhook_id', String(pdWebhookId));
         if (!previous.x_pd_integration_pagerduty_webhook.nil()) {
           grPdWh.setValue('webhook_version', 'NULL');
@@ -182,7 +182,7 @@ PagerDutyWebhooksManagement.prototype = {
    * @param {String} url - url to parse
    * @returns - object with query parameters
    * @example
-   * var url = 'https://myinstance.service-now.com/api/x_pd_integration/pagerduty2sn?task_type=incident&amp;sync_option=auto';
+   * var url = 'https://myinstance.service-now.com/api/x_pd_integration/pagerduty2sn?task_type=incident&sync_option=auto';
    * var result = _parseUrlQueryParams(url);
    * // result = {task_type: 'incident', sync_option: 'auto'}
    */
@@ -195,7 +195,7 @@ PagerDutyWebhooksManagement.prototype = {
    * @param {String} queryParamsStr - query parameters string
    * @returns - object with query parameters
    * @example
-   * var queryParamsStr = 'task_type=incident&amp;sync_option=auto';
+   * var queryParamsStr = 'task_type=incident&sync_option=auto';
    * var result = _parseQueryParams(queryParamsStr);
    * // result = {task_type: 'incident', sync_option: 'auto'}
   */
@@ -204,7 +204,7 @@ PagerDutyWebhooksManagement.prototype = {
     if (queryParamsStr === undefined || queryParamsStr === null) {
       return queryParams;
     }
-    var pairs = queryParamsStr.split('&amp;');
+    var pairs = queryParamsStr.split('&');
     pairs.forEach(function (pair) {
       var kv = pair.split('=');
       queryParams[kv[0]] = kv[1];
@@ -226,11 +226,11 @@ PagerDutyWebhooksManagement.prototype = {
   _objectToQueryParamsStr: function (obj, excludedKeys) {
     var queryParams = [];
     Object.keys(obj).forEach(function (key) {
-      if (excludedKeys.indexOf(key) &lt; 0) {
+      if (excludedKeys.indexOf(key) < 0) {
         queryParams.push(key + '=' + obj[key]);
       }
     });
-    return queryParams.join('&amp;');
+    return queryParams.join('&');
   },
 
   _mapWebhookV2: function (extension) {
@@ -243,14 +243,14 @@ PagerDutyWebhooksManagement.prototype = {
       extension_schema_id: extension.extension_schema.id,
       task_type: extension.config.task_type || 'incident',
       sync_option: extension.config.sync_options === 'sync_all' ? 'auto' : 'manual',
-      custom_query_params: webhookUrl.indexOf('?') &lt; 0 ? '' : webhookUrl.slice(webhookUrl.indexOf('?') + 1),
+      custom_query_params: webhookUrl.indexOf('?') < 0 ? '' : webhookUrl.slice(webhookUrl.indexOf('?') + 1),
       temporarily_disabled: extension.blacklisted || false,
     };
   },
 
   _getAllPagerDutyExtensionsByExtensionSchemaId: function (extensionSchemaId) {
     var restClient = new x_pd_integration.PagerDuty_REST();
-    var path = 'extensions?extension_schema_id=' + extensionSchemaId + '&amp;include%5B%5D=blacklisted';
+    var path = 'extensions?extension_schema_id=' + extensionSchemaId + '&include%5B%5D=blacklisted';
     return restClient.getAllItemsThrowable(path, null);
   },
 
@@ -273,9 +273,9 @@ PagerDutyWebhooksManagement.prototype = {
       var extensions = this._getAllPagerDutyExtensionsByExtensionSchemaId(extensionSchemaId);
       var connectedExtensions = extensions.filter(function (extension) {
         var targetUrl = extension.config.target || '';
-        return targetUrl.toLowerCase().indexOf(this.instanceWebhookUrl) &gt;= 0 &amp;&amp;
-          extension.extension_objects &amp;&amp;
-          extension.extension_objects.length &gt; 0;
+        return targetUrl.toLowerCase().indexOf(this.instanceWebhookUrl) >= 0 &&
+          extension.extension_objects &&
+          extension.extension_objects.length > 0;
       }, this);
       allWebhooks = allWebhooks.concat(connectedExtensions.map(this._mapWebhookV2));
     }, this);
@@ -312,8 +312,8 @@ PagerDutyWebhooksManagement.prototype = {
     var webhooks = restClient.getAllItemsThrowable('webhook_subscriptions', null);
     var connectedWebhooks = webhooks.filter(function (webhook) {
       var delivery_url = webhook.delivery_method.url || '';
-      return webhook.filter.type === 'service_reference' &amp;&amp;
-        delivery_url.toLowerCase().indexOf(this.instanceWebhookUrl) &gt;= 0;
+      return webhook.filter.type === 'service_reference' &&
+        delivery_url.toLowerCase().indexOf(this.instanceWebhookUrl) >= 0;
     }, this);
 
     if (!gs.nil(grJob)) {
@@ -410,7 +410,7 @@ PagerDutyWebhooksManagement.prototype = {
     var allPdWebhooks = dataset.pd_webhooks_v2.concat(dataset.pd_webhooks_v3);
     allPdWebhooks.forEach(function (pd_webhook) {
       var existingWebhook = webhookTableItems.filter(function (item) {
-        return !gs.nil(item.pd_webhook_id) &amp;&amp; item.pd_webhook_id === pd_webhook.id;
+        return !gs.nil(item.pd_webhook_id) && item.pd_webhook_id === pd_webhook.id;
       })[0];
       if (!existingWebhook) {
         webhookTableItems.push({
@@ -533,9 +533,9 @@ PagerDutyWebhooksManagement.prototype = {
       }
       webhooksInMemory.forEach(function (webhookInMemory) {
         var validationErrors = webhooksInMemoryHealthCheckResults.filter(function (itemResult) {
-          return itemResult.webhook.sn_table === webhookInMemory.sn_table &amp;&amp;
-          itemResult.webhook.sn_entity_sys_id === webhookInMemory.sn_entity_sys_id &amp;&amp;
-          itemResult.webhook.pd_service_id === webhookInMemory.pd_service_id &amp;&amp;
+          return itemResult.webhook.sn_table === webhookInMemory.sn_table &&
+          itemResult.webhook.sn_entity_sys_id === webhookInMemory.sn_entity_sys_id &&
+          itemResult.webhook.pd_service_id === webhookInMemory.pd_service_id &&
           itemResult.webhook.pd_webhook_id === webhookInMemory.pd_webhook_id;
         })[0].validationErrors || [];
 
@@ -551,7 +551,7 @@ PagerDutyWebhooksManagement.prototype = {
         this.upsertPagerDutyWebhooksTableItem(webhookInMemory, validationErrors, jobId);
 
         if (!gs.nil(grJob)) {
-          if (validationErrors.length &gt; 0) {
+          if (validationErrors.length > 0) {
             jobData.totalWebhooksProcessedFailed++;
           } else {
             jobData.totalWebhooksProcessedSuccess++;
@@ -682,7 +682,7 @@ PagerDutyWebhooksManagement.prototype = {
       result.status = 'error';
 
       var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
-      if (serviceWebhooks.length &gt; 1) {
+      if (serviceWebhooks.length > 1) {
         result.action_type = 'manual_remediation';
         result.code = 'webhook_invalid_multiple';
         result.desc = 'SNow Entity linked to a PagerDuty Service has an incorrect Webhook ID. There are multiple Webhooks already created';
@@ -717,7 +717,7 @@ PagerDutyWebhooksManagement.prototype = {
       result.status = 'error';
 
       var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
-      if (serviceWebhooks.length &gt; 1) {
+      if (serviceWebhooks.length > 1) {
         result.action_type = 'manual_remediation';
         result.code = 'webhook_service_mismatch_multiple';
         result.desc = 'SNow Entity linked to a PagerDuty Service has a mismatched Webhook ID. There are multiple Webhooks already created';
@@ -744,7 +744,7 @@ PagerDutyWebhooksManagement.prototype = {
       desc: '',
     };
     var serviceWebhooks = this.getAllServiceWebhooks(dataset, webhook);
-    if (serviceWebhooks.length &gt; 1) {
+    if (serviceWebhooks.length > 1) {
       result.status = 'warning';
       result.code = 'webhook_duplicated';
       result.action_type = 'requires_attention';
@@ -771,11 +771,11 @@ PagerDutyWebhooksManagement.prototype = {
       var trigeredEvent = webhookFromDataset.events.filter(function (event) {
         return event === 'incident.triggered';
       });
-      if ((webhook.sync_option === 'auto' &amp;&amp; !trigeredEvent) || (webhook.sync_option === 'manual' &amp;&amp; trigeredEvent)) {
+      if ((webhook.sync_option === 'auto' && !trigeredEvent) || (webhook.sync_option === 'manual' && trigeredEvent)) {
         result.status = 'warning';
         result.code = 'webhook_config_mismatch';
         result.action_type = 'auto_remediation';
-        result.desc = 'Webhook configuration (sync_mode &amp; task_type) params do not match with SNow entity configuration';
+        result.desc = 'Webhook configuration (sync_mode & task_type) params do not match with SNow entity configuration';
       }
     }
     return result;
@@ -817,7 +817,7 @@ PagerDutyWebhooksManagement.prototype = {
       desc: '',
     };
 
-    if (gs.nil(webhook.sn_entity_sys_id) &amp;&amp; webhook.pd_service_id !== this.defaultServiceID) {
+    if (gs.nil(webhook.sn_entity_sys_id) && webhook.pd_service_id !== this.defaultServiceID) {
       result.status = 'error';
       result.code = 'webhook_not_associated';
       result.action_type = 'requires_attention';
@@ -904,7 +904,7 @@ PagerDutyWebhooksManagement.prototype = {
 
   type: 'PagerDutyWebhooksManagement'
 };
-</script>
+]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-07-07 15:04:28</sys_created_on>

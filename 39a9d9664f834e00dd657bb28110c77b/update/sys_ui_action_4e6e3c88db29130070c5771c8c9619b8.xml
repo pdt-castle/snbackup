@@ -3,9 +3,9 @@
         <action_name/>
         <active>true</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>Provision PagerDuty Schedule&#13;
 current.x_pd_integration_pagerduty_schedule.nil() &amp;&amp; !current.x_pd_integration_pagerduty_escalation.nil()</comments>
         <condition>x_pd_integration.ConditionsHelper.provisionPDScheduleUiAction(current)</condition>
@@ -16,6 +16,7 @@ current.x_pd_integration_pagerduty_schedule.nil() &amp;&amp; !current.x_pd_integ
         <form_link>true</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint/>
         <isolate_script>false</isolate_script>
         <list_action>false</list_action>
@@ -26,13 +27,14 @@ current.x_pd_integration_pagerduty_schedule.nil() &amp;&amp; !current.x_pd_integ
         <list_link>false</list_link>
         <list_save_with_form_button>false</list_save_with_form_button>
         <list_style/>
+        <messages/>
         <name>Provision PagerDuty Schedule</name>
         <onclick/>
         <order>799</order>
-        <script>var pdp = new PagerDutyProvisioning();
+        <script><![CDATA[var pdp = new PagerDutyProvisioning();
 var scheduleId = pdp.createSchedule(current);
 pdp.updateGroupPdIds(current, {schedule_id: scheduleId});
-</script>
+]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

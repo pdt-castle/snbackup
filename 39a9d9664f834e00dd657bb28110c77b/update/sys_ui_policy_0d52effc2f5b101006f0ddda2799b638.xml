@@ -12,12 +12,12 @@
         <order>100</order>
         <reverse_if_false>true</reverse_if_false>
         <run_scripts>false</run_scripts>
-        <script_false>function onCondition() {
+        <script_false><![CDATA[function onCondition() {
 
-}</script_false>
-        <script_true>function onCondition() {
+}]]></script_false>
+        <script_true><![CDATA[function onCondition() {
 
-}</script_true>
+}]]></script_true>
         <set_values/>
         <short_description>Make the conference bridge field readonly.</short_description>
         <sys_class_name>sys_ui_policy</sys_class_name>

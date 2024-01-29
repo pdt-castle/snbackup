@@ -19,95 +19,95 @@
         <sys_update_name>sys_ui_macro_6f404d59db34101036b9f53a2996195c</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-07-15 11:27:03</sys_updated_on>
-        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+        <xml><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
 
-  &lt;g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" /&gt;
-  &lt;j:set var="jvar_n" value="show_pagerduty_${HTML:jvar_guid}:${HTML:ref}"/&gt;
-  &lt;j:set var="jvar_input_id" value="${HTML:ref}"/&gt;
+  <g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" />
+  <j:set var="jvar_n" value="show_pagerduty_${HTML:jvar_guid}:${HTML:ref}"/>
+  <j:set var="jvar_input_id" value="${HTML:ref}"/>
 
-  &lt;j:if test="${HTML:jvar_ref_table == 'sys_user_group'}"&gt;
-    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}"&gt;
-      &lt;j:set var="jvar_feature" value="services"/&gt;
-    &lt;/j:if&gt;
-    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_escalation'}"&gt;
-      &lt;j:set var="jvar_feature" value="escalation_policies"/&gt;
-    &lt;/j:if&gt;
-  &lt;/j:if&gt;
-  &lt;j:if test="${HTML:jvar_ref_table.startsWith('cmdb_ci')}"&gt;
-    &lt;j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}"&gt;
-      &lt;j:set var="jvar_feature" value="services"/&gt;
-    &lt;/j:if&gt;
-  &lt;/j:if&gt;
+  <j:if test="${HTML:jvar_ref_table == 'sys_user_group'}">
+    <j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}">
+      <j:set var="jvar_feature" value="services"/>
+    </j:if>
+    <j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_escalation'}">
+      <j:set var="jvar_feature" value="escalation_policies"/>
+    </j:if>
+  </j:if>
+  <j:if test="${HTML:jvar_ref_table.startsWith('cmdb_ci')}">
+    <j:if test="${HTML:jvar_element == 'x_pd_integration_pagerduty_service'}">
+      <j:set var="jvar_feature" value="services"/>
+    </j:if>
+  </j:if>
 
-  &lt;j:if test="${HTML:jvar_feature == 'escalation_policies'}"&gt;
-    &lt;j:set var="jvar_feature_name" value="an escalation policy"/&gt;
-    &lt;j:set var="jvar_src_table" value="x_pd_integration_escalation_policies"/&gt;
-    &lt;j:set var="jvar_spoof_ref" value="${HTML:jvar_src_table}.escalation_policy_id_ref"/&gt;
-  &lt;/j:if&gt;
-  &lt;j:if test="${HTML:jvar_feature == 'services'}"&gt;
-    &lt;j:set var="jvar_feature_name" value="a service"/&gt;
-    &lt;j:set var="jvar_src_table" value="x_pd_integration_services"/&gt;
-    &lt;j:set var="jvar_spoof_ref" value="${HTML:jvar_src_table}.service_id_ref"/&gt;
-  &lt;/j:if&gt;
+  <j:if test="${HTML:jvar_feature == 'escalation_policies'}">
+    <j:set var="jvar_feature_name" value="an escalation policy"/>
+    <j:set var="jvar_src_table" value="x_pd_integration_escalation_policies"/>
+    <j:set var="jvar_spoof_ref" value="${HTML:jvar_src_table}.escalation_policy_id_ref"/>
+  </j:if>
+  <j:if test="${HTML:jvar_feature == 'services'}">
+    <j:set var="jvar_feature_name" value="a service"/>
+    <j:set var="jvar_src_table" value="x_pd_integration_services"/>
+    <j:set var="jvar_spoof_ref" value="${HTML:jvar_src_table}.service_id_ref"/>
+  </j:if>
 
-  &lt;j:if test="${HTML:jvar_feature == 'escalation_policies'}"&gt;
-    &lt;a&gt;
-      &lt;span&gt;
-        &lt;input type="hidden" id="${HTML:jvar_spoof_ref}"&gt;&lt;/input&gt;
-        &lt;input type="hidden" id="sys_display.${HTML:jvar_spoof_ref}"
+  <j:if test="${HTML:jvar_feature == 'escalation_policies'}">
+    <a>
+      <span>
+        <input type="hidden" id="${HTML:jvar_spoof_ref}"></input>
+        <input type="hidden" id="sys_display.${HTML:jvar_spoof_ref}"
           data-completer="AJAXTableCompleter" data-ref="${HTML:jvar_spoof_ref}" data-table="${HTML:jvar_src_table}"
-        &gt;&lt;/input&gt;
-        &lt;script&gt;
+        ></input>
+        <script>
           (function() {
             var epInput = document.getElementById('${HTML:jvar_ref_table}.${HTML:jvar_element}');
             var pdInput = document.getElementById('${HTML:jvar_spoof_ref}');
             pdInput.onchange = function() { epInput.value = pdInput.value };
           })();
-        &lt;/script&gt;
-        &lt;span&gt;
-          &lt;button id="lookup.${HTML:jvar_spoof_ref}" name="lookup.${HTML:jvar_spoof_ref}"
+        </script>
+        <span>
+          <button id="lookup.${HTML:jvar_spoof_ref}" name="lookup.${HTML:jvar_spoof_ref}"
             aria-haspopup="true" aria-label="Look up value for field: ${HTML:jvar_spoof_ref}"
             class="btn btn-default" data-for="sys_display.${HTML:jvar_spoof_ref}"
             data-type="ac_reference_input" data-original-title="Lookup using list"
             role="button" tabindex="-1" title="" type="button"
-          &gt;
-            &lt;span class="icon icon-search" aria-hidden="true"&gt;&lt;/span&gt;
-          &lt;/button&gt;
-        &lt;/span&gt;
-      &lt;/span&gt;
-    &lt;/a&gt;
-  &lt;/j:if&gt;
+          >
+            <span class="icon icon-search" aria-hidden="true"></span>
+          </button>
+        </span>
+      </span>
+    </a>
+  </j:if>
 
-  &lt;j:if test="${HTML:jvar_feature == 'services'}"&gt;
-    &lt;a&gt;
-      &lt;span&gt;
-        &lt;input type="hidden" id="${HTML:jvar_spoof_ref}"&gt;&lt;/input&gt;
-        &lt;input type="hidden" id="sys_display.${HTML:jvar_spoof_ref}"
+  <j:if test="${HTML:jvar_feature == 'services'}">
+    <a>
+      <span>
+        <input type="hidden" id="${HTML:jvar_spoof_ref}"></input>
+        <input type="hidden" id="sys_display.${HTML:jvar_spoof_ref}"
           data-completer="AJAXTableCompleter" data-ref="${HTML:jvar_spoof_ref}" data-table="${HTML:jvar_src_table}"
-        &gt;&lt;/input&gt;
-        &lt;script&gt;
+        ></input>
+        <script>
           (function() {
             var epInput = document.getElementById('${HTML:jvar_ref_table}.${HTML:jvar_element}');
             var pdInput = document.getElementById('${HTML:jvar_spoof_ref}');
             pdInput.onchange = function() { epInput.value = pdInput.value };
           })();
-        &lt;/script&gt;
-        &lt;span&gt;
-          &lt;button id="lookup.${HTML:jvar_spoof_ref}" name="lookup.${HTML:jvar_spoof_ref}"
+        </script>
+        <span>
+          <button id="lookup.${HTML:jvar_spoof_ref}" name="lookup.${HTML:jvar_spoof_ref}"
             aria-haspopup="true" aria-label="Look up value for field: ${HTML:jvar_spoof_ref}"
             class="btn btn-default" data-for="sys_display.${HTML:jvar_spoof_ref}"
             data-type="ac_reference_input" data-original-title="Lookup using list"
             role="button" tabindex="-1" title="" type="button"
-          &gt;
-            &lt;span class="icon icon-search" aria-hidden="true"&gt;&lt;/span&gt;
-          &lt;/button&gt;
-        &lt;/span&gt;
-      &lt;/span&gt;
-    &lt;/a&gt;
-  &lt;/j:if&gt;
+          >
+            <span class="icon icon-search" aria-hidden="true"></span>
+          </button>
+        </span>
+      </span>
+    </a>
+  </j:if>
 
-&lt;/j:jelly&gt;
-</xml>
+</j:jelly>
+]]></xml>
     </sys_ui_macro>
 </record_update>

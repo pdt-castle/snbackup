@@ -1,42 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sc_cat_item_producer">
-    <fx_price action="delete_multiple" query="id=c3d30d642f0ad0101bf7ffecf699b679"/>
-    <fx_price action="INSERT_OR_UPDATE">
-        <amount>0</amount>
-        <currency display_value="USD">USD</currency>
-        <field>price</field>
-        <id>c3d30d642f0ad0101bf7ffecf699b679</id>
-        <parent/>
-        <reference_amount>0</reference_amount>
-        <reference_currency display_value="USD">USD</reference_currency>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2020-07-13 11:30:26</sys_created_on>
-        <sys_id>d14449242f0ad0101bf7ffecf699b6f1</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2020-07-13 11:30:26</sys_updated_on>
-        <table>sc_cat_item_producer</table>
-        <type>calculated</type>
-    </fx_price>
-    <fx_price action="INSERT_OR_UPDATE">
-        <amount>0</amount>
-        <currency display_value="USD">USD</currency>
-        <field>recurring_price</field>
-        <id>c3d30d642f0ad0101bf7ffecf699b679</id>
-        <parent/>
-        <reference_amount>0</reference_amount>
-        <reference_currency display_value="USD">USD</reference_currency>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2020-07-13 11:30:26</sys_created_on>
-        <sys_id>694449242f0ad0101bf7ffecf699b6f2</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2020-07-13 11:30:26</sys_updated_on>
-        <table>sc_cat_item_producer</table>
-        <type>calculated</type>
-    </fx_price>
-    <fx_price>PagerDuty</fx_price>
-    <fx_price>PagerDuty_v8.0</fx_price>
-    <fx_price>PagerDuty_v8.0</fx_price>
     <sc_cat_item_producer action="INSERT_OR_UPDATE">
         <access_type/>
         <active>false</active>
@@ -55,6 +17,7 @@
         <display_price_property>non_zero</display_price_property>
         <entitlement_script/>
         <flow_designer_flow/>
+        <fulfillment_automation_level/>
         <group/>
         <hide_sp>false</hide_sp>
         <icon/>
@@ -118,11 +81,13 @@
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2021-03-20 11:55:21</sys_updated_on>
         <table_name>x_pd_integration_pagerduty_service_provisioning</table_name>
+        <taxonomy_topic/>
         <template/>
         <template_manager_roles/>
         <type>item</type>
         <use_sc_layout>true</use_sc_layout>
         <vendor/>
+        <version/>
         <view/>
         <visible_bundle>true</visible_bundle>
         <visible_guide>true</visible_guide>
@@ -130,4 +95,39 @@
         <workflow/>
     </sc_cat_item_producer>
     <sys_translated_text action="delete_multiple" query="documentkey=c3d30d642f0ad0101bf7ffecf699b679"/>
+    <fx_price action="delete_multiple" query="id=c3d30d642f0ad0101bf7ffecf699b679"/>
+    <fx_price action="INSERT_OR_UPDATE">
+        <amount>0</amount>
+        <currency display_value="USD">USD</currency>
+        <field>price</field>
+        <id>c3d30d642f0ad0101bf7ffecf699b679</id>
+        <parent/>
+        <reference_amount>0</reference_amount>
+        <reference_currency display_value="USD">USD</reference_currency>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-07-13 11:30:26</sys_created_on>
+        <sys_id>d14449242f0ad0101bf7ffecf699b6f1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-07-13 11:30:26</sys_updated_on>
+        <table>sc_cat_item_producer</table>
+        <type>calculated</type>
+    </fx_price>
+    <fx_price action="INSERT_OR_UPDATE">
+        <amount>0</amount>
+        <currency display_value="USD">USD</currency>
+        <field>recurring_price</field>
+        <id>c3d30d642f0ad0101bf7ffecf699b679</id>
+        <parent/>
+        <reference_amount>0</reference_amount>
+        <reference_currency display_value="USD">USD</reference_currency>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-07-13 11:30:26</sys_created_on>
+        <sys_id>694449242f0ad0101bf7ffecf699b6f2</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-07-13 11:30:26</sys_updated_on>
+        <table>sc_cat_item_producer</table>
+        <type>calculated</type>
+    </fx_price>
 </record_update>

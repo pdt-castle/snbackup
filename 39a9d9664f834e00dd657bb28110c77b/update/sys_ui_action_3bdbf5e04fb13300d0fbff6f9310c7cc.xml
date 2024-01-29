@@ -3,9 +3,9 @@
         <action_name>provision_webhook_ci</action_name>
         <active>true</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_pagerduty_service) &amp;&amp; gs.nil(current.x_pd_integration_pagerduty_webhook)</condition>
         <form_action>true</form_action>
@@ -30,7 +30,7 @@
         <name>Provision Webhook into PagerDuty (CI)</name>
         <onclick>provisionWebhook()</onclick>
         <order>100</order>
-        <script>var pd = new x_pd_integration.PagerDuty();
+        <script><![CDATA[var pd = new x_pd_integration.PagerDuty();
 var pdp = new x_pd_integration.PagerDutyProvisioning();
 var pdServiceId = String(current.x_pd_integration_pagerduty_service);
 var webhookId = pd.searchWebhookByServiceId(pdServiceId);
@@ -47,7 +47,7 @@ if (webhookId) {
   pd.provisionWebhook(current, pdServiceId);
   gs.addInfoMessage('Webhook subscription has been created');
 }
-</script>
+]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

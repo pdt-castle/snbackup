@@ -6,6 +6,7 @@
 Before the test you should put valid format api_key (but from another account) and endpoint.&#13;
 Test will be success if api_key has wrong format</description>
         <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Settings page  - check valid api_key but format from another account</name>
         <parameters/>
         <remember/>

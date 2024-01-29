@@ -16,7 +16,6 @@ See the documentation for Test Design Considerations</description>
         <mugshots_cache_json/>
         <notes/>
         <order>18</order>
-        <snapshot/>
         <step_config display_value="Record Insert">14872288df60220062fe6c7a4df26319</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -36,31 +35,6 @@ See the documentation for Test Design Considerations</description>
         <warning_message>Warning: Using a system table may cause unexpected behavior for other tests running in parallel&#13;
 See the documentation for Test Design Considerations</warning_message>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=f79adc4347cd6110c03354f3836d4363"/>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>enforce_security</field>
-        <id>f79adc4347cd6110c03354f3836d4363</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2023-02-20 14:46:56</sys_created_on>
-        <sys_id>bdca908347cd6110c03354f3836d438b</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2023-02-20 14:46:56</sys_updated_on>
-        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
-        <value/>
-    </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>field_values</field>
-        <id>f79adc4347cd6110c03354f3836d4363</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2023-02-20 14:46:56</sys_created_on>
-        <sys_id>71ca908347cd6110c03354f3836d438c</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2023-02-20 14:46:56</sys_updated_on>
-        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
-        <value>user={{step['344a984347cd6110c03354f3836d43f9'].user}}^role={{parameter['272daae1474d2910c03354f3836d43db'].u_role}}^state=active^EQ</value>
-    </sys_element_mapping>
     <sys_variable_value action="delete_multiple" query="document_key=f79adc4347cd6110c03354f3836d4363"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -118,4 +92,29 @@ See the documentation for Test Design Considerations</warning_message>
         <value>record_successfully_inserted</value>
         <variable display_value="Assert type">9024a37f671003007ba405225685efe5</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="id=f79adc4347cd6110c03354f3836d4363"/>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>enforce_security</field>
+        <id>f79adc4347cd6110c03354f3836d4363</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-20 14:46:56</sys_created_on>
+        <sys_id>bdca908347cd6110c03354f3836d438b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-20 14:46:56</sys_updated_on>
+        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
+        <value/>
+    </sys_element_mapping>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>field_values</field>
+        <id>f79adc4347cd6110c03354f3836d4363</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-20 14:46:56</sys_created_on>
+        <sys_id>71ca908347cd6110c03354f3836d438c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-20 14:46:56</sys_updated_on>
+        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
+        <value>user={{step['344a984347cd6110c03354f3836d43f9'].user}}^role={{parameter['272daae1474d2910c03354f3836d43db'].u_role}}^state=active^EQ</value>
+    </sys_element_mapping>
 </record_update>

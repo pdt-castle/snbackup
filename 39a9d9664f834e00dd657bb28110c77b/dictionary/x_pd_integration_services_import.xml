@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="34a5b07607a410109f3bff1d7c1ed073" extends="sys_import_set_row" label="PagerDuty Services Import" max_length="40" name="x_pd_integration_services_import" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="Service ID" max_length="40" name="service_id" type="string"/>
+        <element label="Service Name" max_length="255" name="service_name" type="string_full_utf8"/>
+        <element label="Subdomain" max_length="255" name="subdomain" type="string_full_utf8"/>
+    </element>
+</database>

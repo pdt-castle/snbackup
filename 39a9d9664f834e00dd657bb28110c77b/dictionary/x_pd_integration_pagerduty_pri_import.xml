@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="1c74ee844f0732008c38cab18110c795" extends="sys_import_set_row" label="PagerDuty Priority Import" max_length="40" name="x_pd_integration_pagerduty_pri_import" type="collection">
+        <element label="PagerDuty priority" max_length="40" name="pagerduty_priority" type="string"/>
+        <element label="PagerDuty priority ID" max_length="40" name="pagerduty_priority_id" type="string"/>
+        <element label="Priority sysid" max_length="40" name="priority_sysid" type="string"/>
+    </element>
+</database>

@@ -10,7 +10,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>8</order>
-        <snapshot/>
         <step_config display_value="Field Values Validation">1b97cd31872022008182c9ded0e3ece5</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -58,4 +57,5 @@ With a failure timeout of 5 Seconds</description>
         <value>x_pd_integration_incidentISEMPTY^EQ</value>
         <variable display_value="Conditions">4aa838f25320220002c6435723dc34e1</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_1b97cd31872022008182c9ded0e3ece5^id=9f2a2372db62130070c5771c8c9619df"/>
 </record_update>

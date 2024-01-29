@@ -14,6 +14,7 @@
 - You have a service [1] in PagerDuty which is applied to the workflow above&#13;
 - Open every row in [Test Run Data Sets] tab below on this page and in every row choose the configuration item, which is linked to the service [1] above</description>
         <enable_parameterized_testing>true</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Incident Workflows - 1 - happy path</name>
         <parameters/>
         <remember/>

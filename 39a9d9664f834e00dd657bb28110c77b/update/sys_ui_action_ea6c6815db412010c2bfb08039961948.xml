@@ -3,9 +3,9 @@
         <action_name/>
         <active>true</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>Provision selected groups from the list choice menu.&#13;
 If Assignment Group Mapping only is enabled, provision a group service, escalation policy, and extension in PagerDuty and populate group fields using an import table.&#13;
 If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</comments>
@@ -17,6 +17,7 @@ If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</com
         <form_link>false</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint>Create a service and escalation policy in PagerDuty</hint>
         <isolate_script>false</isolate_script>
         <list_action>true</list_action>
@@ -31,7 +32,7 @@ If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</com
         <name>Provision Groups into PagerDuty</name>
         <onclick>provisionGroups()</onclick>
         <order>950</order>
-        <script>function provisionGroups() {
+        <script><![CDATA[function provisionGroups() {
   var selectedGroupSysIds = g_list.getChecked();
   var ga = new GlideAjax('x_pd_integration.PagerDutyProvisioningController');
   ga.addParam('sysparm_name', 'getGroupsData');
@@ -42,7 +43,7 @@ If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</com
     if (answer.groups_without_manager.length) {
       decision = showDialog('set current user as a manager', answer.groups_without_manager, answer.current_user);
       if (decision) {
-        if (answer.auto_provision_grmembers &amp;&amp; answer.groups_with_more_than_49_members.length) {
+        if (answer.auto_provision_grmembers && answer.groups_with_more_than_49_members.length) {
           decision = showDialog('reduce targets to 49 group members', answer.groups_with_more_than_49_members);
           if (decision) provisionAllGroups(answer.groups);
         } else {
@@ -51,7 +52,7 @@ If CI Mapping is enabled, provision an escalation policy only in PagerDuty.</com
       }
       return;
     }
-    if (answer.auto_provision_grmembers &amp;&amp; answer.groups_with_more_than_49_members.length) {
+    if (answer.auto_provision_grmembers && answer.groups_with_more_than_49_members.length) {
       decision = showDialog('reduce targets to 49 group members', answer.groups_with_more_than_49_members);
       if (decision) provisionAllGroups(answer.groups);
       return;
@@ -103,7 +104,7 @@ function provisionGroupService(groupSysId, managerSysId) {
     jslog(answer);
   });
 }
-</script>
+]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

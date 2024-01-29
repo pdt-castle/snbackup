@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="all_tables.text_index_translations=true,ih_process_sync_enabled=true,iterativeDelete=true,kagami_csindex_enabled=true,slushbucket_omit_embedded=true" db_object_id="c4843c317d31311076daf29f52070d3c" defaultsort="-1" label="Group" max_length="40" name="sys_user_group" text_index="true" type="collection">
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link;x_pd_integration_select_pagerduty_object" label="PagerDuty default escalation" max_length="40" name="x_pd_integration_pagerduty_escalation" type="string"/>
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link" label="PagerDuty schedule" max_length="40" name="x_pd_integration_pagerduty_schedule" type="string"/>
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link;x_pd_integration_select_pagerduty_object" hint="PagerDuty Service ID (not service key)" label="PagerDuty service" max_length="40" name="x_pd_integration_pagerduty_service" type="string"/>
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link" label="PagerDuty team" max_length="40" name="x_pd_integration_pagerduty_team" type="string"/>
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link" label="PagerDuty webhook" max_length="40" name="x_pd_integration_pagerduty_webhook" type="string"/>
+        <element label="PagerDuty error message" max_length="256" name="x_pd_integration_pd_error_message" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Sync Group Members with PagerDuty" max_length="40" name="x_pd_integration_sync_group_members_with_pd" type="boolean"/>
+    </element>
+</database>

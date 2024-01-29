@@ -8,7 +8,7 @@
         <description>*** Changes made to this script are not supported by PagerDuty ***&#13;
 PagerDuty methods for creating users, group services, and service escalation policies</description>
         <name>PagerDutyProvisioning</name>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 var PagerDutyProvisioning = Class.create();
 PagerDutyProvisioning.prototype = {
   initialize: function () {
@@ -75,7 +75,7 @@ PagerDutyProvisioning.prototype = {
       // create contact method for user's phones
       var phoneFields = ['phone', 'mobile_phone'];
       // TODO - add support for E164 fields
-      for (var i = 0; i &lt; phoneFields.length; i++) {
+      for (var i = 0; i < phoneFields.length; i++) {
         var field = phoneFields[i];
         var type = 'phone_contact_method'; // default
         if (field === 'mobile_phone') {
@@ -109,7 +109,7 @@ PagerDutyProvisioning.prototype = {
 
     var message;
     if (this._hasError) {
-      var errors = '&lt;br/&gt;' + this._errors.join('&lt;br/&gt;');
+      var errors = '<br/>' + this._errors.join('<br/>');
       // eslint-disable-next-line es5/no-es6-methods
       if (errors.includes('_createPDUser')) {
         message = 'The user [' + user.getValue('name') + '] has not been provisioned into PagerDuty.' + errors;
@@ -174,7 +174,7 @@ PagerDutyProvisioning.prototype = {
       return;
     }
 
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
       return;
     }
@@ -229,7 +229,7 @@ PagerDutyProvisioning.prototype = {
       return {status: status, id: null};
     }
 
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
       return {status: status, id: null};
     }
@@ -283,8 +283,8 @@ PagerDutyProvisioning.prototype = {
       var errors = body.error.errors.toString();
       if (status === 400) {
         if (errors === 'License error: Bad Request') {
-          var upgradeLink = '&lt;a href="https://support.pagerduty.com/docs/billing-invoices-payments" ' +
-            'target="_blank" rel="noopener noreferrer"&gt;upgrade your plan&lt;/a&gt;';
+          var upgradeLink = '<a href="https://support.pagerduty.com/docs/billing-invoices-payments" ' +
+            'target="_blank" rel="noopener noreferrer">upgrade your plan</a>';
           var errorMessage = 'Your PagerDuty account plan has reached the maximum number of users. ' +
             'In order to add a default user, you will need to ' + upgradeLink + '.';
 
@@ -298,7 +298,7 @@ PagerDutyProvisioning.prototype = {
       return;
     }
 
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
       return;
     }
@@ -321,7 +321,7 @@ PagerDutyProvisioning.prototype = {
     }
     // Check first if the connection id is still valid
     var existingConnection = this.searchWorkflowConnection(currentConnectionId);
-    if (!existingConnection &amp;&amp; !this._hasError) {
+    if (!existingConnection && !this._hasError) {
       // Not a valid connection, create new one
       return this.provisionWorkflowConnection();
     } else if (forceUpdate) {
@@ -367,7 +367,7 @@ PagerDutyProvisioning.prototype = {
       return null;
     }
 
-    if (status &lt; 201 || status &gt;= 300) {
+    if (status < 201 || status >= 300) {
       this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
       return null;
     }
@@ -413,7 +413,7 @@ PagerDutyProvisioning.prototype = {
       this._setError(this._extractErrorMessage(response));
     }
 
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
     }
     return connectionId;
@@ -448,12 +448,12 @@ PagerDutyProvisioning.prototype = {
       this._setError(this._extractErrorMessage(response));
       return null;
     }
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError('unknown error, status: ' + status + ', body: ' + response.getBody());
       return null;
     }
 
-    if (body.count &gt; 0) {
+    if (body.count > 0) {
       return body.Connections[0];
     }
     return null;
@@ -563,7 +563,7 @@ PagerDutyProvisioning.prototype = {
   addUserToPdTeam: function (pdUserId, teamId, opts) {
     var me = 'addUserToPdTeam';
     var payload = {};
-    if (opts &amp;&amp; opts.manager) {
+    if (opts && opts.manager) {
       payload.role = 'manager';
     }
     var feature = 'teams/' + teamId + '/users/' + pdUserId;
@@ -675,9 +675,9 @@ PagerDutyProvisioning.prototype = {
   _getCountryCode: function (phoneNumber) {
     var COUNTRY_CODES = [880, 32, 226, 359, 387, 1246, 681, 590, 1441, 673, 591, 973, 257, 229, 975, 1876, 267, 685, 599, 55, 1242, 441534, 375, 501, 7, 250, 381, 670, 262, 993, 992, 40, 690, 245, 1671, 502, 30, 240, 590, 81, 592, 441481, 594, 995, 1473, 44, 241, 503, 224, 220, 299, 350, 233, 968, 216, 962, 385, 509, 36, 852, 504, 58, 1787, 970, 680, 351, 47, 595, 964, 507, 689, 675, 51, 92, 63, 870, 48, 508, 260, 212, 372, 20, 27, 593, 39, 84, 677, 251, 252, 263, 966, 34, 291, 382, 373, 261, 590, 212, 377, 998, 95, 223, 853, 976, 692, 389, 230, 356, 265, 960, 596, 1670, 1664, 222, 441624, 256, 255, 60, 52, 972, 33, 246, 290, 358, 679, 500, 691, 298, 505, 31, 47, 264, 678, 687, 227, 672, 234, 64, 977, 674, 683, 682, 225, 41, 57, 86, 237, 56, 61, 242, 236, 243, 420, 357, 61, 506, 599, 238, 53, 268, 963, 599, 996, 254, 211, 597, 686, 855, 1869, 269, 239, 421, 82, 386, 850, 965, 221, 378, 232, 248, 7, 1345, 65, 46, 249, 1809, 1767, 253, 45, 1284, 49, 967, 213, 598, 262, 961, 1758, 856, 688, 886, 1868, 90, 94, 423, 371, 676, 370, 352, 231, 266, 66, 228, 235, 1649, 218, 379, 1784, 971, 376, 1268, 93, 1264, 1340, 354, 98, 374, 355, 244, 1684, 54, 61, 43, 297, 91, 35818, 994, 353, 62, 380, 974, 258, 1];
 
-    for (var i = 4; i &gt;= 1; i--) {
+    for (var i = 4; i >= 1; i--) {
       var countryCode = phoneNumber.substr(0, i);
-      for (var j = 0; j &lt; COUNTRY_CODES.length; j++) {
+      for (var j = 0; j < COUNTRY_CODES.length; j++) {
         if (COUNTRY_CODES[j] === parseInt(countryCode, 10)) {
           return countryCode;
         }
@@ -912,17 +912,17 @@ PagerDutyProvisioning.prototype = {
       var grGroupMember = new GlideRecordSecure('sys_user_grmember');
       if (grGroupMember.get('group', grGroup.getValue('sys_id'))) {
         var groupMembersPdIds = this.provisionGroupMembers(grGroupMember);
-        if (opts &amp;&amp; opts.reduce_targets === 'true') {
+        if (opts && opts.reduce_targets === 'true') {
           groupMembersPdIds = groupMembersPdIds.slice(0, 49);
         }
-        epId = this._createPolicy(grGroup, groupMembersPdIds, scheduleId &amp;&amp; [scheduleId]);
+        epId = this._createPolicy(grGroup, groupMembersPdIds, scheduleId && [scheduleId]);
       } else {
         return gs.addErrorMessage('"Provision Assignment Group members into PagerDuty" option is checked, but the group does not contain members. Provisioning has been canceled.');
       }
     } else if (mappedGroupMembersPdIds.length) {
-      epId = this._createPolicy(grGroup, mappedGroupMembersPdIds, scheduleId &amp;&amp; [scheduleId]);
+      epId = this._createPolicy(grGroup, mappedGroupMembersPdIds, scheduleId && [scheduleId]);
     } else {
-      epId = this._createPolicy(grGroup, [userPdId], scheduleId &amp;&amp; [scheduleId]);
+      epId = this._createPolicy(grGroup, [userPdId], scheduleId && [scheduleId]);
     }
 
     if (!epId) {
@@ -1121,7 +1121,7 @@ PagerDutyProvisioning.prototype = {
   /**
    * Update ServiceNow group record with PagerDuty ids from props object
    * @param {GlideRecordSecure} group record
-   * @param {Object} props - object with keys &amp; values for update ServiceNow group record
+   * @param {Object} props - object with keys & values for update ServiceNow group record
    * @return {Object} - object with only saved ids;
    */
   updateGroupPdIds: function (group, props) {
@@ -1246,7 +1246,7 @@ PagerDutyProvisioning.prototype = {
       return;
     }
 
-    if (status &lt; 200 || status &gt;= 300) {
+    if (status < 200 || status >= 300) {
       this._setError(me, 'unknown error, status: ' + status + ', body: ' + response.getBody());
       return;
     }
@@ -1554,7 +1554,7 @@ PagerDutyProvisioning.prototype = {
   /**
    * Retrieves statistics from the provisioning table
    * of how many CIs being successfully provisioned and how many was skipped due to errors
-   * @returns {Object.&lt;string, number&gt;}
+   * @returns {Object.<string, number>}
    */
   getProvisioningStats: function () {
     var provisioned = {};
@@ -1563,14 +1563,14 @@ PagerDutyProvisioning.prototype = {
     grs.query();
     while (grs.next()) {
       if (grs.parent_ci) {
-        if (grs.parent_service_pagerduty_id &amp;&amp; !grs.provisioning_errors) {
+        if (grs.parent_service_pagerduty_id && !grs.provisioning_errors) {
           provisioned[makeKey(grs, 'parent')] = true;
         } else {
           skipped[makeKey(grs, 'parent')] = true;
         }
       }
       if (grs.child_ci) {
-        if (grs.child_service_pagerduty_id &amp;&amp; !grs.provisioning_errors) {
+        if (grs.child_service_pagerduty_id && !grs.provisioning_errors) {
           provisioned[makeKey(grs, 'child')] = true;
         } else {
           skipped[makeKey(grs, 'child')] = true;
@@ -1627,7 +1627,7 @@ PagerDutyProvisioning.prototype = {
     }
 
     var assocRecord = this.getAssociatingRecord();
-    if (assocRecord &amp;&amp; assocRecord.services) {
+    if (assocRecord && assocRecord.services) {
       stats.services = assocRecord.services;
     }
 
@@ -1732,7 +1732,7 @@ PagerDutyProvisioning.prototype = {
 
     var name = 'SN:' + this._removeInvalidCharacters(grCi.name);
     var description = String(grCi.short_description);
-    if (description.length &gt; this.maxBSDescription) {
+    if (description.length > this.maxBSDescription) {
       var replacement = '...';
       description = description.substring(0, this.maxBSDescription - replacement.length) + replacement;
     }
@@ -1740,7 +1740,7 @@ PagerDutyProvisioning.prototype = {
       name: String(grCi.owned_by.name),
       email: String(grCi.owned_by.email)
     };
-    var contact = owner.name &amp;&amp; owner.email
+    var contact = owner.name && owner.email
       ? owner.name + ', ' + owner.email
       : owner.name || owner.email;
 
@@ -1915,7 +1915,7 @@ PagerDutyProvisioning.prototype = {
     if (response.haveError()) {
       this._setError(fnDesc, '[' +
         relationship.supporting_service.id + ':' + relationship.supporting_service.type +
-        '-&gt;' +
+        '->' +
         relationship.dependent_service.id + ':' + relationship.dependent_service.type +
         ']. ' + this._extractErrorMessage(response));
       return;
@@ -2114,7 +2114,7 @@ PagerDutyProvisioning.prototype = {
   _extractErrorMessage: function (response) {
     var errorMessage = response.getErrorMessage();
     var errorBody = JSON.parse(response.getBody());
-    if (errorBody &amp;&amp; errorBody.error &amp;&amp; errorBody.error.errors) {
+    if (errorBody && errorBody.error && errorBody.error.errors) {
       var errors = errorBody.error.errors;
       if (Array.isArray(errors)) {
         errorMessage = errors.join('.\n') + '.';
@@ -2131,12 +2131,12 @@ PagerDutyProvisioning.prototype = {
   },
 
   _removeInvalidCharacters: function (name) {
-    return name.replace(/[`~!@#$%^&amp;*()|+=?;:'",&lt;&gt;{}[\]\\/]/gi, '');
+    return name.replace(/[`~!@#$%^&*()|+=?;:'",<>{}[\]\\/]/gi, '');
   },
 
   type: 'PagerDutyProvisioning'
 };
-</script>
+]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2015-10-28 21:59:18</sys_created_on>

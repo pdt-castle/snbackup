@@ -14,7 +14,7 @@
         <sys_update_name>sys_atf_test_suite_test_5c5edddd4744ad109cd45088c26d436c</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2022-12-27 16:10:20</sys_updated_on>
-        <test display_value="PD: Settings page (Use PagerDuty teams checkbox test 1 - wrong api_key format)">ec9115d14744ad109cd45088c26d43ad</test>
-        <test_suite display_value="PD: Settings page - checkbox 1">282c119d4744ad109cd45088c26d43c7</test_suite>
+        <test display_value="PD: Settings page - Use PagerDuty teams checkbox (wrong api_key format)">ec9115d14744ad109cd45088c26d43ad</test>
+        <test_suite display_value="PD: Settings page -  Use PagerDuty teams checkbox">282c119d4744ad109cd45088c26d43c7</test_suite>
     </sys_atf_test_suite_test>
 </record_update>

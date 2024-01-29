@@ -9,7 +9,6 @@
         <create_access>false</create_access>
         <create_access_controls>false</create_access_controls>
         <delete_access>false</delete_access>
-        <extension_model/>
         <is_extendable>false</is_extendable>
         <label>PagerDuty Incident Note Import (DEPRECATED)</label>
         <live_feed_enabled>false</live_feed_enabled>
@@ -17,10 +16,9 @@
         <number_ref/>
         <provider_class/>
         <read_access>true</read_access>
-        <super_class display_value="Import Set Row" name="sys_import_set_row">d7030177db0323004529dd3b5e9619c8</super_class>
-        <sys_class_code/>
+        <scriptable_table>false</scriptable_table>
+        <super_class display_value="Import Set Row" name="sys_import_set_row">e4e4b0f17d31311076daf29f52070d62</super_class>
         <sys_class_name>sys_db_object</sys_class_name>
-        <sys_class_path/>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2016-03-29 00:46:04</sys_created_on>
         <sys_id>c88d70044fae9a00dd657bb28110c7d9</sys_id>

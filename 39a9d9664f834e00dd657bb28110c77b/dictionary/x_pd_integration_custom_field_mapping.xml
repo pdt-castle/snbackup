@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="fa404a2f4719311047daf2e7536d4386" label="PagerDuty Custom Field Mappings" max_length="40" name="x_pd_integration_custom_field_mapping" type="collection">
+        <element attributes="edge_encryption_enabled=true" default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="Default Value" max_length="4000" name="default_value" read_only="true" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Error" max_length="40" name="error" read_only="true" type="boolean"/>
+        <element label="Error Reason" max_length="1000" name="error_reason" read_only="true" type="string"/>
+        <element label="Options" max_length="4096" name="options" read_only="true" type="string"/>
+        <element calculation="(function calculatedFieldValue(current) {&#10;&#9;var fieldType = current.getValue('pd_field_type') === 'single_value' &#10;&#9;&#9;? current.getDisplayValue('pd_field_data_type') &#10;&#9;&#9;: current.getDisplayValue('pd_field_type');&#10;&#9;return current.getValue('pd_field_display_name') + ' (' + fieldType + ')';&#10;})(current);" label="PagerDuty Field" max_length="100" name="pd_calculated_field" read_only="true" type="string" virtual="true"/>
+        <element calculation="(function calculatedFieldValue(current) {&#10;&#9;return current.getValue('pd_field_type') === 'single_value' &#10;&#9;&#9;? current.getDisplayValue('pd_field_data_type') &#10;&#9;&#9;: current.getDisplayValue('pd_field_type');&#10;})(current);" label="Field Type" max_length="100" name="pd_calculated_field_type" read_only="true" type="string" virtual="true"/>
+        <element choice="1" label="PagerDuty Field Data Type" mandatory="true" max_length="40" name="pd_field_data_type" read_only="true" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Text" sequence="1" value="string"/>
+                <element inactive_on_update="false" label="Date Time" sequence="2" value="datetime"/>
+                <element inactive_on_update="false" label="URL" sequence="3" value="url"/>
+                <element inactive_on_update="false" label="Integer" sequence="4" value="integer"/>
+                <element inactive_on_update="false" label="Decimal" sequence="5" value="float"/>
+                <element inactive_on_update="false" label="Checkbox" sequence="6" value="boolean"/>
+            </choice>
+        </element>
+        <element label="Description" max_length="1000" name="pd_field_description" read_only="true" type="string"/>
+        <element label="Field Display Name" mandatory="true" max_length="50" name="pd_field_display_name" read_only="true" type="string"/>
+        <element label="PagerDuty Field ID" mandatory="true" max_length="20" name="pd_field_id" read_only="true" type="string"/>
+        <element label="PagerDuty Field Name" mandatory="true" max_length="50" name="pd_field_name" read_only="true" type="string"/>
+        <element choice="1" label="PagerDuty Field Type" mandatory="true" max_length="40" name="pd_field_type" read_only="true" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Single Value" sequence="1" value="single_value"/>
+                <element inactive_on_update="false" label="Single Select" sequence="2" value="single_value_fixed"/>
+                <element inactive_on_update="false" label="Multiple Select" sequence="3" value="multi_value_fixed"/>
+            </choice>
+        </element>
+        <element calculation="(function calculatedFieldValue(current) {&#10;&#9;var fieldType = current.getValue('sn_field_type') === 'single_value' &#10;&#9;&#9;? current.getDisplayValue('sn_field_data_type') &#10;&#9;&#9;: 'Choice';&#10;&#9;return current.getValue('sn_field_display_name') + ' (' + fieldType + ')';&#10;})(current);" label="ServiceNow Field" max_length="100" name="sn_calculated_field" read_only="true" type="string" virtual="true"/>
+        <element calculation="(function calculatedFieldValue(current) {&#10;&#9;return current.getValue('sn_field_type') === 'single_value' &#10;&#9;&#9;? current.getDisplayValue('sn_field_data_type') &#10;&#9;&#9;: 'Choice';&#10;})(current);" label="Field Type" max_length="100" name="sn_calculated_field_type" read_only="true" type="string" virtual="true"/>
+        <element choice="1" label="ServiceNow Field Data Type" mandatory="true" max_length="40" name="sn_field_data_type" read_only="true" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Choice" value="choice"/>
+                <element inactive_on_update="false" label="Date" value="glide_date"/>
+                <element inactive_on_update="false" label="Date/Time" value="glide_date_time"/>
+                <element inactive_on_update="false" label="Decimal" value="decimal"/>
+                <element inactive_on_update="false" label="Due Date" value="due_date"/>
+                <element inactive_on_update="false" label="Integer" value="integer"/>
+                <element inactive_on_update="false" label="String" value="string"/>
+                <element inactive_on_update="false" label="True/False" value="boolean"/>
+                <element inactive_on_update="false" label="URL" value="url"/>
+            </choice>
+        </element>
+        <element label="Field Display Name" mandatory="true" max_length="255" name="sn_field_display_name" read_only="true" type="string"/>
+        <element label="ServiceNow Field ID" mandatory="true" max_length="32" name="sn_field_id" read_only="true" type="string"/>
+        <element label="ServiceNow Field Name" mandatory="true" max_length="80" name="sn_field_name" read_only="true" type="string"/>
+        <element choice="1" label="ServiceNow Field Type" mandatory="true" max_length="40" name="sn_field_type" read_only="true" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Single Value" sequence="1" value="single_value"/>
+                <element inactive_on_update="false" label="Single Select" sequence="2" value="single_value_fixed"/>
+                <element inactive_on_update="false" label="Multiple Select" sequence="3" value="multi_value_fixed"/>
+            </choice>
+        </element>
+        <element attributes="base_start=true,edge_encryption_enabled=true" label="ServiceNow Table Name" mandatory="true" max_length="80" name="sn_table_name" read_only="true" type="table_name"/>
+        <element choice="3" default="bidirectional" label="Direction" mandatory="true" max_length="40" name="sync_direction" read_only="true" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Bidirectional" value="bidirectional"/>
+                <element inactive_on_update="false" label="PagerDuty" value="pagerduty"/>
+                <element inactive_on_update="false" label="ServiceNow" value="servicenow"/>
+            </choice>
+        </element>
+        <element calculation="(function calculatedFieldValue(current) {&#10;&#9;return current.getValue('error') == '0' ? 'OK' : 'Failed';&#10;})(current);" label="Sync Status" max_length="200" name="sync_status" read_only="true" type="string" virtual="true"/>
+        <index name="index" unique="true">
+            <element name="sn_field_name"/>
+            <element name="sn_table_name"/>
+        </index>
+    </element>
+</database>

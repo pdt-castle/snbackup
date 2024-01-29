@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="841c6acb4f9e760016183ce18110c77e" extends="sys_import_set_row" label="PagerDuty CI Import" max_length="40" name="x_pd_integration_pagerduty_ci_import" type="collection">
+        <element label="CMDB CI sysid" max_length="40" name="cmdb_ci_sysid" type="string"/>
+        <element label="Name" max_length="100" name="name" type="string"/>
+        <element label="Service ID" max_length="40" name="service_id" type="string"/>
+        <element label="Webhook ID" max_length="40" name="webhook_id" type="string"/>
+    </element>
+</database>

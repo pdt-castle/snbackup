@@ -3,8 +3,9 @@
         <active>true</active>
         <description/>
         <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_pd_integration.ConferenceBridgeConfigu</name>
-        <script>/*jshint esnext: true */
+        <script><![CDATA[/*jshint esnext: true */
 
 var x_pd_integration = x_pd_integration || {};
 
@@ -22,49 +23,49 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 	  this.snIncidentId = snIncidentId;
 
 	element.innerHTML = `
-      &lt;div class="row pd-conference-bridge-body"&gt;
-        &lt;div class="col-sm-12"&gt;
-            &lt;div class="form-group"&gt;
-                &lt;div&gt;
-                    &lt;label class=" col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-                        &lt;span class="label-text"&gt;Conference Bridge&lt;/span&gt;
-                    &lt;/label&gt;
-                &lt;/div&gt;
-                &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls pd-group-selector"&gt;
-					&lt;select class="form-control" id="conf-bridge-list" value="--custom--"&gt;
-					&lt;/select&gt;
-				&lt;/div&gt;
-            &lt;/div&gt;
+      <div class="row pd-conference-bridge-body">
+        <div class="col-sm-12">
+            <div class="form-group">
+                <div>
+                    <label class=" col-xs-12 col-md-3 col-lg-4 control-label">
+                        <span class="label-text">Conference Bridge</span>
+                    </label>
+                </div>
+                <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls pd-group-selector">
+					<select class="form-control" id="conf-bridge-list" value="--custom--">
+					</select>
+				</div>
+            </div>
 
-            &lt;div class="form-group"&gt;
-                &lt;div&gt;
-                    &lt;label class=" col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-                        &lt;span class="label-text"&gt;Dial-In Number&lt;/span&gt;
-                    &lt;/label&gt;
-                &lt;/div&gt;
-                &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls pd-user-selector"&gt;
-                   &lt;input class="form-control" id="conf-bridge-number"/&gt;
-                &lt;/div&gt;
-            &lt;/div&gt;
+            <div class="form-group">
+                <div>
+                    <label class=" col-xs-12 col-md-3 col-lg-4 control-label">
+                        <span class="label-text">Dial-In Number</span>
+                    </label>
+                </div>
+                <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls pd-user-selector">
+                   <input class="form-control" id="conf-bridge-number"/>
+                </div>
+            </div>
 
-            &lt;div class="form-group"&gt;
-                &lt;div&gt;
-                    &lt;label class=" col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-                        &lt;span class="label-text"&gt;URL&lt;/span&gt;
-                    &lt;/label&gt;
-                &lt;/div&gt;
-                &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
-                   &lt;input class="form-control" id="conf-bridge-url" maxlength="500"/&gt;
-                &lt;/div&gt;
-            &lt;/div&gt;
-        &lt;/div&gt;
-    &lt;/div&gt;
+            <div class="form-group">
+                <div>
+                    <label class=" col-xs-12 col-md-3 col-lg-4 control-label">
+                        <span class="label-text">URL</span>
+                    </label>
+                </div>
+                <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+                   <input class="form-control" id="conf-bridge-url" maxlength="500"/>
+                </div>
+            </div>
+        </div>
+    </div>
       `;
 
 	this.allConfBridges = undefined;
 	this.currentConfBridges = undefined;
 
-	api.loadConferenceBridges((error, result) =&gt; {
+	api.loadConferenceBridges((error, result) => {
 		if (error) {
 			if (this.onError) this.onError(error);
 		} else {
@@ -77,8 +78,8 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 				number: '',
 			});
 
-			var html = result.map(r =&gt; {
-				return '&lt;option value="' +  r.value + '"&gt;' + r.name + '&lt;/option&gt;' ;
+			var html = result.map(r => {
+				return '<option value="' +  r.value + '">' + r.name + '</option>' ;
 			}).join('');
 
 			jQuery(".pd-conference-bridge-body #conf-bridge-list").html(html);
@@ -87,7 +88,7 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 		}
 	});
 
-	api.loadCurrentConferenceBridge(this.snIncidentId, (error, currentBridge) =&gt; {
+	api.loadCurrentConferenceBridge(this.snIncidentId, (error, currentBridge) => {
 		if (error) {
 			if (this.onError) this.onError(error);
 		} else {
@@ -96,9 +97,9 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 		}
 	});
 
-	jQuery(".pd-conference-bridge-body #conf-bridge-list").change(() =&gt; {
+	jQuery(".pd-conference-bridge-body #conf-bridge-list").change(() => {
 		const val = jQuery(".pd-conference-bridge-body #conf-bridge-list").val();
-		const o = this.options.find(o =&gt; o.value === val);
+		const o = this.options.find(o => o.value === val);
 		if (o) {
 			jQuery(".pd-conference-bridge-body #conf-bridge-url").val(o.url);
 			jQuery(".pd-conference-bridge-body #conf-bridge-number").val(o.number);
@@ -121,10 +122,10 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 		if (!conference_url) conference_url = '';
 		if (!conference_number) conference_number = '';
 
-		if (conference_url &amp;&amp; !jQuery(".pd-conference-bridge-body #conf-bridge-url").val()) {
+		if (conference_url && !jQuery(".pd-conference-bridge-body #conf-bridge-url").val()) {
 			jQuery(".pd-conference-bridge-body #conf-bridge-url").val(conference_url);
 		}
-		if (conference_number &amp;&amp; !jQuery(".pd-conference-bridge-body #conf-bridge-number").val()) {
+		if (conference_number && !jQuery(".pd-conference-bridge-body #conf-bridge-number").val()) {
 			jQuery(".pd-conference-bridge-body #conf-bridge-number").val(conference_number);
 		}
 
@@ -133,7 +134,7 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 			if (!url) url = '';
 			if (!number) number = '';
 			if (url.toLowerCase() === conference_url.toLowerCase()
-				&amp;&amp; number.toLowerCase() === conference_number.toLowerCase()) {
+				&& number.toLowerCase() === conference_number.toLowerCase()) {
 				if (jQuery(".pd-conference-bridge-body #conf-bridge-list").val() === '--custom--') {
 					jQuery(".pd-conference-bridge-body #conf-bridge-list").val(value);
 					break;
@@ -147,7 +148,7 @@ x_pd_integration.ConferenceBridgeConfigurator = (function() {
 
   return ConferenceBridgeConfigurator;
 })();
-</script>
+]]></script>
         <script_name>ConferenceBridgeConfigurator</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

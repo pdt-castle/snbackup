@@ -6,6 +6,7 @@
 Before the test you should put api_key and endpoint. Api key should have wrong api key format (for example smaller than expected)&#13;
 Test will be success if no api_key</description>
         <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Settings page - Use PagerDuty teams checkbox  (no api_key)</name>
         <parameters/>
         <remember/>

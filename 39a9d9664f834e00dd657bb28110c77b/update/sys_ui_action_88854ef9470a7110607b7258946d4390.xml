@@ -3,9 +3,9 @@
         <action_name>sysverb_delete</action_name>
         <active>true</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>Custom UI action for button Delete on x_pd_integration_custom_field_mapping </comments>
         <condition/>
         <form_action>true</form_action>
@@ -30,14 +30,14 @@
         <name>Delete</name>
         <onclick>openDeleteCustomFieldMappingDialog()</onclick>
         <order>100</order>
-        <script>function openDeleteCustomFieldMappingDialog() {
+        <script><![CDATA[function openDeleteCustomFieldMappingDialog() {
 	var snCustomFieldMappingId = g_form.getUniqueValue();
 	var gm = new GlideModal('x_pd_integration_custom_field_mapping_delete_dialog');
 	gm.setPreference('snCustomFieldMappingId', snCustomFieldMappingId);
 	gm.setTitle('Delete this Field Mapping?');
 	gm.setWidth(700);
 	gm.render();
-}</script>
+}]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

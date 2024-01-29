@@ -3,9 +3,9 @@
         <action_name>add_data_to_application</action_name>
         <active>true</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition/>
         <form_action>false</form_action>
@@ -27,7 +27,7 @@
         <list_save_with_form_button>false</list_save_with_form_button>
         <list_style/>
         <messages/>
-        <name>Custom Field Mapping Override Global Create App File</name>
+        <name>Custom Field Mapping Override Global Cre</name>
         <onclick/>
         <order>100</order>
         <script/>

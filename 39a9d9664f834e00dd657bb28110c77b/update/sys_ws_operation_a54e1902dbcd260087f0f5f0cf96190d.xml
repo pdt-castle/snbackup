@@ -7,7 +7,7 @@
         <enforce_acl>e9c0c2df4ffc07008c38cab18110c766</enforce_acl>
         <http_method>POST</http_method>
         <name>Webhook Post</name>
-        <operation_script>(function process (/* RESTAPIRequest*/ request, /* RESTAPIResponse*/ response) {
+        <operation_script><![CDATA[(function process (/* RESTAPIRequest*/ request, /* RESTAPIResponse*/ response) {
 
   gs.debug('Scripted REST POST pagerduty2sn API started');
 
@@ -18,7 +18,7 @@
   var bodyData = request.body.data;
   var queryParams = request.queryParams;
 
-  if (!gs.nil(bodyData.event) &amp;&amp; bodyData.event === 'incident.action.trigger') {
+  if (!gs.nil(bodyData.event) && bodyData.event === 'incident.action.trigger') {
     var PDInbound = new x_pd_integration.PagerDutyInboundWorkflowActions();
     var actionData = PDInbound.processAction(bodyData, queryParams);
     gs.debug('REST pagerduty2sn POST: processed workflow action webhook. Data: {0}', JSON.stringify(actionData));
@@ -40,7 +40,7 @@
 
     var validMessages = filterOutV3TriggersWithManualSync(messages, queryParams);
 
-    if (validMessages.length &gt; 0) {
+    if (validMessages.length > 0) {
       if (isSyncProcessingModeEnabled()) {
         processMessages(validMessages, queryParams);
       } else {
@@ -77,7 +77,7 @@
       var queueName = 'pagerduty_webhook_queue';
       if (gs.getProperty('x_pd_integration.webhook_processing_mode') === 'async_multi') {
         var incidentId;
-        if (message.event &amp;&amp; message.event.event_type) { // V3
+        if (message.event && message.event.event_type) { // V3
           if (message.event.data.type === 'incident') {
             // Webhook carries an Incident object as part of the event
             incidentId = message.event.data.id;
@@ -99,7 +99,7 @@
       // deterministic order due to ServiceNow’s  limited time precision (1 second).
       sleep(1000);
 
-      var eventType = message.event &amp;&amp; message.event.event_type ? message.event.event_type : message.event;
+      var eventType = message.event && message.event.event_type ? message.event.event_type : message.event;
       gs.debug('REST pagerduty2sn POST: enqueueing 1 message for async processing (queue={0}, event={1})', queueName, eventType || 'unknown');
       gs.eventQueue('x_pd_integration.process_webhook', null, JSON.stringify({
         message: message,
@@ -110,14 +110,14 @@
 
   function sleep (ms) {
     var endSleep = new GlideDuration().getNumericValue() + ms;
-    while (new GlideDuration().getNumericValue() &lt; endSleep) {}
+    while (new GlideDuration().getNumericValue() < endSleep) {}
   }
 
   function filterOutV3TriggersWithManualSync (messages, queryParams) {
     var v3wh = new x_pd_integration.v3webhook();
     return messages.filter(function (message) {
-      if (v3wh.isSupported(message) &amp;&amp; message.event.event_type === 'incident.triggered' &amp;&amp;
-          queryParams.sync_option &amp;&amp; queryParams.sync_option.length &amp;&amp; queryParams.sync_option[0] === 'manual') {
+      if (v3wh.isSupported(message) && message.event.event_type === 'incident.triggered' &&
+          queryParams.sync_option && queryParams.sync_option.length && queryParams.sync_option[0] === 'manual') {
         gs.info('Webhook processing dropped since sync mode in the config is set to manual');
         return false;
       }
@@ -126,7 +126,7 @@
   }
 
 })(request, response);
-</operation_script>
+]]></operation_script>
         <operation_uri>/api/x_pd_integration/v1/pagerduty2sn</operation_uri>
         <produces>application/json,application/xml,text/xml</produces>
         <produces_customized>false</produces_customized>

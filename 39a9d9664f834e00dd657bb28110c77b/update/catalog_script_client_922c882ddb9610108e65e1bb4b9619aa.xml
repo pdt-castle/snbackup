@@ -7,7 +7,7 @@
         <applies_sc_task>false</applies_sc_task>
         <applies_target_record>false</applies_target_record>
         <applies_to>item</applies_to>
-        <cat_item display_value="Set Relationship Between CIs">c3d30d642f0ad0101bf7ffecf699b679</cat_item>
+        <cat_item display_value="Set Relationship Between CIs (DEPRECATED)">c3d30d642f0ad0101bf7ffecf699b679</cat_item>
         <cat_variable/>
         <condition/>
         <description/>
@@ -17,7 +17,8 @@
         <messages/>
         <name>Show Second Table Custom (DEPRECATED)</name>
         <order/>
-        <script>function onChange(control, oldValue, newValue, isLoading) {
+        <published_ref/>
+        <script><![CDATA[function onChange(control, oldValue, newValue, isLoading) {
   if (isLoading || newValue == '') {
     return;
   }
@@ -40,7 +41,7 @@
     ga.addParam('sysparm_table_sys_id', tableSysId);
     ga.getXML(callback);
   }
-}</script>
+}]]></script>
         <sys_class_name>catalog_script_client</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-07-28 20:15:35</sys_created_on>

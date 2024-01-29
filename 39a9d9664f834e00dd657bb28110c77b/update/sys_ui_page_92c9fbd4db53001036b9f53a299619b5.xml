@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>catalog</category>
-        <client_script>jQuery(function () {
+        <client_script><![CDATA[jQuery(function () {
   var $ = jQuery;
   var modal = GlideModal.get();
   var snIncidentId = modal.getPreference('snIncidentId');
@@ -31,7 +31,7 @@
           if (data.impactedServicesIds) {
             impactedServicesIds = data.impactedServicesIds;
           }
-          if (!impactedServices.length &amp;&amp; !allBusinessServices.length) {
+          if (!impactedServices.length && !allBusinessServices.length) {
             bsConfigured = false;
           }
           if (data.warnMessage) {
@@ -55,11 +55,11 @@
           $('select.pd-ibs-selector').append(newOption).trigger('change');
         });
 
-        writePublishedMessage(impactedServices.length &gt; 0);
+        writePublishedMessage(impactedServices.length > 0);
 
         $('select.pd-ibs-selector').select2().on('change', function () {
           var selected = $(this).select2('data');
-          writePublishedMessage(selected.length &gt; 0);
+          writePublishedMessage(selected.length > 0);
         });
 
         callback(data);
@@ -91,7 +91,7 @@
       }
     });
     $('.pd-form button.submit-request').attr('disabled', true);
-    $('.pd-form button.submit-request').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Sending');
+    $('.pd-form button.submit-request').html('<span class="icon icon-loading"></span> Sending');
 
     var selectedData = $('select.pd-ibs-selector').select2('data');
     var chosenServicesIds = [];
@@ -110,7 +110,7 @@
 
     api.sendStatusUpdate(payload, function (error, result) {
       handleErrors(error, result);
-      if (!error &amp;&amp; result.messageWasSent) {
+      if (!error && result.messageWasSent) {
         payload.incidentId = result.incidentId;
         payload.isSent = true;
         setTimeout(api.fetchStatusUpdates.bind(null, payload, handleErrors), storeStatusUpdateTimeout);
@@ -139,7 +139,7 @@
   function addLoader () {
     var containerSelector = 'div.pd-ibs-selector ul';
     var loaderSelector = '.pd-ibs-loader';
-    $(containerSelector).append($('&lt;span class="pd-ibs-loader icon-loading"&gt;&lt;/span&gt;'));
+    $(containerSelector).append($('<span class="pd-ibs-loader icon-loading"></span>'));
     var containerElem = document.querySelector(containerSelector);
     var loaderElem = document.querySelector(loaderSelector);
     var siblingsWidth = $(containerSelector + ' li').width();
@@ -162,28 +162,28 @@
 });
 
 function writePublishedMessage (willPublish) {
-  var message = 'This update will &lt;em&gt;not&lt;/em&gt; be published to your PagerDuty status dashboard.';
+  var message = 'This update will <em>not</em> be published to your PagerDuty status dashboard.';
   if (willPublish) {
-    message = 'This update &lt;em&gt;will&lt;/em&gt; be published to your PagerDuty status dashboard.';
+    message = 'This update <em>will</em> be published to your PagerDuty status dashboard.';
   }
   document.querySelector('.pd-info-message').innerHTML = message;
 }
-</client_script>
+]]></client_script>
         <description/>
         <direct>false</direct>
         <endpoint>x_pd_integration_status_update_dialog.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
-  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
-  &lt;script language="javascript" src="x_pd_integration.PdMultiselect.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_stamp" expression="new Date().getTime()" />
+  <script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"></script>
+  <script language="javascript" src="x_pd_integration.PdMultiselect.jsdbx?v=${HTML:jvar_stamp}"></script>
 
-  &lt;g:evaluate&gt;
+  <g:evaluate>
     var pdLogo = gs.getProperty('x_pd_integration.pd_logo');
-  &lt;/g:evaluate&gt;
+  </g:evaluate>
 
-  &lt;form class="form_body form-horizontal pd-form"&gt;
-    &lt;style&gt;
+  <form class="form_body form-horizontal pd-form">
+    <style>
       .btn.submit-cancel { margin-right: 1rem; }
       .pd-ibs-loader { visibility: hidden; }
       .pd-ibs-selector { width: 100%; }
@@ -200,72 +200,72 @@ function writePublishedMessage (willPublish) {
       .form_body {
         background-color: #fff;
       }
-    &lt;/style&gt;
+    </style>
 
-    &lt;div class="row" style="margin-bottom: 2rem"&gt;
-      &lt;div class="col-sm-12 pd-warning-message-block"&gt;
-        &lt;span class="pd-warning-message"&gt;&lt;/span&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div class="row" style="margin-bottom: 2rem">
+      <div class="col-sm-12 pd-warning-message-block">
+        <span class="pd-warning-message"></span>
+      </div>
+    </div>
 
-    &lt;div class="row"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;div class="form-group"&gt;
-          &lt;div&gt;
-            &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-              &lt;span class="label-text"&gt;Impacted Business Service&lt;/span&gt;
-            &lt;/label&gt;
-          &lt;/div&gt;
-          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
-            &lt;select class="pd-ibs-selector" name="pd-ibs[]" multiple="multiple"&gt;&lt;/select&gt;
-          &lt;/div&gt;
-          &lt;div class="pd-group-selector hidden"&gt;
-            &lt;div class="input-group ref-container hidden"&gt;
-              &lt;input value="" class="form-control element_reference_input hidden" /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div class="form-group"&gt;
-          &lt;div&gt;
-            &lt;div&gt;
-              &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-                &lt;span class="label-text"&gt;&lt;/span&gt;
-              &lt;/label&gt;
-            &lt;/div&gt;
-            &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
-              &lt;span class="label-text pd-info-message"&gt;&lt;/span&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div class="form-group pd-status-update-block"&gt;
-          &lt;div&gt;
-            &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label"&gt;
-              &lt;span class="label-text"&gt;Status Update&lt;/span&gt;
-            &lt;/label&gt;
-          &lt;/div&gt;
-          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls"&gt;
-            &lt;div class="input-group ref-container"&gt;
-              &lt;textarea class="form-control pd-resp-request-message"&gt;&lt;/textarea&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-    &lt;div class="row" style="margin-top: 2rem"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;div class="pull-left" style="padding: 6px 9px;"&gt;
-          &lt;img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" /&gt;
-        &lt;/div&gt;
-        &lt;div class="pull-right"&gt;
-          &lt;button class="btn btn-default submit-cancel"&gt;Cancel&lt;/button&gt;
-          &lt;button class="btn btn-primary submit-request"&gt;Send Update&lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="form-group">
+          <div>
+            <label class="col-xs-12 col-md-3 col-lg-4 control-label">
+              <span class="label-text">Impacted Business Service</span>
+            </label>
+          </div>
+          <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+            <select class="pd-ibs-selector" name="pd-ibs[]" multiple="multiple"></select>
+          </div>
+          <div class="pd-group-selector hidden">
+            <div class="input-group ref-container hidden">
+              <input value="" class="form-control element_reference_input hidden" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div>
+            <div>
+              <label class="col-xs-12 col-md-3 col-lg-4 control-label">
+                <span class="label-text"></span>
+              </label>
+            </div>
+            <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+              <span class="label-text pd-info-message"></span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group pd-status-update-block">
+          <div>
+            <label class="col-xs-12 col-md-3 col-lg-4 control-label">
+              <span class="label-text">Status Update</span>
+            </label>
+          </div>
+          <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+            <div class="input-group ref-container">
+              <textarea class="form-control pd-resp-request-message"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top: 2rem">
+      <div class="col-sm-12">
+        <div class="pull-left" style="padding: 6px 9px;">
+          <img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" />
+        </div>
+        <div class="pull-right">
+          <button class="btn btn-default submit-cancel">Cancel</button>
+          <button class="btn btn-primary submit-request">Send Update</button>
+        </div>
+      </div>
+    </div>
 
-  &lt;/form&gt;
-&lt;/j:jelly&gt;
-</html>
+  </form>
+</j:jelly>
+]]></html>
         <name>status_update_dialog</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
     <sysauto_script action="INSERT_OR_UPDATE">
         <active>true</active>
+        <business_calendar/>
         <condition/>
         <conditional>false</conditional>
+        <entered_time/>
+        <max_drift/>
         <name>PagerDuty Refresh Escalation Policies</name>
+        <offset/>
+        <offset_type/>
         <run_as/>
         <run_as_tz/>
         <run_dayofmonth>1</run_dayofmonth>
@@ -12,7 +17,7 @@
         <run_start>2020-05-14 11:31:49</run_start>
         <run_time>1970-01-03 00:00:00</run_time>
         <run_type>periodically</run_type>
-        <script>var pd = new x_pd_integration.EscalationPolicies();
+        <script><![CDATA[var pd = new x_pd_integration.EscalationPolicies();
 var result = pd.refreshEscalationPolicies();
 
 if (result.error) {
@@ -20,7 +25,7 @@ if (result.error) {
 } else if (result.message) {
   gs.info(result.message);
 }
-</script>
+]]></script>
         <sys_class_name>sysauto_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-05-14 11:34:46</sys_created_on>
@@ -33,6 +38,7 @@ if (result.error) {
         <sys_update_name>sysauto_script_6835005d07b490109f3bff1d7c1ed052</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-05-14 11:42:15</sys_updated_on>
+        <time_zone/>
         <upgrade_safe>false</upgrade_safe>
     </sysauto_script>
 </record_update>

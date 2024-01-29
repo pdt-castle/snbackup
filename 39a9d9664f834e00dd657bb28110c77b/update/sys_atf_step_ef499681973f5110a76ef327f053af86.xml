@@ -10,7 +10,6 @@
         <mugshots_cache_json>{"cbeb5ac28954a149f44ef8a6998ff371":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Password &lt;input&gt;: api_key\",\"sn_atf_mugshot_long_description\":\"Password &lt;input&gt;: api_key with value general access REST API key\",\"methods\":[\"setValue\"],\"sn_atf_mugshot_label\":\"api_key\",\"type\":\"password\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"input\"],\"get_value_result\":\"\",\"sn_atf_mugshot_tag_display_name\":\"Password &lt;input&gt;\",\"name\":\"api_key\",\"sn_atf_mugshot_value\":\"general access REST API key\",\"tag\":\"input\",\"isDisabled\":false,\"placeholder\":\"general access REST API key\",\"label_path\":[\"default\"],\"hash\":\"cbeb5ac28954a149f44ef8a6998ff371\",\"html_value\":\"\"}"}</mugshots_cache_json>
         <notes/>
         <order>2</order>
-        <snapshot/>
         <step_config display_value="Set Component Values (Custom UI)">e5dd168473330300c79260bdfaf6a794</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -29,7 +28,6 @@
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=ef499681973f5110a76ef327f053af86"/>
     <sys_variable_value action="delete_multiple" query="document_key=ef499681973f5110a76ef327f053af86"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -45,4 +43,5 @@
         <value>cbeb5ac28954a149f44ef8a6998ff371=123^EQ</value>
         <variable display_value="Component values">d12fde8473330300c79260bdfaf6a7b5</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_e5dd168473330300c79260bdfaf6a794^id=ef499681973f5110a76ef327f053af86"/>
 </record_update>

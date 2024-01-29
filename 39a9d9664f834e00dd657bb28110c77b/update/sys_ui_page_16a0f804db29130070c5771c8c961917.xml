@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>var $J = jQuery;
+        <client_script><![CDATA[var $J = jQuery;
 $J.prototype.reduce = Array.prototype.reduce;
 var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
 
@@ -125,7 +125,7 @@ function changeAppClick () {
   xhr.setRequestHeader('Content-type', 'application/json');
 
   xhr.onreadystatechange = function () {
-    if (xhr.readyState === XMLHttpRequest.DONE &amp;&amp; xhr.status === 200) {
+    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
       location.reload();
     }
   };
@@ -152,10 +152,10 @@ function saveBtnClick () {
   removeTrailingSlash('instance_url');
 
   var formValid = $J('input.form-control').reduce(function (prev, input) {
-    return !input.disabled &amp;&amp; !validate(input) ? false : prev;
+    return !input.disabled && !validate(input) ? false : prev;
   }, true);
 
-  if (formValid &amp;&amp; apiKeyValid()) {
+  if (formValid && apiKeyValid()) {
     trackEvent('pd_settings_clicked_save_button');
     $J('form')[0].submit();
   } else {
@@ -220,8 +220,8 @@ function apiKeyValid () {
 
   var response = JSON.parse(xhr.response);
 
-  var htmlUrl = response.users[0] &amp;&amp; response.users[0].html_url;
-  var userHostname = htmlUrl &amp;&amp; new URL(htmlUrl).hostname; // 'html_url' is the url of the PD account
+  var htmlUrl = response.users[0] && response.users[0].html_url;
+  var userHostname = htmlUrl && new URL(htmlUrl).hostname; // 'html_url' is the url of the PD account
   var inputHostname = new URL(instanceUrl.get(0).value).hostname;
 
   if (userHostname !== inputHostname) {
@@ -367,7 +367,7 @@ function checkFields (fields) {
     return !validate(input) ? {
       isValid: false,
       values: {},
-      invalidFields: i &gt; 0 ? invalidFields : [key]
+      invalidFields: i > 0 ? invalidFields : [key]
     } : prev;
   }, {isValid: true, invalidFields: [], values: {}});
   validity.invalidFields = validity.invalidFields.join(', ');
@@ -726,7 +726,7 @@ function showMainArea () {
 }
 
 function loader () {
-  return '&lt;span class="icon icon-loading"&gt;&lt;/span&gt;';
+  return '<span class="icon icon-loading"></span>';
 }
 
 function executeWithProps (callback) {
@@ -742,17 +742,17 @@ function executeWithProps (callback) {
     }
   });
 }
-</client_script>
+]]></client_script>
         <description>PagerDuty Settings Page</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_pd_settings_page.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
-  &lt;script language="javascript" src="x_pd_integration.PdPropValidator.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
-  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_stamp" expression="new Date().getTime()" />
+  <script language="javascript" src="x_pd_integration.PdPropValidator.jsdbx?v=${HTML:jvar_stamp}"></script>
+  <script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"></script>
 
-  &lt;g:evaluate&gt;
+  <g:evaluate>
     var isWrongScope = gs.getSession().getCurrentApplicationId() != '39a9d9664f834e00dd657bb28110c77b';
 
     // Check if the client has the the ability to handle custom field mappings.
@@ -829,7 +829,7 @@ function executeWithProps (callback) {
       }
     };
 
-    var default_service_user_enable = props.api_key &amp;amp;&amp;amp; props.sn_auth_user &amp;amp;&amp;amp; props.sn_auth_userpwd;
+    var default_service_user_enable = props.api_key &amp;&amp; props.sn_auth_user &amp;&amp; props.sn_auth_userpwd;
     if (default_service_user_enable)
       default_service_user_enable = 'yes';
 
@@ -889,14 +889,14 @@ function executeWithProps (callback) {
     }
 
     var clientHeader = new x_pd_integration.PagerDuty_REST().getDefaultClientHeader();
-    var contactSalesUrl = 'https://www.pagerduty.com/contact-us?utm_source=servicenow_itsm&amp;amp;utm_content=pd_settings_no_cf_ability_click_contact_sales_button';
-  &lt;/g:evaluate&gt;
+    var contactSalesUrl = 'https://www.pagerduty.com/contact-us?utm_source=servicenow_itsm&amp;utm_content=pd_settings_no_cf_ability_click_contact_sales_button';
+  </g:evaluate>
 
-  &lt;script&gt;
+  <script>
     var g_clientHeader = "${JS:clientHeader}";
-  &lt;/script&gt;
+  </script>
 
-  &lt;style&gt;
+  <style>
     .status-bar {
       font-weight: bold;
       margin-top: 1rem;
@@ -910,287 +910,287 @@ function executeWithProps (callback) {
     .pd-webhook-config-header {
       font-weight: 600;
     }
-  &lt;/style&gt;
+  </style>
 
-  &lt;j:if test="${HTML:checkPricePlan}"&gt;
-    &lt;div class="col-sm-8 status-bar"&gt;
-      &lt;p id="status_bar"&gt;
-        &lt;span class="icon-loading"&gt;&lt;/span&gt;
-      &lt;/p&gt;
-    &lt;/div&gt;
-  &lt;/j:if&gt;
+  <j:if test="${HTML:checkPricePlan}">
+    <div class="col-sm-8 status-bar">
+      <p id="status_bar">
+        <span class="icon-loading"></span>
+      </p>
+    </div>
+  </j:if>
 
-  &lt;div class="col-sm-8" id="main_area" style="visibility: hidden;"&gt;
-    &lt;j:if test="${HTML:isWrongScope}"&gt;
-      &lt;div id="wrong_scope_msg" class="outputmsg_nav"&gt;
-        &lt;img src="images/icon_nav_info.png"/&gt;
-        &lt;span class="outputmsg_nav_inner"&gt;$[SP]This settings available only in the
-        &lt;a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b"&gt;
-        &lt;strong&gt;PagerDuty Incident Resolution Platform&lt;/strong&gt;$[SP]application&lt;/a&gt;,$[SP]to change the application click$[SP]
-        &lt;a id="changeApp"&gt;here&lt;/a&gt;.&lt;/span&gt;
-      &lt;/div&gt;
-    &lt;/j:if&gt;
-    &lt;p&gt;
-      Once you set the API endpoint and access key you should test the connection. See$[SP]&lt;a title="implementation guide" href="https://support.pagerduty.com/v1/docs/servicenow-integration-guide" target="_blank" rel="nofollow"&gt;implementation guide&lt;/a&gt;$[SP]for more information.
-    &lt;/p&gt;
-    &lt;g:ui_form&gt;
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab" id="integrationHeading"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#integration-settings" data-toggle="collapse"&gt;
+  <div class="col-sm-8" id="main_area" style="visibility: hidden;">
+    <j:if test="${HTML:isWrongScope}">
+      <div id="wrong_scope_msg" class="outputmsg_nav">
+        <img src="images/icon_nav_info.png"/>
+        <span class="outputmsg_nav_inner">$[SP]This settings available only in the
+        <a href="sys_scope.do?sys_id=39a9d9664f834e00dd657bb28110c77b">
+        <strong>PagerDuty Incident Resolution Platform</strong>$[SP]application</a>,$[SP]to change the application click$[SP]
+        <a id="changeApp">here</a>.</span>
+      </div>
+    </j:if>
+    <p>
+      Once you set the API endpoint and access key you should test the connection. See$[SP]<a title="implementation guide" href="https://support.pagerduty.com/v1/docs/servicenow-integration-guide" target="_blank" rel="nofollow">implementation guide</a>$[SP]for more information.
+    </p>
+    <g:ui_form>
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="integrationHeading">
+          <h4 class="panel-title">
+            <a role="button" href="#integration-settings" data-toggle="collapse">
               Integration Behavior
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="integration-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+            </a>
+          </h4>
+        </div>
+        <div id="integration-settings" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <g:macro_invoke macro="x_pd_integration_select_formgroup"
               label="Choose ServiceNow to PagerDuty mapping"
               name="sn2pd_mapping"
               value="${HTML:props.sn2pd_mapping}"
               options="${HTML:['Assignment Groups map to PagerDuty', 'Configuration Items and Assignment Groups map to PagerDuty']}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_select_formgroup"
               label="Incident state value to use when PagerDuty resolves an incident"
               name="resolved_state_value"
               value="${HTML:props.resolved_state_value}"
               values="${HTML:incident_states_values}"
               options="${HTML:incident_states_options}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_select_formgroup"
               label="Default role that should be used when provisioning users from ServiceNow into PagerDuty"
               name="default_user_role"
               value="${HTML:props.default_user_role}"
               values="${HTML:['Global Admin', 'Manager', 'Responder', 'Observer']}"
               options="${HTML:['Global Admin', 'Manager', 'Responder', 'Observer']}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Resolve PagerDuty incident if ServiceNow incident is assigned to a group that doesn't exist in PagerDuty"
               type="checkbox"
               name="close_incident_on_unknown"
               value="${HTML:props.close_incident_on_unknown}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Create a new PagerDuty user if the Assigned To user on the incident is not in PagerDuty"
               type="checkbox"
               name="auto_provision_users"
               value="${HTML:props.auto_provision_users}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Do not assign the ServiceNow incident until a PagerDuty user has acknowledged the incident"
               type="checkbox"
               name="assign_on_ack_only"
               value="${HTML:props.assign_on_ack_only}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Provision current Assignment Group members into PagerDuty when provisioning Assignment Groups"
               type="checkbox"
               name="auto_provision_grmembers"
               value="${HTML:props.auto_provision_grmembers}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Create PagerDuty Schedule when provisioning Assignment Groups"
               type="checkbox"
               name="auto_provision_group_schedules"
               value="${HTML:props.auto_provision_group_schedules}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Use PagerDuty teams"
               type="checkbox"
               name="use_pd_teams"
               value="${HTML:props.use_pd_teams}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Create PagerDuty Team when provisioning Assignment Groups"
               type="checkbox"
               name="auto_creation_pd_teams"
               value="${HTML:props.auto_creation_pd_teams}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Enable Response Mobilizer feature"
               type="checkbox"
               name="enable_response_mobilizer"
               value="${HTML:props.enable_response_mobilizer}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Enable Conference Bridge feature"
               type="checkbox"
               name="enable_conference_bridge"
               value="${HTML:props.enable_conference_bridge}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Enable Incident Workflows feature"
               type="checkbox"
               name="enable_incident_workflows"
               value="${HTML:props.enable_incident_workflows}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Enable Status Update feature"
               type="checkbox"
               name="enable_status_update"
               value="${HTML:props.enable_status_update}"
-            /&gt;
+            />
 
-            &lt;div class="form-group"&gt;
-              &lt;label class="control-label"&gt;Customize PagerDuty Incident Body:&lt;/label&gt;
-              &lt;textarea style="width: 100%; height: 100px;" id="template-body" name="incident_body_template"&gt;
+            <div class="form-group">
+              <label class="control-label">Customize PagerDuty Incident Body:</label>
+              <textarea style="width: 100%; height: 100px;" id="template-body" name="incident_body_template">
                 ${HTML:props.incident_body_template}
-              &lt;/textarea&gt;
-            &lt;/div&gt;
-            &lt;g:breakpoint var="sysparm_view"/&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+              </textarea>
+            </div>
+            <g:breakpoint var="sysparm_view"/>
+          </div>
+        </div>
+      </div>
 
-      &lt;j:if test="${HTML:changeRequestsInstalled}"&gt;
-        &lt;div class="panel panel-default"&gt;
-          &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
-            &lt;h4 class="panel-title"&gt;
-              &lt;a role="button" href="#legacy-settings" aria-expanded="true"&gt;
+      <j:if test="${HTML:changeRequestsInstalled}">
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab" id="legacyHeading">
+            <h4 class="panel-title">
+              <a role="button" href="#legacy-settings" aria-expanded="true">
                 Change Requests
-              &lt;/a&gt;
-            &lt;/h4&gt;
-          &lt;/div&gt;
-          &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-            &lt;div class="panel-body"&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              </a>
+            </h4>
+          </div>
+          <div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel">
+            <div class="panel-body">
+              <g:macro_invoke macro="x_pd_integration_select_formgroup"
                 label="Change request state value to use when PagerDuty resolves an incident"
                 name="changerequest_resolved_state_value"
                 value="${HTML:props.changerequest_resolved_state_value}"
                 values="${HTML:changerequest_states_values}"
                 options="${HTML:changerequest_states_options}"
-              /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/j:if&gt;
+              />
+            </div>
+          </div>
+        </div>
+      </j:if>
 
-      &lt;j:if test="${HTML:secureIncidentsEnabled}"&gt;
-        &lt;div class="panel panel-default"&gt;
-          &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
-            &lt;h4 class="panel-title"&gt;
-              &lt;a role="button" href="#legacy-settings" aria-expanded="true"&gt;
+      <j:if test="${HTML:secureIncidentsEnabled}">
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab" id="legacyHeading">
+            <h4 class="panel-title">
+              <a role="button" href="#legacy-settings" aria-expanded="true">
                 Security Incidents
-              &lt;/a&gt;
-            &lt;/h4&gt;
-          &lt;/div&gt;
-          &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-            &lt;div class="panel-body"&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              </a>
+            </h4>
+          </div>
+          <div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel">
+            <div class="panel-body">
+              <g:macro_invoke macro="x_pd_integration_select_formgroup"
                 label="Security incident state value to use when PagerDuty resolves an incident"
                 name="sn_si_resolved_state_value"
                 value="${HTML:props.sn_si_resolved_state_value}"
                 values="${HTML:sn_si_incident_states_values}"
                 options="${HTML:sn_si_incident_states_options}"
-              /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/j:if&gt;
+              />
+            </div>
+          </div>
+        </div>
+      </j:if>
 
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab" id="PagerDutyHeading"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#PagerDuty-settings" data-toggle="collapse"&gt;
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="PagerDutyHeading">
+          <h4 class="panel-title">
+            <a role="button" href="#PagerDuty-settings" data-toggle="collapse">
               PagerDuty Settings
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="PagerDuty-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            </a>
+          </h4>
+        </div>
+        <div id="PagerDuty-settings" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               type="input"
               name="instance_url"
               value="${HTML:props.instance_url}"
               placeholder="https://your-instance.pagerduty.com"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="PagerDuty API access key"
               type="password"
               name="api_key"
               value="${HTML:maskApiKey(props.api_key)}"
               placeholder="general access REST API key"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_default_service"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup_default_service"
               label="Default service ID"
               type="input"
               name="default_service"
               value="${HTML:props.default_service}"
               placeholder="PD00001"
               enabled="${HTML:default_service_user_enable}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_default_user"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup_default_user"
               label="Default user ID"
               type="input"
               name="default_user"
               value="${HTML:props.default_user}"
               placeholder="PD00001"
               enabled="${HTML:default_service_user_enable}"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="REST API Endpoint"
               type="input"
               name="rest_api_endpoint"
               value="${HTML:props.rest_api_endpoint}"
               placeholder="https://api.pagerduty.com"
-            /&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+            />
+          </div>
+        </div>
+      </div>
 
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab" id="servicenowHeading"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#webhook-configuration" aria-expanded="true" data-toggle="collapse"&gt;
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="servicenowHeading">
+          <h4 class="panel-title">
+            <a role="button" href="#webhook-configuration" aria-expanded="true" data-toggle="collapse">
               Webhook Configuration
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="webhook-configuration" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;div class="pd-webhook-config-section"&gt;
-              &lt;p class="pd-webhook-config-header"&gt;Authentication&lt;/p&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            </a>
+          </h4>
+        </div>
+        <div id="webhook-configuration" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <div class="pd-webhook-config-section">
+              <p class="pd-webhook-config-header">Authentication</p>
+              <g:macro_invoke macro="x_pd_integration_input_formgroup"
                 label="ServiceNow user ID"
                 type="input"
                 name="sn_auth_user"
                 value="${HTML:props.sn_auth_user}"
                 placeholder="username"
-              /&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              />
+              <g:macro_invoke macro="x_pd_integration_input_formgroup"
                 label="ServiceNow user password"
                 type="password"
                 name="sn_auth_userpwd"
                 value="${HTML:props.sn_auth_userpwd}"
                 placeholder="password"
-                /&gt;
-            &lt;/div&gt;
-            &lt;div class="pd-webhook-config-section"&gt;
-              &lt;p class="pd-webhook-config-header"&gt;Parameters&lt;/p&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+                />
+            </div>
+            <div class="pd-webhook-config-section">
+              <p class="pd-webhook-config-header">Parameters</p>
+              <g:macro_invoke macro="x_pd_integration_select_formgroup"
                 label="Sync option"
                 name="webhook_config_sync_option"
                 value="${HTML:props.webhook_config_sync_option}"
                 values="${HTML:['auto', 'manual']}"
                 options="${HTML:['Auto', 'Manual']}"
-              /&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+              />
+              <g:macro_invoke macro="x_pd_integration_select_formgroup"
                 label="Task type"
                 name="webhook_config_task_type"
                 value="${HTML:props.webhook_config_task_type}"
                 values="${HTML:['incident', 'sn_si_incident']}"
                 options="${HTML:['Incident', 'Security Incident']}"
                 disabled="${HTML:!secureIncidentsEnabled}"
-              /&gt;
-            &lt;/div&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              />
+            </div>
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="ServiceNow REST endpoint for webhook"
               type="input"
               name="webhook_restapi"
               value="${HTML:props.webhook_restapi}"
               placeholder="api/x_pd_integration/pagerduty2sn"
-            /&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_connection_id"
+            />
+            <g:macro_invoke macro="x_pd_integration_input_formgroup_connection_id"
               label="Workflow connection"
               type="input"
               name="connection_id"
@@ -1200,77 +1200,77 @@ function executeWithProps (callback) {
               tooltip_icon="icon-warning-circle"
               tooltip_target="_self"
               tooltip_href="#"
-            /&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+            />
+          </div>
+        </div>
+      </div>
 
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#activity-stream-customization" aria-expanded="true" data-toggle="collapse"&gt;
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+          <h4 class="panel-title">
+            <a role="button" href="#activity-stream-customization" aria-expanded="true" data-toggle="collapse">
               Activity stream customization
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="activity-stream-customization" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;div&gt;
+            </a>
+          </h4>
+        </div>
+        <div id="activity-stream-customization" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <div>
               Configuration options to control what PagerDuty information is shown in the ServiceNow incident activity stream:
-            &lt;/div&gt;
-            &lt;div class="row"&gt;
-              &lt;div class="col-md-6"&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Incident triggering"
                   type="checkbox"
                   name="show_incident_triggering_note"
                   value="${HTML:props.show_incident_triggering_note}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Incident assignment"
                   type="checkbox"
                   name="show_incident_assignment_note"
                   value="${HTML:props.show_incident_assignment_note}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Incident reassignment and escalation"
                   type="checkbox"
                   name="show_incident_reassignment_note"
                   value="${HTML:props.show_incident_reassignment_note}"
-                /&gt;
-              &lt;/div&gt;
-              &lt;div class="col-md-6"&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+              </div>
+              <div class="col-md-6">
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Status updates"
                   type="checkbox"
                   name="show_status_update_note"
                   value="${HTML:props.show_status_update_note}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Added responders"
                   type="checkbox"
                   name="show_responder_request_related_notes"
                   value="${HTML:props.show_responder_request_related_notes}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Responders responses"
                   type="checkbox"
                   name="show_note_with_responder_response"
                   value="${HTML:props.show_note_with_responder_response}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Incident workflows"
                   type="checkbox"
                   name="show_notes_on_incident_workflow"
                   value="${HTML:props.show_notes_on_incident_workflow}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup"
                   label="Conference bridge addition"
                   type="checkbox"
                   name="show_note_on_conference_bridge_addition"
                   value="${HTML:props.show_note_on_conference_bridge_addition}"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
                   label="Custom Fields updates"
                   type="checkbox"
                   name="show_notes_on_custom_fields_updates"
@@ -1283,8 +1283,8 @@ function executeWithProps (callback) {
                   popover_button="Contact Sales"
                   popover_onclick_url="${HTML:contactSalesUrl}"
                   popover_icon="glyphicon glyphicon-lock"
-                /&gt;
-                &lt;g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
+                />
+                <g:macro_invoke macro="x_pd_integration_input_formgroup_popover"
                   label="Custom Fields errors"
                   type="checkbox"
                   name="show_notes_on_custom_fields_errors"
@@ -1297,92 +1297,92 @@ function executeWithProps (callback) {
                   popover_button="Contact Sales"
                   popover_onclick_url="${HTML:contactSalesUrl}"
                   popover_icon="glyphicon glyphicon-lock"
-                /&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#api-requests-settings" aria-expanded="true" data-toggle="collapse"&gt;
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab">
+          <h4 class="panel-title">
+            <a role="button" href="#api-requests-settings" aria-expanded="true" data-toggle="collapse">
               PagerDuty API requests customization
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="api-requests-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;div class="form-group"&gt;
-              &lt;label for="http-headers" class="control-label"&gt;HTTP headers&lt;/label&gt;
-              &lt;textarea
+            </a>
+          </h4>
+        </div>
+        <div id="api-requests-settings" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="http-headers" class="control-label">HTTP headers</label>
+              <textarea
                 style="width: 100%; height: 100px; padding: 5px"
                 id="http-headers"
                 name="http_headers"
                 placeholder="Add custom headers, one on each line without quotes (name: value)"
-              &gt;
+              >
                 ${HTML:props.http_headers}
-              &lt;/textarea&gt;
-            &lt;/div&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+              </textarea>
+            </div>
+            <g:macro_invoke macro="x_pd_integration_input_formgroup"
               label="Use MID Server"
               type="checkbox"
               name="enable_mid_server"
               value="${HTML:props.enable_mid_server}"
-            /&gt;
-            &lt;div id="mid-server-config" style="display: none"&gt;
-              &lt;g:macro_invoke macro="x_pd_integration_input_formgroup"
+            />
+            <div id="mid-server-config" style="display: none">
+              <g:macro_invoke macro="x_pd_integration_input_formgroup"
                 label="Set MID Server"
                 type="input"
                 name="mid_server"
                 value="${HTML:props.mid_server}"
-              /&gt;
-              &lt;div class="form-group"&gt;
-                &lt;label for="ecc-params" class="control-label"&gt;ECC parameters&lt;/label&gt;
-                &lt;textarea
+              />
+              <div class="form-group">
+                <label for="ecc-params" class="control-label">ECC parameters</label>
+                <textarea
                   style="width: 100%; height: 100px; padding: 5px"
                   id="ecc-params"
                   name="ecc_params"
                   placeholder="Set ECC parameters, one on each line. For example, source: http://very.long.endpoint.url"
-                &gt;
+                >
                   ${HTML:props.ecc_params}
-                &lt;/textarea&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+                </textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      &lt;div class="panel panel-default"&gt;
-        &lt;div class="panel-heading" role="tab" id="legacyHeading"&gt;
-          &lt;h4 class="panel-title"&gt;
-            &lt;a role="button" href="#legacy-settings" aria-expanded="true" data-toggle="collapse"&gt;
+      <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="legacyHeading">
+          <h4 class="panel-title">
+            <a role="button" href="#legacy-settings" aria-expanded="true" data-toggle="collapse">
               Legacy Settings
-            &lt;/a&gt;
-          &lt;/h4&gt;
-        &lt;/div&gt;
-        &lt;div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel"&gt;
-          &lt;div class="panel-body"&gt;
-            &lt;g:macro_invoke macro="x_pd_integration_select_formgroup"
+            </a>
+          </h4>
+        </div>
+        <div id="legacy-settings" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body">
+            <g:macro_invoke macro="x_pd_integration_select_formgroup"
               label="Logging verbosity level"
               name="logging.verbosity"
               value="${HTML:props['logging.verbosity']}"
               values=""
               options="${HTML:['error', 'warn', 'info', 'debug']}"
-            /&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/g:ui_form&gt;
-    &lt;div class="btn-container"&gt;
-      &lt;button id="saveBtn" class="btn btn-primary"&gt;Save&lt;/button&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/j:jelly&gt;
-</html>
+            />
+          </div>
+        </div>
+      </div>
+    </g:ui_form>
+    <div class="btn-container">
+      <button id="saveBtn" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</j:jelly>
+]]></html>
         <name>pd_settings_page</name>
-        <processing_script>(function () {
+        <processing_script><![CDATA[(function () {
   gs.debug('pd_settings_page');
 
   try {
@@ -1440,7 +1440,7 @@ function executeWithProps (callback) {
     ];
 
     var requiresWorkflowConnectionUpdate = false;
-    for (var i = 0; i &lt; propsKeys.length; i++) {
+    for (var i = 0; i < propsKeys.length; i++) {
       var key = propsKeys[i];
       var value = self[key];
 
@@ -1449,7 +1449,7 @@ function executeWithProps (callback) {
         var oldValue = gs.getProperty(propName);
         if (value !== oldValue) {
           gs.setProperty(propName, value);
-          if (propKeysForWorkflowConnection.indexOf(key) &gt;= 0) {
+          if (propKeysForWorkflowConnection.indexOf(key) >= 0) {
             requiresWorkflowConnectionUpdate = true;
           }
         }
@@ -1471,7 +1471,7 @@ function executeWithProps (callback) {
   response.sendRedirect(gs.getSession().getUrlOnStack());
 })();
 
-</processing_script>
+]]></processing_script>
         <sys_class_name>sys_ui_page</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2018-04-13 15:33:04</sys_created_on>

@@ -4,12 +4,12 @@
         <array>false</array>
         <attributes/>
         <audit>false</audit>
-        <calculation>(function calculatedFieldValue(current) {
+        <calculation><![CDATA[(function calculatedFieldValue(current) {
 
 	// Add your code here
 	return '';  // return the calculated value
 
-})(current);</calculation>
+})(current);]]></calculation>
         <choice/>
         <choice_field/>
         <choice_table/>
@@ -52,7 +52,6 @@
         <sys_class_name>sys_dictionary</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-06-11 15:56:20</sys_created_on>
-        <sys_id>19c290b647dba11012a32646926d43d8</sys_id>
         <sys_name>SN table</sys_name>
         <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
         <sys_policy/>

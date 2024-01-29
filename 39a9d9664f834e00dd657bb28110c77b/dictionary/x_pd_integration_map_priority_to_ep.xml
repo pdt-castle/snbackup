@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="0317582b07bc10109f3bff1d7c1ed0ff" label="PagerDuty Map Priority to Escalation Policy" max_length="40" name="x_pd_integration_map_priority_to_ep" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Assignment Group" max_length="32" name="assignment_group" reference="sys_user_group" type="reference"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Escalation Policy" max_length="32" name="escalation_policy" reference="x_pd_integration_escalation_policies" type="reference"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Priority" max_length="32" name="priority" reference="dl_u_priority" type="reference"/>
+        <index name="index">
+            <element name="assignment_group"/>
+        </index>
+        <index name="index2">
+            <element name="escalation_policy"/>
+        </index>
+        <index name="index3">
+            <element name="priority"/>
+        </index>
+    </element>
+</database>

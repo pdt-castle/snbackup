@@ -26,4 +26,5 @@
         <title>mobile</title>
         <user/>
     </sys_filter>
+    <sys_translated_text action="delete_multiple" query="documentkey=e22e18bd4fb883008c38cab18110c7c1"/>
 </record_update>

@@ -17,7 +17,7 @@
         <sys_updated_on>2020-06-30 10:34:58</sys_updated_on>
         <table>dl_u_priority</table>
         <variable_prefix>sn</variable_prefix>
-        <view display_value="x_pd_integration_join_priorities">5e86fd98db31101036b9f53a2996191d</view>
+        <view display_value="x_pd_integration_join_priority">5e86fd98db31101036b9f53a2996191d</view>
         <where_clause>pd_priority = sn_priority</where_clause>
     </sys_db_view_table>
 </record_update>

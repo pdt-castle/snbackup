@@ -9,7 +9,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes>Check if error message is not on the page </notes>
         <order>4</order>
-        <snapshot display_value="">a07e9ad74777d5109cd45088c26d43c8</snapshot>
         <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -28,7 +27,6 @@ With a failure timeout of 5 Seconds</description>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=6b9ad51d4744ad109cd45088c26d437a"/>
     <sys_variable_value action="delete_multiple" query="document_key=6b9ad51d4744ad109cd45088c26d437a"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -72,4 +70,5 @@ With a failure timeout of 5 Seconds</description>
         <value>21.0</value>
         <variable display_value="Custom UI version">4a49b1d3b700101044026848ee11a980</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_475e0de3d732130089fca2285e610361^id=6b9ad51d4744ad109cd45088c26d437a"/>
 </record_update>

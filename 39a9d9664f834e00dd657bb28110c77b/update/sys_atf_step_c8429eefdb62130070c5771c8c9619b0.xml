@@ -8,7 +8,6 @@
         <mugshots_cache_json/>
         <notes/>
         <order>2</order>
-        <snapshot/>
         <step_config display_value="Open an Existing Record">5f2e0e535332120028bc29cac2dc34d3</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -70,4 +69,5 @@
         <value>b85d44954a3623120004689b2d5dd60a</value>
         <variable display_value="Record">ad351a4e53a0220002c6435723dc34f0</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_5f2e0e535332120028bc29cac2dc34d3^id=c8429eefdb62130070c5771c8c9619b0"/>
 </record_update>

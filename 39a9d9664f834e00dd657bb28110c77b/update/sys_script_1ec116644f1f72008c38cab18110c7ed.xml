@@ -31,7 +31,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>(function executeRule(current, previous /*null when async*/) {
+        <script><![CDATA[(function executeRule(current, previous /*null when async*/) {
 
   if (current.assignment_group.changes() || current.assigned_to.changes()) {
     gs.debug("{0}. Prevent rule from execution in favour of \"PD Update Priority and Assignment\" business rule that handle the case when Priority and Assignment (either Assignment Group or Assignee) are changing simultaneously.", current.getDisplayValue());
@@ -48,7 +48,7 @@
   };
   gs.eventQueue(eventName, current, currentUserSysid, JSON.stringify(previousPriorityParams));
 
-})(current, previous);</script>
+})(current, previous);]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2017-06-08 19:26:28</sys_created_on>

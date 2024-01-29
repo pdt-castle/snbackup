@@ -7,18 +7,19 @@
         <description/>
         <global>true</global>
         <inherit>false</inherit>
+        <isolate_script>false</isolate_script>
         <model_id/>
         <model_table/>
         <on_load>true</on_load>
         <order>100</order>
         <reverse_if_false>true</reverse_if_false>
         <run_scripts>false</run_scripts>
-        <script_false>function onCondition() {
+        <script_false><![CDATA[function onCondition() {
 
-}</script_false>
-        <script_true>function onCondition() {
+}]]></script_false>
+        <script_true><![CDATA[function onCondition() {
 
-}</script_true>
+}]]></script_true>
         <set_values/>
         <short_description>PD IFR hide or show run lookup script fields</short_description>
         <sys_class_name>sys_ui_policy</sys_class_name>

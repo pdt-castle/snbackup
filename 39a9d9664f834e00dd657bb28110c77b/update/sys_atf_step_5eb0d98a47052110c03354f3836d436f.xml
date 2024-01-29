@@ -15,7 +15,6 @@ See the documentation for Test Design Considerations</description>
         <mugshots_cache_json/>
         <notes>Provision escalation policy</notes>
         <order>6</order>
-        <snapshot/>
         <step_config display_value="Record Insert">14872288df60220062fe6c7a4df26319</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -35,31 +34,6 @@ See the documentation for Test Design Considerations</description>
         <warning_message>Warning: Using a system table may cause unexpected behavior for other tests running in parallel&#13;
 See the documentation for Test Design Considerations</warning_message>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=5eb0d98a47052110c03354f3836d436f"/>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>enforce_security</field>
-        <id>5eb0d98a47052110c03354f3836d436f</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2023-02-17 16:09:24</sys_created_on>
-        <sys_id>a4e0910e47052110c03354f3836d43e3</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2023-02-17 16:09:24</sys_updated_on>
-        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
-        <value/>
-    </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>field_values</field>
-        <id>5eb0d98a47052110c03354f3836d436f</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2023-02-17 16:09:24</sys_created_on>
-        <sys_id>6ce0910e47052110c03354f3836d43e3</sys_id>
-        <sys_mod_count>3</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2023-02-23 10:10:21</sys_updated_on>
-        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
-        <value>manager={{step['624faa65474d2910c03354f3836d4301'].user}}^name=ATF ServiceNow incident workflow runners^EQ</value>
-    </sys_element_mapping>
     <sys_variable_value action="delete_multiple" query="document_key=5eb0d98a47052110c03354f3836d436f"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -117,4 +91,29 @@ See the documentation for Test Design Considerations</warning_message>
         <value>record_successfully_inserted</value>
         <variable display_value="Assert type">9024a37f671003007ba405225685efe5</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="id=5eb0d98a47052110c03354f3836d436f"/>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>enforce_security</field>
+        <id>5eb0d98a47052110c03354f3836d436f</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-17 16:09:24</sys_created_on>
+        <sys_id>a4e0910e47052110c03354f3836d43e3</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-17 16:09:24</sys_updated_on>
+        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
+        <value/>
+    </sys_element_mapping>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>field_values</field>
+        <id>5eb0d98a47052110c03354f3836d436f</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-17 16:09:24</sys_created_on>
+        <sys_id>6ce0910e47052110c03354f3836d43e3</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-23 10:10:21</sys_updated_on>
+        <table>var__m_atf_input_variable_14872288df60220062fe6c7a4df26319</table>
+        <value>manager={{step['624faa65474d2910c03354f3836d4301'].user}}^name=ATF ServiceNow incident workflow runners^EQ</value>
+    </sys_element_mapping>
 </record_update>

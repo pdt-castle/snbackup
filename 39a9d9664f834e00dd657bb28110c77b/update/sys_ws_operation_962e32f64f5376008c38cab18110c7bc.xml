@@ -7,13 +7,13 @@
         <enforce_acl>e9c0c2df4ffc07008c38cab18110c766</enforce_acl>
         <http_method>POST</http_method>
         <name>User Authentication</name>
-        <operation_script>(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+        <operation_script><![CDATA[(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
 
     // Return status code 200 if it gets here - passed the basic authentication step
 	gs.debug("Scripted REST GET pagerduty2sn API started - user authentication succeeded");
 	response.setStatus(200);
 
-})(request, response);</operation_script>
+})(request, response);]]></operation_script>
         <operation_uri>/api/x_pd_integration/v1/pagerduty2sn/userauth</operation_uri>
         <produces>application/json,application/xml,text/xml</produces>
         <produces_customized>false</produces_customized>
@@ -21,6 +21,7 @@
         <request_example/>
         <requires_acl_authorization>true</requires_acl_authorization>
         <requires_authentication>true</requires_authentication>
+        <requires_snc_internal_role>false</requires_snc_internal_role>
         <short_description/>
         <sys_class_name>sys_ws_operation</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

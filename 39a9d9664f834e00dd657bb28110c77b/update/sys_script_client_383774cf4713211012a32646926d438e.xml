@@ -10,7 +10,7 @@
         <messages/>
         <name>Disable Choice Option in Webhook Config</name>
         <order/>
-        <script>function onLoad() {
+        <script><![CDATA[function onLoad() {
   var ga = new GlideAjax('PagerDutyWebhooksController');
   ga.addParam('sysparm_name', 'isPdSiIncidentsInstalled');
   ga.getXMLAnswer(function(answer) {
@@ -18,7 +18,7 @@
       g_form.getOption('task_type', 'sn_si_incident').disabled = 'true';
     } 
   });
-}</script>
+}]]></script>
         <sys_class_name>sys_script_client</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-06-12 17:12:07</sys_created_on>

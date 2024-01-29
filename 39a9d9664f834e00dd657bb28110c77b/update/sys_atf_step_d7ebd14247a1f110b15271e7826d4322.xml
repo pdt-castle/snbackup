@@ -33,7 +33,6 @@ See the documentation for Test Design Considerations</description>
         <warning_message>Warning: Using a system table may cause unexpected behavior for other tests running in parallel&#13;
 See the documentation for Test Design Considerations</warning_message>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_14872288df60220062fe6c7a4df26319^id=d7ebd14247a1f110b15271e7826d4322"/>
     <sys_variable_value action="delete_multiple" query="document_key=d7ebd14247a1f110b15271e7826d4322"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -91,4 +90,5 @@ See the documentation for Test Design Considerations</warning_message>
         <value>name=PD ATF Test Group^x_pd_integration_pagerduty_service=XXXXXX^EQ</value>
         <variable display_value="Field values">dd54cf535320220002c6435723dc34fd</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_14872288df60220062fe6c7a4df26319^id=d7ebd14247a1f110b15271e7826d4322"/>
 </record_update>

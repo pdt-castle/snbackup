@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>var $J = jQuery;
+        <client_script><![CDATA[var $J = jQuery;
 var webhooksAutoRemediationIds = [];
 var healthcheckStatusResult = null;
 
@@ -29,9 +29,9 @@ function hideAllViews () {
 }
 
 function addAutoRemediationItem (total, itemText) {
-  if (total &gt; 0) {
+  if (total > 0) {
     // Append to parent UL list the item
-    $J('#healthcheck-auto-remediation-list').append('&lt;li&gt;' + total + ' ' + itemText + '&lt;/li&gt;');
+    $J('#healthcheck-auto-remediation-list').append('<li>' + total + ' ' + itemText + '</li>');
   }
 }
 
@@ -60,19 +60,19 @@ function handleHealthCheckStatus (healthcheckStatus) {
       $J('#healthcheck-auto-remediation-list').empty();
 
       var autoRemediationTotals = healthcheckStatusResult?.autoRemediationTotals || {total: 0};
-      if (autoRemediationTotals.total &gt; 0) {
+      if (autoRemediationTotals.total > 0) {
         // Inconsistencies that can be auto-resolved
         addAutoRemediationItem(autoRemediationTotals.webhookDisabled, 'temporarily disabled webhook(s)');
         addAutoRemediationItem(autoRemediationTotals.webhookConfigMismatch, 'webhook(s) with config params mismatch');
         addAutoRemediationItem(autoRemediationTotals.webhookServiceMismatch, 'webhook(s) with service mismatch');
         $J('#healthcheck-auto-remediation-totals').show();
-      } else if (healthcheckStatusResult?.totalCanBeMigrated &gt; 0) {
+      } else if (healthcheckStatusResult?.totalCanBeMigrated > 0) {
         // Webhooks V2 available to be migrated
         $J('#healthcheck-results-view #webhooks-can-be-migrated').text(healthcheckStatusResult?.totalCanBeMigrated);
         $J('#healthcheck-migration-totals').show();
       }
-      $J('#manual-intervention-table &gt; tbody').html('');
-      if (healthcheckStatusResult?.webhooks.length &gt; 0) {
+      $J('#manual-intervention-table > tbody').html('');
+      if (healthcheckStatusResult?.webhooks.length > 0) {
         renderTable(currentPage);
       }
     } else {
@@ -168,7 +168,7 @@ function showErrorToast (title, message) {
 
 // Pagination events
 $J('#prev-page').on('click', function () {
-  if (currentPage &gt; 1) {
+  if (currentPage > 1) {
     currentPage--;
     renderTable(currentPage);
   }
@@ -176,7 +176,7 @@ $J('#prev-page').on('click', function () {
 
 $J('#next-page').on('click', function () {
   var maxPage = Math.ceil(healthcheckStatusResult?.webhooks.length / itemsPerPage);
-  if (currentPage &lt; maxPage) {
+  if (currentPage < maxPage) {
     currentPage++;
     renderTable(currentPage);
   }
@@ -195,7 +195,7 @@ $J('#last-page').on('click', function () {
 $J('#records-per-page-select').on('change', function (event) {
   itemsPerPage = parseInt($J(this).val(), 10);
   currentPage = 1;
-  // Save the&lt; selected itemsPerPage value to local storage
+  // Save the< selected itemsPerPage value to local storage
   localStorage.setItem('pd.HealthCheck.itemsPerPage', itemsPerPage.toString());
   renderTable(currentPage);
 });
@@ -219,33 +219,33 @@ function renderTable (page) {
   $J('#manual-intervention-table tbody').empty(); // Clear previous rows
 
   paginatedItems.forEach(function (webhook) {
-    var webhookRow = '&lt;tr&gt;';
+    var webhookRow = '<tr>';
     if (webhook.snEntityName) {
-      webhookRow += '&lt;td&gt;&lt;a href="' + webhook.snTable + '.do?sys_id=' + webhook.snEntitySysId + '"&gt;' + webhook.snEntityName + '&lt;/a&gt;&lt;/td&gt;';
+      webhookRow += '<td><a href="' + webhook.snTable + '.do?sys_id=' + webhook.snEntitySysId + '">' + webhook.snEntityName + '</a></td>';
     } else {
-      webhookRow += '&lt;td&gt; - &lt;/td&gt;';
+      webhookRow += '<td> - </td>';
     }
     if (webhook.pdServiceName) {
-      webhookRow += '&lt;td&gt;&lt;a href="' + webhook.pdServiceUrl + '" target="_blank"&gt;' + webhook.pdServiceName + '&lt;/a&gt;&lt;/td&gt;';
+      webhookRow += '<td><a href="' + webhook.pdServiceUrl + '" target="_blank">' + webhook.pdServiceName + '</a></td>';
     } else {
-      webhookRow += '&lt;td&gt; - &lt;/td&gt;';
+      webhookRow += '<td> - </td>';
     }
-    webhookRow += '&lt;td&gt;' + (webhook.webhookId || '-') + '&lt;/td&gt;';
-    webhookRow += '&lt;td&gt;' + (webhook.webhookVersion || '-') + '&lt;/td&gt;';
-    webhookRow += '&lt;td&gt;';
+    webhookRow += '<td>' + (webhook.webhookId || '-') + '</td>';
+    webhookRow += '<td>' + (webhook.webhookVersion || '-') + '</td>';
+    webhookRow += '<td>';
     webhook.errors.forEach(function (error) {
       if (error.action_type === 'manual_remediation') {
-        webhookRow += '$[SP]&lt;span style="color: red;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]' + error.desc + '&lt;br /&gt;';
+        webhookRow += '$[SP]<span style="color: red;">$[SP]&#8226;$[SP]</span>$[SP]' + error.desc + '<br />';
       } else {
-        webhookRow += '$[SP]&lt;span style="color: orange;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]' + error.desc + '&lt;br /&gt;';
+        webhookRow += '$[SP]<span style="color: orange;">$[SP]&#8226;$[SP]</span>$[SP]' + error.desc + '<br />';
       }
     });
-    webhookRow += '&lt;/td&gt;';
-    webhookRow += '&lt;/tr&gt;';
-    $J('#manual-intervention-table &gt; tbody').append(webhookRow);
+    webhookRow += '</td>';
+    webhookRow += '</tr>';
+    $J('#manual-intervention-table > tbody').append(webhookRow);
   });
   var infoStartIdx = startIndex + 1;
-  var infoEndIdx = (endIndex &gt; totalRecords) ? totalRecords : endIndex;
+  var infoEndIdx = (endIndex > totalRecords) ? totalRecords : endIndex;
 
   $J('#page-info').text('' + infoStartIdx + ' to ' + infoEndIdx + ' of ' + totalRecords);
   updateButtonStates(page);
@@ -277,7 +277,7 @@ $J(function () {
       });
 
       // run auto-remediation for each webhook
-      if (webhooksAutoRemediationIds.length &gt; 0) {
+      if (webhooksAutoRemediationIds.length > 0) {
         webhooksAutoRemediationIds.forEach(function (webhookSysId, index) {
           var ga = new GlideAjax('PagerDutyWebhookManagementController');
           ga.addParam('sysparm_name', 'runWebhookRemediation');
@@ -348,15 +348,15 @@ $J(function () {
   });
   initPageLayoutAccordingToHealthCheckStatus();
 });
-</client_script>
+]]></client_script>
         <description>Webhooks health check UI page</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_webhooks_healthcheck.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
-  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
-  &lt;style&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_stamp" expression="new Date().getTime()" />
+  <script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"></script>
+  <style>
     p {
       margin: 0;
     }
@@ -399,22 +399,22 @@ $J(function () {
     .notification-info .notification-icon {
       width: 21px;
       height: 21px;
-      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M1.73242 10.6523C1.73242 6.04993 5.46338 2.31897 10.0658 2.31897C14.6681 2.31897 18.3991 6.04993 18.3991 10.6523C18.3991 15.2546 14.6681 18.9856 10.0658 18.9856C5.46338 18.9856 1.73242 15.2546 1.73242 10.6523ZM10.0658 17.319C6.38385 17.319 3.39909 14.3342 3.39909 10.6523C3.39909 6.9704 6.38385 3.98564 10.0658 3.98564C13.7477 3.98564 16.7324 6.9704 16.7324 10.6523C16.7324 14.3342 13.7477 17.319 10.0658 17.319ZM10.0658 5.69493C9.60551 5.69493 9.23242 6.06802 9.23242 6.52826C9.23242 6.98849 9.60551 7.36159 10.0658 7.36159C10.526 7.36159 10.8991 6.98849 10.8991 6.52826C10.8991 6.06802 10.526 5.69493 10.0658 5.69493ZM9.23242 9.8018C9.23242 9.34155 9.60551 8.96845 10.0658 8.96845C10.526 8.96845 10.8991 9.34155 10.8991 9.8018V14.8018C10.8991 15.2621 10.526 15.6351 10.0658 15.6351C9.60551 15.6351 9.23242 15.2621 9.23242 14.8018V9.8018Z"/&gt;&lt;/svg&gt;');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.73242 10.6523C1.73242 6.04993 5.46338 2.31897 10.0658 2.31897C14.6681 2.31897 18.3991 6.04993 18.3991 10.6523C18.3991 15.2546 14.6681 18.9856 10.0658 18.9856C5.46338 18.9856 1.73242 15.2546 1.73242 10.6523ZM10.0658 17.319C6.38385 17.319 3.39909 14.3342 3.39909 10.6523C3.39909 6.9704 6.38385 3.98564 10.0658 3.98564C13.7477 3.98564 16.7324 6.9704 16.7324 10.6523C16.7324 14.3342 13.7477 17.319 10.0658 17.319ZM10.0658 5.69493C9.60551 5.69493 9.23242 6.06802 9.23242 6.52826C9.23242 6.98849 9.60551 7.36159 10.0658 7.36159C10.526 7.36159 10.8991 6.98849 10.8991 6.52826C10.8991 6.06802 10.526 5.69493 10.0658 5.69493ZM9.23242 9.8018C9.23242 9.34155 9.60551 8.96845 10.0658 8.96845C10.526 8.96845 10.8991 9.34155 10.8991 9.8018V14.8018C10.8991 15.2621 10.526 15.6351 10.0658 15.6351C9.60551 15.6351 9.23242 15.2621 9.23242 14.8018V9.8018Z"/></svg>');
     }
     .notification-success .notification-icon {
       width: 21px;
       height: 21px;
-      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/&gt;&lt;/svg&gt;');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/></svg>');
     }
     .notification-error .notification-icon {
       width: 21px;
       height: 21px;
-      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/></svg>');
     }
     .notification-warning .notification-icon {
       width: 21px;
       height: 21px;
-      background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/&gt;&lt;path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/&gt;&lt;/svg&gt;');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="%23161B1C"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/></svg>');
     }
     .image, .message, .actions {
       margin: 0 auto;
@@ -495,209 +495,209 @@ $J(function () {
       border-color: RGB(var(--now-form-field--border-color,var(--now-color_border--primary,var(--now-color--neutral-7,135,147,148))));
       text-align: center;
     }
-  &lt;/style&gt;
+  </style>
 
-  &lt;div class="container-fluid"&gt;
+  <div class="container-fluid">
 
-    &lt;div class="header"&gt;
-      &lt;div class="row"&gt;
-        &lt;div class="col-xs-14 col-md-10"&gt;
-          &lt;h1 class="header-primary"&gt;Webhooks Health Check&lt;/h1&gt;
-          &lt;p class="header-secondary"&gt;Check all webhooks to see if they have the right configuration and are ready to be migrated&lt;/p&gt;
-        &lt;/div&gt;
-        &lt;div class="col-xs-4 col-md-2"&gt;
-          &lt;div id="re-run-healthcheck-col" class="actions"&gt;
-            &lt;button id="re-run-healthcheck" class="btn btn-default"&gt;Re-run health check&lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div class="header">
+      <div class="row">
+        <div class="col-xs-14 col-md-10">
+          <h1 class="header-primary">Webhooks Health Check</h1>
+          <p class="header-secondary">Check all webhooks to see if they have the right configuration and are ready to be migrated</p>
+        </div>
+        <div class="col-xs-4 col-md-2">
+          <div id="re-run-healthcheck-col" class="actions">
+            <button id="re-run-healthcheck" class="btn btn-default">Re-run health check</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    &lt;div class="divider"&gt;&lt;/div&gt;
+    <div class="divider"></div>
 
-    &lt;div id="errors"&gt;
-      &lt;div class="notification notification-error"&gt;
-        &lt;div class="notification-content"&gt;
-          &lt;div class="notification-icon"&gt;&lt;/div&gt;
-          &lt;div&gt;
-            &lt;p&gt;&lt;b id="error-title"&gt;There was an error loading the webhook health check status.&lt;/b&gt;&lt;/p&gt;
-            &lt;p id="error-message"&gt;Unexpected error.&lt;/p&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div id="errors">
+      <div class="notification notification-error">
+        <div class="notification-content">
+          <div class="notification-icon"></div>
+          <div>
+            <p><b id="error-title">There was an error loading the webhook health check status.</b></p>
+            <p id="error-message">Unexpected error.</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    &lt;div id="loading-view"&gt;
-      &lt;span class="icon icon-loading"&gt;&lt;/span&gt;
-    &lt;/div&gt;
+    <div id="loading-view">
+      <span class="icon icon-loading"></span>
+    </div>
 
-    &lt;div id="healthcheck-never-ran-view"&gt;
-      &lt;div class="image"&gt;
-        &lt;img src="x_pd_integration.run-healthcheck.svg"&gt;&lt;/img&gt;
-      &lt;/div&gt;
+    <div id="healthcheck-never-ran-view">
+      <div class="image">
+        <img src="x_pd_integration.run-healthcheck.svg"></img>
+      </div>
 
-      &lt;div class="message"&gt;
-        &lt;p class="message-primary"&gt;You never ran a health check&lt;/p&gt;
-        &lt;p class="message-secondary"&gt;A health-check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.&lt;/p&gt;
-        &lt;p class="message-secondary"&gt;The process is asynchronous, so you can continue working with the instance or even close the tab.&lt;/p&gt;
-        &lt;p class="message-secondary"&gt;The results will be shown upon job completion.&lt;/p&gt;
-      &lt;/div&gt;
+      <div class="message">
+        <p class="message-primary">You never ran a health check</p>
+        <p class="message-secondary">A health-check is done asynchronously and helps identify any potential issues or inconsistencies that may arise during or after the migration process.</p>
+        <p class="message-secondary">The process is asynchronous, so you can continue working with the instance or even close the tab.</p>
+        <p class="message-secondary">The results will be shown upon job completion.</p>
+      </div>
 
-      &lt;div class="actions"&gt;
-        &lt;button id="run-healthcheck" class="btn btn-primary"&gt;Run health check&lt;/button&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+      <div class="actions">
+        <button id="run-healthcheck" class="btn btn-primary">Run health check</button>
+      </div>
+    </div>
 
-    &lt;div id="healthcheck-running-view"&gt;
-      &lt;div class="notification notification-info"&gt;
-        &lt;div class="notification-content"&gt;
-          &lt;div class="notification-icon"&gt;&lt;/div&gt;
-          &lt;div&gt;
-            &lt;p&gt;The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.&lt;/p&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
-            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
-        &lt;/button&gt;
-      &lt;/div&gt;
+    <div id="healthcheck-running-view">
+      <div class="notification notification-info">
+        <div class="notification-content">
+          <div class="notification-icon"></div>
+          <div>
+            <p>The process is asynchronous, so you can continue working with the instance or even close the tab. The results will be shown upon job completion.</p>
+          </div>
+        </div>
+        <button data-dismiss="alert" class="btn-icon close icon-cross">
+            <span class="sr-only">Close</span>
+        </button>
+      </div>
 
-      &lt;div id="healthcheck-running-progress-bar"&gt;
-        &lt;div class="progress-step"&gt;&lt;/div&gt;
-        &lt;div class="progress"&gt;
-          &lt;div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100"&gt;
-              &lt;span class="sr-only"&gt;&lt;/span&gt;
-            &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+      <div id="healthcheck-running-progress-bar">
+        <div class="progress-step"></div>
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100">
+              <span class="sr-only"></span>
+            </div>
+        </div>
+      </div>
+    </div>
 
-    &lt;div id="healthcheck-results-view"&gt;
-      &lt;div class="notification notification-error" id="healthcheck-failed-notification"&gt;
-        &lt;div class="notification-content"&gt;
-          &lt;div class="notification-icon"&gt;&lt;/div&gt;
-          &lt;div&gt;
-            &lt;p id="healthcheck-failed-notification-message"&gt;&lt;/p&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
-            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
-        &lt;/button&gt;
-      &lt;/div&gt;
+    <div id="healthcheck-results-view">
+      <div class="notification notification-error" id="healthcheck-failed-notification">
+        <div class="notification-content">
+          <div class="notification-icon"></div>
+          <div>
+            <p id="healthcheck-failed-notification-message"></p>
+          </div>
+        </div>
+        <button data-dismiss="alert" class="btn-icon close icon-cross">
+            <span class="sr-only">Close</span>
+        </button>
+      </div>
 
-      &lt;div class="row footer-results"&gt;
-        &lt;div id="healthcheck-totals" class="col-xs-4"&gt;
-          &lt;p&gt;&lt;b id="healthcheck-total"&gt;&lt;/b&gt;&lt;span id="healthcheck-total-inconsistencies"&gt;&lt;/span&gt;&lt;/p&gt;
-        &lt;/div&gt;
-        &lt;div id="healthcheck-no-totals" class="col-xs-4"&gt;&lt;/div&gt;
-        &lt;div class="col-xs-14"&gt;&lt;p id="healthcheck-job-date"&gt;&lt;/p&gt;&lt;/div&gt;
-      &lt;/div&gt;
+      <div class="row footer-results">
+        <div id="healthcheck-totals" class="col-xs-4">
+          <p><b id="healthcheck-total"></b><span id="healthcheck-total-inconsistencies"></span></p>
+        </div>
+        <div id="healthcheck-no-totals" class="col-xs-4"></div>
+        <div class="col-xs-14"><p id="healthcheck-job-date"></p></div>
+      </div>
 
-      &lt;div id="healthcheck-auto-remediation-totals"&gt;
-        &lt;div class="notification notification-warning"&gt;
-          &lt;div class="notification-content"&gt;
-            &lt;div class="notification-icon"&gt;&lt;/div&gt;
-            &lt;div&gt;
-              &lt;p&gt;Some inconsistencies can be solved automatically:&lt;/p&gt;
-              &lt;ul id="healthcheck-auto-remediation-list"&gt;
-              &lt;/ul&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div class="close"&gt;
-            &lt;button id="run-auto-remediation" class="btn btn-primary"&gt;Auto resolve inconsistencies&lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+      <div id="healthcheck-auto-remediation-totals">
+        <div class="notification notification-warning">
+          <div class="notification-content">
+            <div class="notification-icon"></div>
+            <div>
+              <p>Some inconsistencies can be solved automatically:</p>
+              <ul id="healthcheck-auto-remediation-list">
+              </ul>
+            </div>
+          </div>
+          <div class="close">
+            <button id="run-auto-remediation" class="btn btn-primary">Auto resolve inconsistencies</button>
+          </div>
+        </div>
+      </div>
 
-      &lt;div id="auto-remediation-view"&gt;
-        &lt;div id="auto-remediation-running-progress-bar"&gt;
-          &lt;div class="progress-step"&gt;&lt;/div&gt;
-          &lt;div class="progress"&gt;
-            &lt;div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100"&gt;
-                &lt;span class="sr-only"&gt;&lt;/span&gt;
-              &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+      <div id="auto-remediation-view">
+        <div id="auto-remediation-running-progress-bar">
+          <div class="progress-step"></div>
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="100">
+                <span class="sr-only"></span>
+              </div>
+          </div>
+        </div>
+      </div>
 
-      &lt;div id="healthcheck-migration-totals"&gt;
-        &lt;div class="notification notification-info"&gt;
-          &lt;div class="notification-content"&gt;
-            &lt;div class="notification-icon"&gt;&lt;/div&gt;
-            &lt;div&gt;
-              &lt;p&gt;From the last health-check run we identified $[SP]&lt;b id="webhooks-can-be-migrated"&gt;&lt;/b&gt;$[SP] webhooks v2 that can be migrated.&lt;/p&gt;
-              &lt;p&gt;Webhooks with inconsistencies will not be migrated.&lt;/p&gt;
-              &lt;p&gt;Upgrade existing v2 webhooks to v3 in order to gain access to new integration functionality.&lt;/p&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div class="close"&gt;
-            &lt;button id="run-migration" class="btn btn-primary"&gt;Migrate webhooks to V3&lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
+      <div id="healthcheck-migration-totals">
+        <div class="notification notification-info">
+          <div class="notification-content">
+            <div class="notification-icon"></div>
+            <div>
+              <p>From the last health-check run we identified $[SP]<b id="webhooks-can-be-migrated"></b>$[SP] webhooks v2 that can be migrated.</p>
+              <p>Webhooks with inconsistencies will not be migrated.</p>
+              <p>Upgrade existing v2 webhooks to v3 in order to gain access to new integration functionality.</p>
+            </div>
+          </div>
+          <div class="close">
+            <button id="run-migration" class="btn btn-primary">Migrate webhooks to V3</button>
+          </div>
+        </div>
+      </div>
 
-      &lt;div id="healthcheck-manual-intervention-table"&gt;
-        &lt;div class="divider"&gt;&lt;/div&gt;
+      <div id="healthcheck-manual-intervention-table">
+        <div class="divider"></div>
 
-        &lt;div class="margins"&gt;
-          &lt;p&gt;$[SP]&lt;span style="color: red;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]Require manual intervention $[SP]$[SP]$[SP]$[SP] $[SP]&lt;span style="color: orange;"&gt;$[SP]&amp;#8226;$[SP]&lt;/span&gt;$[SP]Additional review needed&lt;/p&gt;
-        &lt;/div&gt;
+        <div class="margins">
+          <p>$[SP]<span style="color: red;">$[SP]&#8226;$[SP]</span>$[SP]Require manual intervention $[SP]$[SP]$[SP]$[SP] $[SP]<span style="color: orange;">$[SP]&#8226;$[SP]</span>$[SP]Additional review needed</p>
+        </div>
 
-        &lt;div class="notification notification-info"&gt;
-          &lt;div class="notification-content"&gt;
-            &lt;div class="notification-icon"&gt;&lt;/div&gt;
-            &lt;div&gt;              
-              &lt;p&gt;Please use our $[SP]&lt;a href="https://support.pagerduty.com/docs/servicenow-faq#how-do-i-resolve-the-inconsistencies-from-the-webhook-health-check?utm_source=servicenow_itsm&amp;amp;utm_content=webhooks_health_check_click_help_page" target="_blank" rel="noopener noreferrer"&gt;help page&lt;/a&gt;$[SP] to understand how each inconsistency can be solved manually&lt;/p&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;button data-dismiss="alert" class="btn-icon close icon-cross"&gt;
-            &lt;span class="sr-only"&gt;Close&lt;/span&gt;
-          &lt;/button&gt;
-        &lt;/div&gt;
+        <div class="notification notification-info">
+          <div class="notification-content">
+            <div class="notification-icon"></div>
+            <div>              
+              <p>Please use our $[SP]<a href="https://support.pagerduty.com/docs/servicenow-faq#how-do-i-resolve-the-inconsistencies-from-the-webhook-health-check?utm_source=servicenow_itsm&amp;utm_content=webhooks_health_check_click_help_page" target="_blank" rel="noopener noreferrer">help page</a>$[SP] to understand how each inconsistency can be solved manually</p>
+            </div>
+          </div>
+          <button data-dismiss="alert" class="btn-icon close icon-cross">
+            <span class="sr-only">Close</span>
+          </button>
+        </div>
 
-        &lt;table id="manual-intervention-table" class="margins table table-striped"&gt;
-          &lt;thead&gt;
-              &lt;tr&gt;
-                  &lt;th&gt;SNow Entity Name&lt;/th&gt;
-                  &lt;th&gt;PD Service Name&lt;/th&gt;
-                  &lt;th&gt;Webhook ID&lt;/th&gt;
-                  &lt;th&gt;Webhook version&lt;/th&gt;
-                  &lt;th&gt;Inconsistencies&lt;/th&gt;
-              &lt;/tr&gt;
-          &lt;/thead&gt;
-          &lt;tbody&gt;&lt;/tbody&gt;
-          &lt;tfoot&gt;
-            &lt;tr&gt;
-              &lt;td colspan="5"&gt;
-                &lt;div class="pagination-container"&gt;
-                  &lt;div&gt;&lt;/div&gt;
-                  &lt;div id="pagination"&gt;
-                      &lt;button id="first-page" name="vcr_first" class="list_nav  btn btn-icon h_flip_content" title="First page" aria-label="First page" disabled="" data-original-title="First page"&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
-                      &lt;button id="prev-page" name="vcr_back" class="list_nav  btn btn-icon h_flip_content" title="Previous page" aria-label="Previous page" disabled="" data-original-title="Previous page"&gt;&lt;span class="icon-vcr-left" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
-                      &lt;span class="vcr_controls" id="page-info"&gt;&lt;/span&gt;
-                      &lt;button id="next-page" name="vcr_next" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Next page" data-original-title="Next page"&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
-                      &lt;button id="last-page" name="vcr_last" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Last page" data-original-title="Last page"&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;span class="icon-vcr-right" aria-hidden="true"&gt;&lt;/span&gt;&lt;/button&gt;
-                  &lt;/div&gt;
-                  &lt;div&gt;
-                    &lt;label for="records-per-page-select"&gt;Records per page&lt;/label&gt;
-                    &lt;select id="records-per-page-select"&gt;
-                      &lt;option value="5"&gt;5&lt;/option&gt;
-                      &lt;option value="10"&gt;10&lt;/option&gt;
-                      &lt;option value="15"&gt;15&lt;/option&gt;
-                      &lt;option value="20"&gt;20&lt;/option&gt;
-                      &lt;option value="50"&gt;50&lt;/option&gt;
-                      &lt;option value="100"&gt;100&lt;/option&gt;
-                    &lt;/select&gt;
-                  &lt;/div&gt;
-                &lt;/div&gt;
-              &lt;/td&gt;
-            &lt;/tr&gt;
-        &lt;/tfoot&gt;
-       &lt;/table&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/j:jelly&gt;
-</html>
+        <table id="manual-intervention-table" class="margins table table-striped">
+          <thead>
+              <tr>
+                  <th>SNow Entity Name</th>
+                  <th>PD Service Name</th>
+                  <th>Webhook ID</th>
+                  <th>Webhook version</th>
+                  <th>Inconsistencies</th>
+              </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">
+                <div class="pagination-container">
+                  <div></div>
+                  <div id="pagination">
+                      <button id="first-page" name="vcr_first" class="list_nav  btn btn-icon h_flip_content" title="First page" aria-label="First page" disabled="" data-original-title="First page"><span class="icon-vcr-left" aria-hidden="true"></span><span class="icon-vcr-left" aria-hidden="true"></span></button>
+                      <button id="prev-page" name="vcr_back" class="list_nav  btn btn-icon h_flip_content" title="Previous page" aria-label="Previous page" disabled="" data-original-title="Previous page"><span class="icon-vcr-left" aria-hidden="true"></span></button>
+                      <span class="vcr_controls" id="page-info"></span>
+                      <button id="next-page" name="vcr_next" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Next page" data-original-title="Next page"><span class="icon-vcr-right" aria-hidden="true"></span></button>
+                      <button id="last-page" name="vcr_last" class="list_nav  btn btn-icon h_flip_content" title="" aria-label="Last page" data-original-title="Last page"><span class="icon-vcr-right" aria-hidden="true"></span><span class="icon-vcr-right" aria-hidden="true"></span></button>
+                  </div>
+                  <div>
+                    <label for="records-per-page-select">Records per page</label>
+                    <select id="records-per-page-select">
+                      <option value="5">5</option>
+                      <option value="10">10</option>
+                      <option value="15">15</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                </div>
+              </td>
+            </tr>
+        </tfoot>
+       </table>
+      </div>
+    </div>
+  </div>
+</j:jelly>
+]]></html>
         <name>webhooks_healthcheck</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

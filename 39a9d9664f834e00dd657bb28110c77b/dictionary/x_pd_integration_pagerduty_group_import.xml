@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="e3e43aaa4f130240dd657bb28110c710" extends="sys_import_set_row" label="PagerDuty Group Import" max_length="40" name="x_pd_integration_pagerduty_group_import" type="collection">
+        <element label="Escalation ID" max_length="40" name="escalation_id" type="string"/>
+        <element label="Group sysid" max_length="40" name="group_sysid" type="string"/>
+        <element label="Name" max_length="100" name="name" type="string"/>
+        <element label="Schedule id" max_length="40" name="schedule_id" type="string"/>
+        <element label="Service ID" max_length="40" name="service_id" type="string"/>
+        <element label="Team ID" max_length="40" name="team_id" type="string"/>
+        <element label="Webhook ID" max_length="40" name="webhook_id" type="string"/>
+    </element>
+</database>

@@ -31,12 +31,12 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>function onAfter(current, previous) {
+        <script><![CDATA[function onAfter(current, previous) {
 	//This function will be automatically called when this rule is processed.
 	var eventName = "x_pd_integration.post_worknote";
 	gs.debug("Firing event {0} for {1}", eventName, current.getDisplayValue());
 	gs.eventQueue(eventName, current, gs.getUserName());
-}</script>
+}]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2016-04-01 19:19:43</sys_created_on>

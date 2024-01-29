@@ -17,7 +17,7 @@
         <sys_updated_on>2020-05-28 11:21:52</sys_updated_on>
         <table>x_pd_integration_map_priority_to_ep</table>
         <variable_prefix>ep</variable_prefix>
-        <view display_value="x_pd_integration_join_group_and_ep">8f0f7b2507c918109f3bff1d7c1ed0c2</view>
+        <view display_value="x_pd_integration_join_group_and_ep_mapping">8f0f7b2507c918109f3bff1d7c1ed0c2</view>
         <where_clause>ag_sys_id = ep_assignment_group</where_clause>
     </sys_db_view_table>
 </record_update>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="18f47c3607a410109f3bff1d7c1ed0bb" label="PagerDuty Services" max_length="40" name="x_pd_integration_services" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="Service ID" max_length="40" name="service_id" type="string"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Service ID Ref" max_length="40" name="service_id_ref" reference="x_pd_integration_services" reference_key="service_id" reference_qual="active=true^EQ" reference_qual_condition="active=true^EQ" type="reference"/>
+        <element label="Service Name" max_length="255" name="service_name" type="string_full_utf8"/>
+        <element label="Subdomain" max_length="255" name="subdomain" type="string_full_utf8"/>
+        <index name="index">
+            <element name="service_id"/>
+        </index>
+        <index name="index2">
+            <element name="service_id_ref"/>
+        </index>
+    </element>
+</database>

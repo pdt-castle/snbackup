@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="a6c5e1ec2f4ad0101bf7ffecf699b6ee" extends="sys_import_set_row" label="PagerDuty Service Provisioning Import" max_length="40" name="x_pd_integration_pagerduty_service_provisioning_import" type="collection">
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Child CI" max_length="32" name="child_ci" reference="cmdb_ci" type="reference"/>
+        <element label="Child CI Name" max_length="255" name="child_ci_name" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true" choice="3" label="Child type" max_length="40" name="child_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Business Service" value="business_service"/>
+                <element inactive_on_update="false" label="Technical Service" value="technical_service"/>
+            </choice>
+        </element>
+        <element active="false" label="Key (DEPRECATED)" max_length="255" name="key" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Parent CI" max_length="32" name="parent_ci" reference="cmdb_ci" type="reference"/>
+        <element label="Parent CI Name" max_length="255" name="parent_ci_name" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true" choice="3" label="Parent type" max_length="40" name="parent_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Business Service" value="business_service"/>
+                <element inactive_on_update="false" label="Technical Service" value="technical_service"/>
+            </choice>
+        </element>
+        <element label="Provisioning errors" max_length="255" name="provisioning_errors" type="string_full_utf8"/>
+        <element label="Validation warnings" max_length="255" name="validation_warnings" type="string_full_utf8"/>
+        <index name="index">
+            <element name="child_ci"/>
+        </index>
+        <index name="index2">
+            <element name="parent_ci"/>
+        </index>
+    </element>
+</database>

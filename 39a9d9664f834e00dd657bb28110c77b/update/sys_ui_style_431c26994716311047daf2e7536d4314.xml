@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_style">
-    <sys_translated_text action="delete_multiple" query="documentkey=431c26994716311047daf2e7536d4314"/>
     <sys_ui_style action="INSERT_OR_UPDATE">
         <alt/>
         <element>active</element>
@@ -21,4 +20,5 @@ background-repeat: no-repeat;</style>
         <themed_style/>
         <value>1</value>
     </sys_ui_style>
+    <sys_translated_text action="delete_multiple" query="documentkey=431c26994716311047daf2e7536d4314"/>
 </record_update>

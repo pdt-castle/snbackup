@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="14ecb0ec2fc6d0101bf7ffecf699b61a" label="PagerDuty Service Provisioning" max_length="40" name="x_pd_integration_pagerduty_service_provisioning" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Associating" max_length="40" name="associating" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Child CI [sys_id]" max_length="32" name="child_ci" reference="cmdb_ci" type="reference"/>
+        <element label="Child CI Name" max_length="255" name="child_ci_name" type="string_full_utf8"/>
+        <element label="Child service PagerDuty ID" max_length="40" name="child_service_pagerduty_id" type="string"/>
+        <element attributes="edge_encryption_enabled=true" choice="3" label="Child type" max_length="40" name="child_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Business Service" value="business_service"/>
+                <element inactive_on_update="false" label="Technical Service" value="technical_service"/>
+            </choice>
+        </element>
+        <element active="false" label="Key (DEPRECATED)" max_length="255" name="key" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Parent CI [sys_id]" max_length="32" name="parent_ci" reference="cmdb_ci" type="reference"/>
+        <element label="Parent CI Name" max_length="255" name="parent_ci_name" type="string_full_utf8"/>
+        <element label="Parent service PagerDuty ID" max_length="40" name="parent_service_pagerduty_id" type="string"/>
+        <element attributes="edge_encryption_enabled=true" choice="3" label="Parent type" max_length="40" name="parent_type" type="choice">
+            <choice>
+                <element inactive_on_update="false" label="Business Service" value="business_service"/>
+                <element inactive_on_update="false" label="Technical Service" value="technical_service"/>
+            </choice>
+        </element>
+        <element attributes="edge_encryption_enabled=true" label="Relationship provisioned" max_length="40" name="provisioned" type="boolean"/>
+        <element label="Provisioning errors" max_length="2048" name="provisioning_errors" type="string_full_utf8"/>
+        <element label="Validation warnings" max_length="255" name="validation_warnings" type="string_full_utf8"/>
+        <index name="index">
+            <element name="child_ci"/>
+        </index>
+        <index name="index2">
+            <element name="parent_ci"/>
+        </index>
+    </element>
+</database>

@@ -14,7 +14,7 @@
         <sys_update_name>sys_atf_test_suite_test_8ab4e1954784ad109cd45088c26d43a6</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2022-12-27 16:37:50</sys_updated_on>
-        <test display_value="PD: Settings page (Use PagerDuty teams checkbox  test 4 - api_key is correct) copy copy">678a151d4744ad109cd45088c26d431a</test>
-        <test_suite display_value="PD: Settings page - checkbox 3">c692add14784ad109cd45088c26d43bc</test_suite>
+        <test display_value="PD: Settings page -  Enable Conference Bridge feature ( api_key is correct)">678a151d4744ad109cd45088c26d431a</test>
+        <test_suite display_value="PD: Settings page - Enable Conference Bridge feature">c692add14784ad109cd45088c26d43bc</test_suite>
     </sys_atf_test_suite_test>
 </record_update>

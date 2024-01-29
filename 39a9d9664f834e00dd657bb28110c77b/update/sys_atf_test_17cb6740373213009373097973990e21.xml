@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_atf_test">
     <sys_atf_test action="INSERT_OR_UPDATE">
         <active>true</active>
+        <copied_from/>
         <description>'Use PagerDuty Teams' set to true.&#13;
 'Create PagerDuty Team when provisioning Assignment Group' set to true.&#13;
 Group is not mapped to a PagerDuty.&#13;
@@ -8,7 +9,10 @@ Do 'Group provision to PD'&#13;
 &#13;
 PagerDuty Team ID  should be stored on the Assignment Group record inPagerDutyTeam ServiceNow&#13;
 The corresponding PagerDuty Escalation Policy should be added to the newly created PagerDuty Team</description>
+        <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>A.Team creation for not mapped group</name>
+        <parameters/>
         <remember/>
         <sys_class_name>sys_atf_test</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

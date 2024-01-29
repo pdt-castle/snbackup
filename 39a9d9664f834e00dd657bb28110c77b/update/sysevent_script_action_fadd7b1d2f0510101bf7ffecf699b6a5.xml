@@ -6,10 +6,10 @@
         <event_name>activate.life.cycle.migration</event_name>
         <name>PagerDuty Associate Service (DEPRECATED)</name>
         <order>100</order>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 var pd = new x_pd_integration.PagerDutyProvisioning();
 pd.setRelationship(current, event.parm1, event.parm2);
-// CI, parentPdId:parentType, childPdId:childType</script>
+// CI, parentPdId:parentType, childPdId:childType]]></script>
         <synchronous>false</synchronous>
         <sys_class_name>sysevent_script_action</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="7294984adbd510103541d426ca9619e2" extends="sys_import_set_row" label="PagerDuty Map Priority to Escalation Policy Import" max_length="40" name="x_pd_integration_map_priority_to_ep_import" type="collection">
+        <element attributes="edge_encryption_enabled=true" default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="Assignment Group" max_length="40" name="assignment_group" reference="sys_user_group" type="string"/>
+        <element label="Escalation Policy" max_length="40" name="escalation_policy" reference="x_pd_integration_escalation_policies" type="string"/>
+        <element label="Priority" max_length="40" name="priority" reference="dl_u_priority" type="string"/>
+    </element>
+</database>

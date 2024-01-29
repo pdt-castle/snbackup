@@ -8,7 +8,6 @@
         <mugshots_cache_json>{"532e6200765d8bad160db39f4a32fa8f":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Text &lt;span&gt;: invalid PagerDuty api key\",\"inner_text\":\"invalid PagerDuty api key\",\"sn_atf_mugshot_long_description\":\"Text &lt;span&gt; [api_key_help]: invalid PagerDuty api key\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"invalid PagerDuty api key\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"span\"],\"get_value_result\":\"invalid PagerDuty api key\",\"sn_atf_mugshot_tag_display_name\":\"Text &lt;span&gt;\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"span\",\"isDisabled\":false,\"id\":\"api_key_help\",\"label_path\":[\"default\"],\"hash\":\"532e6200765d8bad160db39f4a32fa8f\"}"}</mugshots_cache_json>
         <notes/>
         <order>3</order>
-        <snapshot/>
         <step_config display_value="Component State Validation (Custom UI)">38907e937322130007d738682bf6a742</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

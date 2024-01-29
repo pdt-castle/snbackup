@@ -10,7 +10,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>18</order>
-        <snapshot display_value="">0be0a3ae2f8b10106a70e93df699b69d</snapshot>
         <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -29,19 +28,6 @@ With a failure timeout of 5 Seconds</description>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=e9a767a22fcb10106a70e93df699b62f"/>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>text</field>
-        <id>e9a767a22fcb10106a70e93df699b62f</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2020-09-07 21:34:53</sys_created_on>
-        <sys_id>2da767a22fcb10106a70e93df699b630</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2020-09-07 21:34:53</sys_updated_on>
-        <table>var__m_atf_input_variable_475e0de3d732130089fca2285e610361</table>
-        <value>Run as</value>
-    </sys_element_mapping>
     <sys_variable_value action="delete_multiple" query="document_key=e9a767a22fcb10106a70e93df699b62f"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -71,4 +57,17 @@ With a failure timeout of 5 Seconds</description>
         <value>text_on_page</value>
         <variable display_value="Assert Type">86e4f05cd703130089fca2285e610307</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="id=e9a767a22fcb10106a70e93df699b62f"/>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>text</field>
+        <id>e9a767a22fcb10106a70e93df699b62f</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2020-09-07 21:34:53</sys_created_on>
+        <sys_id>2da767a22fcb10106a70e93df699b630</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2020-09-07 21:34:53</sys_updated_on>
+        <table>var__m_atf_input_variable_475e0de3d732130089fca2285e610361</table>
+        <value>Run as</value>
+    </sys_element_mapping>
 </record_update>

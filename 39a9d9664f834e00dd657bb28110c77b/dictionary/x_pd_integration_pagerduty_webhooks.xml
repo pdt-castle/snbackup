@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="f162d87647dba11012a32646926d43c2" label="PagerDuty Webhooks" max_length="40" name="x_pd_integration_pagerduty_webhooks" type="collection">
+        <element label="Custom query params" max_length="255" name="custom_query_params" type="string"/>
+        <element label="Extension schema ID" max_length="32" name="extension_schema_id" type="string"/>
+        <element label="Last health check ID" max_length="32" name="last_health_check_id" type="string"/>
+        <element label="Migration errors" max_length="4096" name="migration_errors" type="string"/>
+        <element label="PD service ID" max_length="32" name="pd_service_id" type="string"/>
+        <element label="PD service name" max_length="100" name="pd_service_name" type="string_full_utf8"/>
+        <element label="SN entity name" max_length="255" name="sn_entity_name" type="string"/>
+        <element label="SN entity sys ID" max_length="32" name="sn_entity_sys_id" type="string"/>
+        <element label="SN table" max_length="40" name="sn_table" type="string"/>
+        <element choice="3" default="javascript:gs.getProperty('x_pd_integration.webhook_config_sync_option');" label="Sync option" max_length="40" name="sync_option" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Auto" value="auto"/>
+                <element inactive_on_update="false" label="Manual" value="manual"/>
+            </choice>
+        </element>
+        <element choice="3" default="javascript:gs.getProperty('x_pd_integration.webhook_config_task_type');" label="Task type" max_length="80" name="task_type" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Incident" value="incident"/>
+                <element inactive_on_update="false" label="Security Incident" value="sn_si_incident"/>
+            </choice>
+        </element>
+        <element attributes="edge_encryption_enabled=true" label="Temporarily disabled" max_length="40" name="temporarily_disabled" type="boolean"/>
+        <element label="Validation errors" max_length="1024" name="validation_errors" type="string"/>
+        <element label="Webhook ID" max_length="32" name="webhook_id" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Webhook version" max_length="40" name="webhook_version" type="integer"/>
+    </element>
+</database>

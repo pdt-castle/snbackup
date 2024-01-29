@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="e9543a6a4f130240dd657bb28110c792" extends="sys_import_set_row" label="PagerDuty User Import" max_length="40" name="x_pd_integration_pagerduty_user_import" type="collection">
+        <element label="Email" max_length="100" name="email" type="string"/>
+        <element label="Id" max_length="40" name="id" type="string"/>
+        <element label="User SysID" max_length="40" name="user_sysid" type="string"/>
+    </element>
+</database>

@@ -13,7 +13,6 @@ With roles: itil</description>
         <mugshots_cache_json/>
         <notes>Create a user</notes>
         <order>17</order>
-        <snapshot/>
         <step_config display_value="Create a User">d9bc5f21ff6033008d3f5d9ad53bf12d</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -32,7 +31,6 @@ With roles: itil</description>
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_d9bc5f21ff6033008d3f5d9ad53bf12d^id=344a984347cd6110c03354f3836d43f9"/>
     <sys_variable_value action="delete_multiple" query="document_key=344a984347cd6110c03354f3836d43f9"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -132,4 +130,5 @@ With roles: itil</description>
         <value/>
         <variable display_value="Groups">b27b2b29ff6033008d3f5d9ad53bf164</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_d9bc5f21ff6033008d3f5d9ad53bf12d^id=344a984347cd6110c03354f3836d43f9"/>
 </record_update>

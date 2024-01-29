@@ -9,7 +9,7 @@
         <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
         <sys_policy/>
         <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
-        <sys_security_acl display_value="">e65fe148db20101033dd1120399619cf</sys_security_acl>
+        <sys_security_acl display_value="x_pd_integration_run_response_play_dialog">e65fe148db20101033dd1120399619cf</sys_security_acl>
         <sys_update_name>sys_security_acl_role_506f2908db20101033dd11203996195b</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-04-28 11:48:09</sys_updated_on>

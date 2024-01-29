@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_style">
-    <sys_translated_text action="delete_multiple" query="documentkey=f93b6a954716311047daf2e7536d438f"/>
     <sys_ui_style action="INSERT_OR_UPDATE">
         <alt/>
         <element>sync_direction</element>
@@ -21,4 +20,5 @@ background-repeat: no-repeat;</style>
         <themed_style/>
         <value>javascript: current.sync_direction == 'bidirectional' &amp;&amp; (function(){var thisURI = gs.action.getGlideURI().toString(); return thisURI.indexOf('_list.do')!=-1})()</value>
     </sys_ui_style>
+    <sys_translated_text action="delete_multiple" query="documentkey=f93b6a954716311047daf2e7536d438f"/>
 </record_update>

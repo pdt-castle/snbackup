@@ -68,7 +68,7 @@
             <sys_domain_path>/</sys_domain_path>
             <sys_id>a22472834fde760016183ce18110c752</sys_id>
             <sys_mod_count>0</sys_mod_count>
-            <sys_name>New Section</sys_name>
+            <sys_name>x_pd_integration_pagerduty_ci_import</sys_name>
             <sys_overrides/>
             <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
             <sys_policy/>

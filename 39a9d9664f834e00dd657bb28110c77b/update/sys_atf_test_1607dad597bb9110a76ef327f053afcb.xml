@@ -4,6 +4,7 @@
         <copied_from/>
         <description>Check feature Response mobilizer feature - success</description>
         <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Settings page - Response mobilizer feature (success) </name>
         <parameters/>
         <remember/>

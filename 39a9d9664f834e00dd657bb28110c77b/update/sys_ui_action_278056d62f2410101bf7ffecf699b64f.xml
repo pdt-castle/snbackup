@@ -3,9 +3,9 @@
         <action_name>refresh_pagerduty_status_updates</action_name>
         <active>false</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_incident) &amp;&amp; !current.x_pd_integration_incident.includes('---')</condition>
         <form_action>true</form_action>
@@ -15,6 +15,7 @@
         <form_link>false</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint/>
         <isolate_script>false</isolate_script>
         <list_action>false</list_action>
@@ -29,12 +30,12 @@
         <name>Refresh PagerDuty Status (DEPRECATED)</name>
         <onclick/>
         <order>1060</order>
-        <script>new FetchStatusUpdates().fetchStatusUpdates({
+        <script><![CDATA[new FetchStatusUpdates().fetchStatusUpdates({
   snIncidentId: current.sys_id,
   incidentId: current.x_pd_integration_incident,
 });
 
-action.setRedirectURL(current);</script>
+action.setRedirectURL(current);]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

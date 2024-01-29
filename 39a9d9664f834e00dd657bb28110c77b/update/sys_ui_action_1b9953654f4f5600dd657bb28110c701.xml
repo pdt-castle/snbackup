@@ -3,9 +3,9 @@
         <action_name/>
         <active>false</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_incident)</condition>
         <form_action>true</form_action>
@@ -15,6 +15,7 @@
         <form_link>false</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint/>
         <isolate_script>false</isolate_script>
         <list_action>false</list_action>
@@ -29,7 +30,7 @@
         <name>Refresh PagerDuty Notes (DEPRECATED)</name>
         <onclick/>
         <order>900</order>
-        <script>var pd = new x_pd_integration.PagerDuty();
+        <script><![CDATA[var pd = new x_pd_integration.PagerDuty();
 var pdIncidentID = current.x_pd_integration_incident;
 var notes = pd.getIncidentNotes(pdIncidentID);
 if (!gs.nil(notes)) {
@@ -38,7 +39,7 @@ if (!gs.nil(notes)) {
 action.setRedirectURL(current);
 
 gs.addInfoMessage("Requesting new notes from PagerDuty incident");
-</script>
+]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

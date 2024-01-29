@@ -9,7 +9,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>25</order>
-        <snapshot display_value="c10552793a48432c015fc428401cde6f">aba54d97478da110c03354f3836d43d0</snapshot>
         <step_config display_value="UI Action Visibility">d8fdf5e10b1022009cfdc71437673adc</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

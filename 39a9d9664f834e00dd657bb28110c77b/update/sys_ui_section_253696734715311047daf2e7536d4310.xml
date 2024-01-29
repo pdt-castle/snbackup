@@ -4,33 +4,22 @@
             <is_plain_text>false</is_plain_text>
             <sys_created_by>PagerDuty_v8.0</sys_created_by>
             <sys_created_on>2023-11-07 17:34:16</sys_created_on>
-            <sys_id>bf6efbeec39a3510743293477d0131a5</sys_id>
-            <sys_mod_count>0</sys_mod_count>
-            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
-            <text>PagerDuty Custom Field details can only be edited in PagerDuty. Only the mapping sync status can be edited.$[SP]&lt;a href="https://support.pagerduty.com/docs/servicenow-custom-fields#why-cant-i-edit-the-newly-created-pagerduty-custom-field-in-servicenow-after-mapping?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_update_cant_edit_custom_fields_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;</text>
-            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
-        </sys_ui_annotation>
-        <sys_ui_annotation action="INSERT_OR_UPDATE">
-            <is_plain_text>false</is_plain_text>
-            <sys_created_by>PagerDuty_v8.0</sys_created_by>
-            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
-            <sys_id>3b6efbeec39a3510743293477d0131a6</sys_id>
-            <sys_mod_count>0</sys_mod_count>
-            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
-            <text>&lt;h4&gt;ServiceNow Field&lt;/h4&gt;</text>
-            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
-        </sys_ui_annotation>
-        <sys_ui_annotation action="INSERT_OR_UPDATE">
-            <is_plain_text>false</is_plain_text>
-            <sys_created_by>PagerDuty_v8.0</sys_created_by>
-            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
             <sys_id>fb6efbeec39a3510743293477d0131a6</sys_id>
             <sys_mod_count>0</sys_mod_count>
             <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
             <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
             <text>&lt;h4&gt;PagerDuty Field&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>736efbeec39a3510743293477d0131a7</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>&lt;h4&gt;Field Mapping Status&lt;/h4&gt;</text>
             <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
         </sys_ui_annotation>
         <sys_ui_annotation action="INSERT_OR_UPDATE">
@@ -48,11 +37,22 @@
             <is_plain_text>false</is_plain_text>
             <sys_created_by>PagerDuty_v8.0</sys_created_by>
             <sys_created_on>2023-11-07 17:34:16</sys_created_on>
-            <sys_id>736efbeec39a3510743293477d0131a7</sys_id>
+            <sys_id>3b6efbeec39a3510743293477d0131a6</sys_id>
             <sys_mod_count>0</sys_mod_count>
             <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
             <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
-            <text>&lt;h4&gt;Field Mapping Status&lt;/h4&gt;</text>
+            <text>&lt;h4&gt;ServiceNow Field&lt;/h4&gt;</text>
+            <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
+        </sys_ui_annotation>
+        <sys_ui_annotation action="INSERT_OR_UPDATE">
+            <is_plain_text>false</is_plain_text>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2023-11-07 17:34:16</sys_created_on>
+            <sys_id>bf6efbeec39a3510743293477d0131a5</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2023-11-07 17:34:16</sys_updated_on>
+            <text>PagerDuty Custom Field details can only be edited in PagerDuty. Only the mapping sync status can be edited.$[SP]&lt;a href="https://support.pagerduty.com/docs/servicenow-custom-fields#why-cant-i-edit-the-newly-created-pagerduty-custom-field-in-servicenow-after-mapping?utm_source=servicenow_itsm&amp;amp;utm_content=cf_mapping_update_cant_edit_custom_fields_click_learn_more" target="_blank" rel="noopener noreferrer"&gt;Learn more&lt;/a&gt;</text>
             <type display_value="Section Plain Text">a21c608353611010a813ddeeff7b12fc</type>
         </sys_ui_annotation>
         <sys_ui_element action="INSERT_OR_UPDATE">

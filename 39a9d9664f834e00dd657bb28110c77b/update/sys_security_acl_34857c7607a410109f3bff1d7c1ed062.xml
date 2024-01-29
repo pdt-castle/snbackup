@@ -5,9 +5,11 @@
         <advanced>false</advanced>
         <condition/>
         <description>Default access control on x_pd_integration_services</description>
+        <local_or_existing/>
         <name>x_pd_integration_services</name>
         <operation display_value="read">read</operation>
         <script/>
+        <security_attribute/>
         <sys_class_name>sys_security_acl</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-05-06 20:38:05</sys_created_on>

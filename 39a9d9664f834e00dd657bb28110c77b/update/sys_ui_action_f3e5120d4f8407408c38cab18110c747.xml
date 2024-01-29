@@ -3,14 +3,19 @@
         <action_name/>
         <active>true</active>
         <client>false</client>
+        <client_script_v2/>
         <comments>Provision a user in PagerDuty from group member choice list. If user exists then populate the PagerDuty ID field.</comments>
         <condition>gs.hasRole("x_pd_integration.admin") </condition>
         <form_action>false</form_action>
         <form_button>false</form_button>
+        <form_button_v2>false</form_button_v2>
         <form_context_menu>false</form_context_menu>
         <form_link>false</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint>Create a user in PagerDuty</hint>
+        <isolate_script>false</isolate_script>
         <list_action>true</list_action>
         <list_banner_button>false</list_banner_button>
         <list_button>false</list_button>
@@ -19,16 +24,17 @@
         <list_link>false</list_link>
         <list_save_with_form_button>false</list_save_with_form_button>
         <list_style/>
+        <messages/>
         <name>Provision PagerDuty Users</name>
         <onclick/>
         <order>800</order>
-        <script>var userRecord = new GlideRecordSecure('sys_user');
+        <script><![CDATA[var userRecord = new GlideRecordSecure('sys_user');
 if (userRecord.get(current.getValue('user'))) {
 	var pd = new x_pd_integration.PagerDutyProvisioning();
 	pd.provisionUser(userRecord);
 	gs.addInfoMessage("Submitted user to PagerDuty. PagerDuty ID field will be stored for each user once complete.");
 }
-</script>
+]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

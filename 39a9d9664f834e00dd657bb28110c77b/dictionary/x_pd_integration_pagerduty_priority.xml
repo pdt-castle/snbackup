@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="345e16374f7232008c38cab18110c738" label="PagerDuty Priority" max_length="40" name="x_pd_integration_pagerduty_priority" type="collection">
+        <element attributes="edge_encryption_enabled=true" choice="1" choice_field="impact" choice_table="dl_u_priority" label="Impact" max_length="40" name="impact" type="integer">
+            <choice>
+                <element inactive_on_update="false" label="1 - High" sequence="0" value="1"/>
+                <element inactive_on_update="false" label="2 - Medium" sequence="1" value="2"/>
+                <element inactive_on_update="false" label="3 - Low" sequence="2" value="3"/>
+            </choice>
+        </element>
+        <element display="true" label="PagerDuty priority" max_length="40" name="pagerduty_priority" type="string"/>
+        <element label="PagerDuty priority id" max_length="40" name="pagerduty_priority_id" type="string"/>
+        <element choice="1" label="PagerDuty urgency" max_length="40" name="pagerduty_urgency" type="string">
+            <choice>
+                <element inactive_on_update="false" label="High" sequence="1" value="high"/>
+                <element inactive_on_update="false" label="Low" sequence="2" value="low"/>
+            </choice>
+        </element>
+        <element attributes="edge_encryption_enabled=true" choice="1" choice_field="priority" choice_table="dl_u_priority" label="Priority" max_length="40" name="priority" read_only="true" type="integer">
+            <choice>
+                <element inactive_on_update="false" label="1 - Critical" sequence="0" value="1"/>
+                <element inactive_on_update="false" label="2 - High" sequence="1" value="2"/>
+                <element inactive_on_update="false" label="3 - Moderate" sequence="2" value="3"/>
+                <element inactive_on_update="false" label="4 - Low" sequence="3" value="4"/>
+                <element inactive_on_update="false" label="5 - Planning" sequence="4" value="5"/>
+            </choice>
+        </element>
+        <element attributes="edge_encryption_enabled=true" choice="1" choice_field="urgency" choice_table="dl_u_priority" label="Urgency" max_length="40" name="urgency" type="integer">
+            <choice>
+                <element inactive_on_update="false" label="1 - High" sequence="0" value="1"/>
+                <element inactive_on_update="false" label="2 - Medium" sequence="1" value="2"/>
+                <element inactive_on_update="false" label="3 - Low" sequence="2" value="3"/>
+            </choice>
+        </element>
+    </element>
+</database>

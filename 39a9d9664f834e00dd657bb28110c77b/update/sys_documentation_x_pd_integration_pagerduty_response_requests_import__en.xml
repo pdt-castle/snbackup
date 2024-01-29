@@ -11,7 +11,6 @@
             <sys_class_name>sys_documentation</sys_class_name>
             <sys_created_by>PagerDuty_v8.0</sys_created_by>
             <sys_created_on>2022-09-28 11:42:29</sys_created_on>
-            <sys_id>1202095497de1d10474470700153afd4</sys_id>
             <sys_mod_count>0</sys_mod_count>
             <sys_name>PagerDuty Response Requests Import</sys_name>
             <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
@@ -23,7 +22,5 @@
             <url/>
             <url_target/>
         </sys_documentation>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
     </sys_documentation>
 </record_update>

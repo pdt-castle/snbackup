@@ -8,7 +8,6 @@
         <mugshots_cache_json/>
         <notes>Create an incident</notes>
         <order>12</order>
-        <snapshot display_value="32337cf46933bce1526510aa70edf441">28658597478da110c03354f3836d433c</snapshot>
         <step_config display_value="Open a New Form">05317cd10b10220050192f15d6673af8</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -27,7 +26,6 @@
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_05317cd10b10220050192f15d6673af8^id=bb7d4c3147816910c03354f3836d4333"/>
     <sys_variable_value action="delete_multiple" query="document_key=bb7d4c3147816910c03354f3836d4333"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -71,4 +69,5 @@
         <value>standard_ui</value>
         <variable display_value="Form UI">6f2a59a4e7133300b5646ea8c2f6a975</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_05317cd10b10220050192f15d6673af8^id=bb7d4c3147816910c03354f3836d4333"/>
 </record_update>

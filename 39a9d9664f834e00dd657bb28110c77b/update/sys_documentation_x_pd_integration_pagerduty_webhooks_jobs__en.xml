@@ -11,7 +11,6 @@
             <sys_class_name>sys_documentation</sys_class_name>
             <sys_created_by>PagerDuty_v8.0</sys_created_by>
             <sys_created_on>2023-07-31 16:31:11</sys_created_on>
-            <sys_id>6e9a7d7247143110607b7258946d43cc</sys_id>
             <sys_mod_count>0</sys_mod_count>
             <sys_name>PagerDuty Webhooks Jobs</sys_name>
             <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
@@ -23,7 +22,5 @@
             <url/>
             <url_target/>
         </sys_documentation>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
     </sys_documentation>
 </record_update>

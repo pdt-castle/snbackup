@@ -3,9 +3,9 @@
         <action_name>enable_response_play</action_name>
         <active>false</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_incident) &amp;&amp; gs.getProperty("x_pd_integration.enable_response_play") == 'true' &amp;&amp; current.state &lt; 6</condition>
         <form_action>true</form_action>
@@ -30,14 +30,14 @@
         <name>Run Response Play (DEPRECATED)</name>
         <onclick>runResponsePlayDialog()</onclick>
         <order>-150</order>
-        <script>function runResponsePlayDialog() {
+        <script><![CDATA[function runResponsePlayDialog() {
   var snIncidentId = g_form.getUniqueValue();
   var gm = new GlideModal('x_pd_integration_run_response_play_dialog');
   gm.setPreference('snIncidentId', snIncidentId);
   gm.setTitle('Run PagerDuty Response Play');
   gm.setWidth(700);
   gm.render();
-}</script>
+}]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

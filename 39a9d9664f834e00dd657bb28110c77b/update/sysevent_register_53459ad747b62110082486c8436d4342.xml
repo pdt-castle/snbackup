@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sysevent_register">
     <sysevent_register action="INSERT_OR_UPDATE">
         <caller_access/>
+        <derived_priority/>
         <description>Adds escalation policy and users (group members and manager) into the PagerDuty team</description>
         <event_name>x_pd_integration.add_users_to_pd_team</event_name>
         <fired_by>Server Development &gt; Script Includes &gt; PagerDutyProvisioning &gt; createPdTeam</fired_by>
+        <priority/>
         <queue/>
         <suffix>add_users_to_pd_team</suffix>
         <sys_class_name>sysevent_register</sys_class_name>

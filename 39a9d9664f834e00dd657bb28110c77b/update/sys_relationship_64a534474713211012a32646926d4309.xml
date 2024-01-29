@@ -7,12 +7,12 @@
         <insert_callback/>
         <name>PagerDuty Webhook</name>
         <query_from/>
-        <query_with>(function refineQuery(current, parent) {
+        <query_with><![CDATA[(function refineQuery(current, parent) {
 
   current.addQuery('sn_entity_sys_id=' + parent.getValue('sys_id'));
 
 })(current, parent);
-</query_with>
+]]></query_with>
         <reference_field/>
         <related_list/>
         <simple_reference>false</simple_reference>
@@ -32,7 +32,7 @@
     <sys_translated_text action="delete_multiple" query="documentkey=64a534474713211012a32646926d4309"/>
     <sys_ui_related_list_relationship_entry action="INSERT_OR_UPDATE">
         <filter/>
-        <list_id display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">09bf8b55475ef190b15271e7826d43f5</list_id>
+        <list_id display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">d3a6ffea772210100afbf62ad91061c0</list_id>
         <order_by/>
         <position>5</position>
         <related_list>REL:64a534474713211012a32646926d4309</related_list>
@@ -42,7 +42,7 @@
         <sys_id>95cf07d5475ef190b15271e7826d4349</sys_id>
         <sys_mod_count>0</sys_mod_count>
         <sys_relationship display_value="PagerDuty Webhook">64a534474713211012a32646926d4309</sys_relationship>
-        <sys_ui_related_list display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">09bf8b55475ef190b15271e7826d43f5</sys_ui_related_list>
+        <sys_ui_related_list display_value="Group - Default view" name="sys_user_group" related_list="NULL" sys_domain="global" view="Default view">d3a6ffea772210100afbf62ad91061c0</sys_ui_related_list>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2023-11-03 16:57:58</sys_updated_on>
     </sys_ui_related_list_relationship_entry>

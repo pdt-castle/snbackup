@@ -7,11 +7,11 @@
         <insert_callback/>
         <name>PagerDuty Webhook</name>
         <query_from/>
-        <query_with>(function refineQuery(current, parent) {
+        <query_with><![CDATA[(function refineQuery(current, parent) {
 
   current.addQuery('sn_entity_sys_id=' + parent.getValue('sys_id'));
 
-})(current, parent);</query_with>
+})(current, parent);]]></query_with>
         <reference_field/>
         <related_list/>
         <simple_reference>false</simple_reference>

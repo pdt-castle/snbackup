@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="aa06f47d7d31311076daf29f52070dfe" defaultsort="-1" dynamic_creation_script="// default on the table level is to create a server&#13;&#10;&#13;&#10;var gr = new GlideRecord(&quot;cmdb_ci_server&quot;);&#13;&#10;gr.initialize();&#13;&#10;gr.name=value;&#13;&#10;gr.insert();" extends="cmdb" label="Configuration Item" max_length="40" name="cmdb_ci" type="collection">
+        <element label="PagerDuty Change Event Token" max_length="40" name="x_pd_integration_pagerduty_change_event_token" type="string"/>
+        <element attributes="edge_encryption_enabled=true,field_decorations=x_pd_integration_pagerduty_link;x_pd_integration_select_pagerduty_object" label="PagerDuty service" max_length="40" name="x_pd_integration_pagerduty_service" type="string"/>
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link,edge_encryption_enabled=true" label="PagerDuty webhook" max_length="40" name="x_pd_integration_pagerduty_webhook" type="string"/>
+    </element>
+</database>

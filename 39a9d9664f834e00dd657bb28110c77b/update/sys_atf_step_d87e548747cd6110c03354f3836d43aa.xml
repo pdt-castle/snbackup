@@ -8,7 +8,6 @@
         <mugshots_cache_json/>
         <notes/>
         <order>20</order>
-        <snapshot display_value="d6fde18903d1e0cb5896fc38e26242e9">1995c997478da110c03354f3836d43cd</snapshot>
         <step_config display_value="Click a UI Action">0f4a128297202200abe4bb7503ac4af0</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

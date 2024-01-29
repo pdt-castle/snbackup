@@ -8,7 +8,6 @@
         <mugshots_cache_json>{"2e48381c628b5ad0639bb36952780bd6":"{\"area\":\"Run a Workflow\",\"sn_atf_mugshot_short_description\":\"List item &lt;li&gt;: ATF ServiceNow incident workflow\",\"inner_text\":\"ATF ServiceNow incident workflow\",\"sn_atf_mugshot_long_description\":\"List item &lt;li&gt;: ATF ServiceNow incident workflow in page area Run a Workflow\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"ATF ServiceNow incident workflow\",\"index\":0,\"type\":\"\",\"version\":\"20.2\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"div\",\"rendered_body\",\"form\",\"li\"],\"get_value_result\":\"ATF ServiceNow incident workflow\",\"sn_atf_mugshot_tag_display_name\":\"List item &lt;li&gt;\",\"sn_atf_mugshot_value\":\"\",\"tag\":\"li\",\"isDisabled\":false,\"label_path\":[\"default\"],\"hash\":\"2e48381c628b5ad0639bb36952780bd6\"}"}</mugshots_cache_json>
         <notes/>
         <order>30</order>
-        <snapshot display_value="87b63f9ef8f2e6f41dccf9240e125c17">e0f14bfb47cd2510c03354f3836d43eb</snapshot>
         <step_config display_value="Click Component (Custom UI)">def25c4b73730300c79260bdfaf6a700</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

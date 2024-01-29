@@ -11,6 +11,7 @@
         <grantable>true</grantable>
         <includes_roles/>
         <name>x_pd_integration.incident_response</name>
+        <requires_subscription/>
         <scoped_admin>false</scoped_admin>
         <suffix>incident_response</suffix>
         <sys_class_name>sys_user_role</sys_class_name>

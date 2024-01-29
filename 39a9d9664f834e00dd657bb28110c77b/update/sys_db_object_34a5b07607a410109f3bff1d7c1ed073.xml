@@ -9,7 +9,6 @@
         <create_access>false</create_access>
         <create_access_controls>true</create_access_controls>
         <delete_access>false</delete_access>
-        <extension_model/>
         <is_extendable>false</is_extendable>
         <label>PagerDuty Services Import</label>
         <live_feed_enabled>false</live_feed_enabled>
@@ -18,10 +17,8 @@
         <provider_class/>
         <read_access>true</read_access>
         <scriptable_table>false</scriptable_table>
-        <super_class display_value="Import Set Row" name="sys_import_set_row">c51ac3b5db11101036b9f53a299619a8</super_class>
-        <sys_class_code/>
+        <super_class display_value="Import Set Row" name="sys_import_set_row">e4e4b0f17d31311076daf29f52070d62</super_class>
         <sys_class_name>sys_db_object</sys_class_name>
-        <sys_class_path/>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-05-06 20:40:13</sys_created_on>
         <sys_id>34a5b07607a410109f3bff1d7c1ed073</sys_id>

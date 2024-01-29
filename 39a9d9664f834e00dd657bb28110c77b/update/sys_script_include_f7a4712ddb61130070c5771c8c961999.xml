@@ -7,7 +7,7 @@
         <client_callable>false</client_callable>
         <description/>
         <name>PdWebhookTransform</name>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 /****
  * For variables go to: http://wiki.service-now.com/index.php?title=Import_Sets
  **/
@@ -44,7 +44,7 @@ var PdWebhookTransform = (function () {
       var isClientServiceNow = String(source.message_channel_client).startsWith(serviceNowClientName);
 
       //ignore if pagerduty message channel client is ServiceNow; this event originally comes from ServiceNow
-      if (!gs.nil(source.message_channel_client) &amp;&amp; (isClientServiceNow) &amp;&amp; (source.message_type == 'incident.resolve')) {
+      if (!gs.nil(source.message_channel_client) && (isClientServiceNow) && (source.message_type == 'incident.resolve')) {
         ignore = true;
         gs.debug('Transform: ignore {0} since the event originally comes from ServiceNow', source.message_type);
         return;
@@ -52,14 +52,14 @@ var PdWebhookTransform = (function () {
 
       if (source.message_type == 'incident.trigger') {
         if (action == 'update') {
-          var shouldAddWorkNote = target.work_notes &amp;&amp; target.work_notes.indexOf(insertWorkNote) &gt;= 0;
+          var shouldAddWorkNote = target.work_notes && target.work_notes.indexOf(insertWorkNote) >= 0;
           gs.debug('webhookTransform incident.trigger update for incident {0}', source.id);
           taskHelper.setPdId(source.id);
 
           //Ent v3.1 populate incident_key as well as id
           target.x_pd_integration_incident_key = source.incident_key;
 
-          if (shouldAddWorkNote &amp;&amp; notesHelper.isEnabled('show_incident_triggering_note')) {
+          if (shouldAddWorkNote && notesHelper.isEnabled('show_incident_triggering_note')) {
             target.work_notes = notesHelper.build('PagerDuty incident was triggered and will notify ' + assignmentsSummary);
           }
 
@@ -69,7 +69,7 @@ var PdWebhookTransform = (function () {
           //don't assign incident is configured to only assign on acknowledgement
           if (assignOnAckOnly == 'true') {
             gs.debug('PagerDuty has assigned incident {0} to {1}', target.getDisplayValue(), assignmentsSummary);
-            if (shouldAddWorkNote &amp;&amp; notesHelper.isEnabled('show_incident_assignment_note')) {
+            if (shouldAddWorkNote && notesHelper.isEnabled('show_incident_assignment_note')) {
               target.work_notes = notesHelper.build('PagerDuty incident was assigned to ' + assignmentsSummary);
             }
           } else {
@@ -81,13 +81,13 @@ var PdWebhookTransform = (function () {
                 'PagerDuty incident was assigned to {0}, but ServiceNow could not locate user \'{1}\' to assign the incident to them',
                 assignmentsSummary, source.assigned_to_pd_id
               );
-              if (shouldAddWorkNote &amp;&amp; notesHelper.isEnabled('show_incident_assignment_note')) {
+              if (shouldAddWorkNote && notesHelper.isEnabled('show_incident_assignment_note')) {
                 target.work_notes = notesHelper.build('PagerDuty incident was assigned to ' + assignmentsSummary +
                   ', but ServiceNow could not locate user \'' + source.assigned_to_pd_id);
               }
               return;
             } else {
-              if (shouldAddWorkNote &amp;&amp; notesHelper.isEnabled('show_incident_assignment_note')) {
+              if (shouldAddWorkNote && notesHelper.isEnabled('show_incident_assignment_note')) {
                 target.work_notes = notesHelper.build('PagerDuty incident was assigned to ' + assignmentsSummary +
                   ', assigning this incident to them');
               }
@@ -107,14 +107,14 @@ var PdWebhookTransform = (function () {
           }
           target.x_pd_integration_incident_key = source.incident_key;
 
-          if (gs.nil(source.message_channel_client) || (!gs.nil(source.message_channel_client) &amp;&amp; (!isClientServiceNow))) {
+          if (gs.nil(source.message_channel_client) || (!gs.nil(source.message_channel_client) && (!isClientServiceNow))) {
             newGroupSysId = getGroupSysIdFromEscalationPolicyId(source);
             if (!gs.nil(newGroupSysId)) {
               target.setValue('assignment_group', newGroupSysId);
             }
           }
 
-          if (!gs.nil(source.service_id) &amp;&amp; gs.nil(source.ci_sys_id)) {
+          if (!gs.nil(source.service_id) && gs.nil(source.ci_sys_id)) {
             target.setValue('cmdb_ci', getCISysID(source.service_id));
           }
 
@@ -126,7 +126,7 @@ var PdWebhookTransform = (function () {
 
           // If the status is acknowledged or someone is assigned and acknowledge flag is false,
           // set the Assigned To field to incident
-          if (!gs.nil(source.assigned_to_pd_id) &amp;&amp; (source.status == 'acknowledged' || assignOnAckOnly == 'false')) {
+          if (!gs.nil(source.assigned_to_pd_id) && (source.status == 'acknowledged' || assignOnAckOnly == 'false')) {
             var assignToUser = getUserByPDID(source.assigned_to_pd_id);
             if (gs.nil(assignToUser)) {
               gs.debug(
@@ -151,7 +151,7 @@ var PdWebhookTransform = (function () {
         return;
       }
 
-      if ((source.message_type == 'incident.assign' || source.message_type == 'incident.delegate' || source.message_type == 'incident.escalate') &amp;&amp; action == 'update') {
+      if ((source.message_type == 'incident.assign' || source.message_type == 'incident.delegate' || source.message_type == 'incident.escalate') && action == 'update') {
 
         gs.debug('Assign or delegate incident, assignOnAckOnly:{0}, assigned_to_pd_id:{1}', assignOnAckOnly, source.assigned_to_pd_id);
 
@@ -170,8 +170,8 @@ var PdWebhookTransform = (function () {
 
         //based on property setting don't auto-assign ServiceNow incident until it's acknowledged
         if (assignOnAckOnly == 'true') {
-          if ((!gs.nil(source.message_channel_client) &amp;&amp; (isClientServiceNow) &amp;&amp;
-            (!gs.nil(assignToUser) &amp;&amp; (assignToUser.getUniqueValue() == target.assigned_to)) ||
+          if ((!gs.nil(source.message_channel_client) && (isClientServiceNow) &&
+            (!gs.nil(assignToUser) && (assignToUser.getUniqueValue() == target.assigned_to)) ||
             (source.status == 'acknowledged'))) {
             target.state = taskHelper.triggerStateValue();
           } else {
@@ -314,18 +314,18 @@ var PdWebhookTransform = (function () {
   function runDynamicFieldMapping (messageType, payload) {
     // Add the dynamic field mapping
     var eventArr = messageType.split('.');
-    if (eventArr.length &gt; 1) {
+    if (eventArr.length > 1) {
       var pifr = new x_pd_integration.PagerDutyInboundFieldRule();
       var results = pifr.getValuesFromPayloadBasedOnEvent(eventArr[1], payload, source.target_table);
       // This is for debugging
       //pifr.printArrayKeyValuePairs(results);
       // Set the target field
       // if setting for a reference, the value is not a valid sys_id, it will set field to empty
-      for (var i = 0; i &lt; results.length; i++) {
+      for (var i = 0; i < results.length; i++) {
         var key = results[i].key;
         // eslint-disable-next-line es5/no-es6-methods
         var isClientServiceNow = String(source.message_channel_client).startsWith(serviceNowClientName);
-        if ((!gs.nil(source.message_channel_client) &amp;&amp; (!isClientServiceNow)) ||
+        if ((!gs.nil(source.message_channel_client) && (!isClientServiceNow)) ||
           (gs.nil(target.getValue(key))) || (gs.nil(source.message_channel_client))) {
           target.setValue(results[i].key, results[i].value);
         }
@@ -412,13 +412,13 @@ var PdWebhookTransform = (function () {
 
       if (checkPriorityChanges) {
         db_priority = getIncidentPriority(source.id);
-        if (!gs.nil(iuObj) &amp;&amp; iuObj.hasOwnProperty('priority')) {
+        if (!gs.nil(iuObj) && iuObj.hasOwnProperty('priority')) {
           tr_priority = iuObj.priority;
         }
       }
 
-      if (!checkPriorityChanges || (db_priority != tr_priority &amp;&amp; !gs.nil(db_priority) &amp;&amp; !gs.nil(tr_priority))) {
-        if (!gs.nil(iuObj) &amp;&amp; iuObj.hasOwnProperty('impact') &amp;&amp; iuObj.hasOwnProperty('urgency')) {
+      if (!checkPriorityChanges || (db_priority != tr_priority && !gs.nil(db_priority) && !gs.nil(tr_priority))) {
+        if (!gs.nil(iuObj) && iuObj.hasOwnProperty('impact') && iuObj.hasOwnProperty('urgency')) {
           taskHelper.setPriority(iuObj);
           gs.debug('webhookTransform Impact: {0}, Urgency: {1}', iuObj.impact, iuObj.urgency);
         }
@@ -428,7 +428,7 @@ var PdWebhookTransform = (function () {
 
   function parseAssignmentsSummary (source) {
     var payload = JSON.parse(source.payload);
-    var assignments = payload.incident &amp;&amp; payload.incident.assignments;
+    var assignments = payload.incident && payload.incident.assignments;
     var assignmentsSummary = [];
     if (assignments) {
       assignments.forEach(function (item) {
@@ -441,7 +441,7 @@ var PdWebhookTransform = (function () {
 
   return {tryTransform: tryTransform};
 })();
-</script>
+]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2018-04-18 12:20:40</sys_created_on>

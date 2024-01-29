@@ -18,52 +18,52 @@
         <sys_update_name>sys_ui_macro_f8a17c04db29130070c5771c8c9619ce</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2020-09-01 12:42:47</sys_updated_on>
-        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;div class="form-group"&gt;
-    &lt;label class="control-label" for="${HTML:jvar_name}"&gt;${HTML:jvar_label}&lt;/label&gt;
-    &lt;select class="form-control" name="${HTML:jvar_name}"&gt;
-      &lt;j:forEach items="${HTML:jvar_options}" var="jvar_option" indexVar="jvar_i"&gt;
-        &lt;j:if test="${HTML:!empty(jvar_values)}"&gt;
-          &lt;j:choose&gt;
-            &lt;j:when test="${HTML:jvar_values[jvar_i] == 'sn_si_incident'}"&gt;
-              &lt;j:choose&gt;
-                &lt;j:when test="${HTML:jvar_disabled == 'true'}"&gt;
-                  &lt;option disabled="true" value="${HTML:jvar_values[jvar_i]}"&gt;${HTML:jvar_option}&lt;/option&gt;
-                &lt;/j:when&gt;
-                &lt;j:otherwise&gt;
-                  &lt;j:if test="${HTML:jvar_values[jvar_i] == jvar_value}"&gt;
-                    &lt;option selected="selected" value="${HTML:jvar_values[jvar_i]}"&gt;${HTML:jvar_option}&lt;/option&gt;
-                  &lt;/j:if&gt;
-                  &lt;j:if test="${HTML:jvar_values[jvar_i] != jvar_value}"&gt;
-                    &lt;option value="${HTML:jvar_values[jvar_i]}"&gt;${HTML:jvar_option}&lt;/option&gt;
-                  &lt;/j:if&gt;
-                &lt;/j:otherwise&gt;
-              &lt;/j:choose&gt;
-            &lt;/j:when&gt;
-            &lt;j:otherwise&gt;
-              &lt;j:if test="${HTML:jvar_values[jvar_i] == jvar_value}"&gt;
-                &lt;option selected="selected" value="${HTML:jvar_values[jvar_i]}"&gt;${HTML:jvar_option}&lt;/option&gt;
-              &lt;/j:if&gt;
-              &lt;j:if test="${HTML:jvar_values[jvar_i] != jvar_value}"&gt;
-                &lt;option value="${HTML:jvar_values[jvar_i]}"&gt;${HTML:jvar_option}&lt;/option&gt;
-              &lt;/j:if&gt;
-            &lt;/j:otherwise&gt;
-          &lt;/j:choose&gt;
-        &lt;/j:if&gt;
-        &lt;j:if test="${HTML:empty(jvar_values)}"&gt;
-          &lt;j:if test="${HTML:jvar_options[jvar_i] == jvar_value}"&gt;
-            &lt;option selected="selected"&gt;${HTML:jvar_option}&lt;/option&gt;
-          &lt;/j:if&gt;
-          &lt;j:if test="${HTML:jvar_options[jvar_i] != jvar_value}"&gt;
-            &lt;option&gt;${HTML:jvar_option}&lt;/option&gt;
-          &lt;/j:if&gt;
-        &lt;/j:if&gt;
-      &lt;/j:forEach&gt;
-    &lt;/select&gt;
-    &lt;span id="${HTML:jvar_name}_help" class="help-block"&gt;&lt;/span&gt;
-  &lt;/div&gt;
-&lt;/j:jelly&gt;
-</xml>
+        <xml><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <div class="form-group">
+    <label class="control-label" for="${HTML:jvar_name}">${HTML:jvar_label}</label>
+    <select class="form-control" name="${HTML:jvar_name}">
+      <j:forEach items="${HTML:jvar_options}" var="jvar_option" indexVar="jvar_i">
+        <j:if test="${HTML:!empty(jvar_values)}">
+          <j:choose>
+            <j:when test="${HTML:jvar_values[jvar_i] == 'sn_si_incident'}">
+              <j:choose>
+                <j:when test="${HTML:jvar_disabled == 'true'}">
+                  <option disabled="true" value="${HTML:jvar_values[jvar_i]}">${HTML:jvar_option}</option>
+                </j:when>
+                <j:otherwise>
+                  <j:if test="${HTML:jvar_values[jvar_i] == jvar_value}">
+                    <option selected="selected" value="${HTML:jvar_values[jvar_i]}">${HTML:jvar_option}</option>
+                  </j:if>
+                  <j:if test="${HTML:jvar_values[jvar_i] != jvar_value}">
+                    <option value="${HTML:jvar_values[jvar_i]}">${HTML:jvar_option}</option>
+                  </j:if>
+                </j:otherwise>
+              </j:choose>
+            </j:when>
+            <j:otherwise>
+              <j:if test="${HTML:jvar_values[jvar_i] == jvar_value}">
+                <option selected="selected" value="${HTML:jvar_values[jvar_i]}">${HTML:jvar_option}</option>
+              </j:if>
+              <j:if test="${HTML:jvar_values[jvar_i] != jvar_value}">
+                <option value="${HTML:jvar_values[jvar_i]}">${HTML:jvar_option}</option>
+              </j:if>
+            </j:otherwise>
+          </j:choose>
+        </j:if>
+        <j:if test="${HTML:empty(jvar_values)}">
+          <j:if test="${HTML:jvar_options[jvar_i] == jvar_value}">
+            <option selected="selected">${HTML:jvar_option}</option>
+          </j:if>
+          <j:if test="${HTML:jvar_options[jvar_i] != jvar_value}">
+            <option>${HTML:jvar_option}</option>
+          </j:if>
+        </j:if>
+      </j:forEach>
+    </select>
+    <span id="${HTML:jvar_name}_help" class="help-block"></span>
+  </div>
+</j:jelly>
+]]></xml>
     </sys_ui_macro>
 </record_update>

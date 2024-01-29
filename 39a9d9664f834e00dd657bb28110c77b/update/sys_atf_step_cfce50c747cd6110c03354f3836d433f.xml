@@ -10,7 +10,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>22</order>
-        <snapshot display_value="e9b7e426c53b127681482fda6ee89f57">e3954d97478da110c03354f3836d43ea</snapshot>
         <step_config display_value="Field Values Validation">1b97cd31872022008182c9ded0e3ece5</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -29,7 +28,6 @@ With a failure timeout of 5 Seconds</description>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_1b97cd31872022008182c9ded0e3ece5^id=cfce50c747cd6110c03354f3836d433f"/>
     <sys_variable_value action="delete_multiple" query="document_key=cfce50c747cd6110c03354f3836d433f"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -73,4 +71,5 @@ With a failure timeout of 5 Seconds</description>
         <value>x_pd_integration_pagerduty_idISNOTEMPTY^EQ</value>
         <variable display_value="Conditions">4aa838f25320220002c6435723dc34e1</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_1b97cd31872022008182c9ded0e3ece5^id=cfce50c747cd6110c03354f3836d433f"/>
 </record_update>

@@ -9,7 +9,6 @@ PagerDuty team is not empty</description>
         <mugshots_cache_json/>
         <notes/>
         <order>5</order>
-        <snapshot/>
         <step_config display_value="Record Validation">1f39a288df60220062fe6c7a4df2639d</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -85,4 +84,5 @@ PagerDuty team is not empty</description>
         <value>1</value>
         <variable display_value="Enforce security">cbddfa135320220002c6435723dc3415</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_1f39a288df60220062fe6c7a4df2639d^id=63cbef80373213009373097973990e53"/>
 </record_update>

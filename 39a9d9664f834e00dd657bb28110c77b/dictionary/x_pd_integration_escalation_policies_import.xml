@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="2bd278be076410109f3bff1d7c1ed0e9" extends="sys_import_set_row" label="PagerDuty Escalation Policies Import" max_length="40" name="x_pd_integration_escalation_policies_import" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="Escalation Policy ID" max_length="40" name="escalation_policy_id" type="string"/>
+        <element label="Escalation Policy Name" max_length="255" name="escalation_policy_name" type="string_full_utf8"/>
+        <element label="Subdomain" max_length="255" name="subdomain" type="string_full_utf8"/>
+    </element>
+</database>

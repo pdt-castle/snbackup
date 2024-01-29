@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sysevent_register">
     <sysevent_register action="INSERT_OR_UPDATE">
+        <caller_access/>
+        <derived_priority/>
         <description>Refresh PagerDuty Responders</description>
         <event_name>x_pd_integration.fetch_responders</event_name>
         <fired_by>PagerDuty business rules</fired_by>
+        <priority/>
         <queue/>
         <suffix>fetch_responders</suffix>
         <sys_class_name>sysevent_register</sys_class_name>

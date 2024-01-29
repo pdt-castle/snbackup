@@ -18,31 +18,31 @@
         <sys_update_name>sys_ui_macro_aea70ffd97eba1108bc07f5e6253af96</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2023-06-21 12:48:26</sys_updated_on>
-        <xml>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-&lt;style&gt;
+        <xml><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<style>
   .inactiveLink {
     pointer-events: none;
     cursor: default;
   }
-&lt;/style&gt;
-&lt;div id="provision-connection-div"&gt;
-  &lt;label class="control-label" for="${HTML:jvar_name}"&gt;${HTML:jvar_label}&lt;/label&gt;
-  &lt;span class="sn-tooltip-basic" style="margin-left: 8px;" title="${HTML:jvar_tooltip_title}"
-        data-toggle="tooltip" data-placement="auto"&gt;
-    &lt;a class="inactiveLink" target="${HTML:jvar_tooltip_target}" style="color: #222"
-       href="${HTML:jvar_tooltip_href}"&gt;
-      &lt;i class="${HTML:jvar_tooltip_icon}"&gt;&lt;/i&gt;
-    &lt;/a&gt;
-  &lt;/span&gt;
-  &lt;div class="${HTML:jvar_class}"&gt;
-    &lt;input type="${HTML:jvar_type}" class="form-control sn-tooltip-basic"
+</style>
+<div id="provision-connection-div">
+  <label class="control-label" for="${HTML:jvar_name}">${HTML:jvar_label}</label>
+  <span class="sn-tooltip-basic" style="margin-left: 8px;" title="${HTML:jvar_tooltip_title}"
+        data-toggle="tooltip" data-placement="auto">
+    <a class="inactiveLink" target="${HTML:jvar_tooltip_target}" style="color: #222"
+       href="${HTML:jvar_tooltip_href}">
+      <i class="${HTML:jvar_tooltip_icon}"></i>
+    </a>
+  </span>
+  <div class="${HTML:jvar_class}">
+    <input type="${HTML:jvar_type}" class="form-control sn-tooltip-basic"
            name="${HTML:jvar_name}" placeholder="${HTML:jvar_placeholder}"
            aria-describedby="${HTML:jvar_name}_help" value="${HTML:jvar_value}"
-           mandatory="mandatory" readonly="readonly" /&gt;
-  &lt;/div&gt;
-&lt;/div&gt;
-&lt;/j:jelly&gt;
-</xml>
+           mandatory="mandatory" readonly="readonly" />
+  </div>
+</div>
+</j:jelly>
+]]></xml>
     </sys_ui_macro>
 </record_update>

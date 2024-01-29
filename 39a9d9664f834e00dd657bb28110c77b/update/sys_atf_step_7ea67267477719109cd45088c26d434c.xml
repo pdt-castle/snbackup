@@ -9,7 +9,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes>If wrong api_key format</notes>
         <order>4</order>
-        <snapshot/>
         <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -28,4 +27,6 @@ With a failure timeout of 5 Seconds</description>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
+    <sys_variable_value action="delete_multiple" query="document_key=7ea67267477719109cd45088c26d434c"/>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_475e0de3d732130089fca2285e610361^id=7ea67267477719109cd45088c26d434c"/>
 </record_update>

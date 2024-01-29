@@ -3,9 +3,9 @@
         <action_name>add_responders</action_name>
         <active>true</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition>!gs.nil(current.x_pd_integration_incident) &amp;&amp; gs.getProperty("x_pd_integration.enable_response_mobilizer") == 'true' &amp;&amp; current.state &lt; 6</condition>
         <form_action>true</form_action>
@@ -30,7 +30,7 @@
         <name>Add Responders</name>
         <onclick>addRespondersDialog()</onclick>
         <order>-175</order>
-        <script>function addRespondersDialog() {
+        <script><![CDATA[function addRespondersDialog() {
 	ScriptLoader.getScripts('x_pd_integration.AjaxHelper.jsdbx?v='+new Date().getTime(), function() {
 	var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
           trackingApi.track('incident_ui_action_clicked_add_responders_button', {},
@@ -43,7 +43,7 @@
     gm.setWidth(700);
     gm.render();
 }
-</script>
+]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

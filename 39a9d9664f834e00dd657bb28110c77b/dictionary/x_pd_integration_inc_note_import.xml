@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="c88d70044fae9a00dd657bb28110c7d9" extends="sys_import_set_row" label="PagerDuty Incident Note Import (DEPRECATED)" max_length="40" name="x_pd_integration_inc_note_import" type="collection">
+        <element label="Content" max_length="4000" name="content" type="string"/>
+        <element label="Incident ID" max_length="40" name="incident_id" type="string"/>
+        <element label="Note created at" max_length="40" name="note_created_at" type="string"/>
+        <element label="Note ID" max_length="40" name="note_id" type="string"/>
+        <element label="User email" max_length="100" name="user_email" type="string"/>
+        <element label="User ID" max_length="40" name="user_id" type="string"/>
+        <element label="User name" max_length="100" name="user_name" type="string"/>
+    </element>
+</database>

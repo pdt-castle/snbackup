@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="e877d3ca1ba03300a689db15cc4bcb75" label="PagerDuty Response Requests" max_length="40" name="x_pd_integration_pagerduty_response_requests" type="collection">
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Assigned To" max_length="32" name="assigned_to" reference="sys_user" type="reference"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Assignment Group" max_length="32" name="assignment_group" reference="sys_user_group" type="reference"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Incident" max_length="32" name="incident" reference="incident" type="reference"/>
+        <element label="Message" max_length="255" name="message" type="string_full_utf8"/>
+        <element attributes="ignore_filter_on_new=true" default="javascript:global.getNextObjNumberPadded();" label="Number" max_length="40" name="number" type="string"/>
+        <element label="PD Group ID" max_length="40" name="pd_group_id" type="string"/>
+        <element label="PD User ID" max_length="40" name="pd_user_id" type="string"/>
+        <element label="State" max_length="40" name="state" type="string"/>
+        <index name="index">
+            <element name="assigned_to"/>
+        </index>
+        <index name="index2">
+            <element name="assignment_group"/>
+        </index>
+        <index name="index3">
+            <element name="incident"/>
+        </index>
+    </element>
+</database>

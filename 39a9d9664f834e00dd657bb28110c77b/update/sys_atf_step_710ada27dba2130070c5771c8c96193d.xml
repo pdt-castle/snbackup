@@ -9,7 +9,6 @@ PagerDuty ID = expected_id</description>
         <mugshots_cache_json/>
         <notes/>
         <order>8</order>
-        <snapshot/>
         <step_config display_value="Record Update">17a72288df60220062fe6c7a4df26397</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -85,4 +84,5 @@ PagerDuty ID = expected_id</description>
         <value>46d96f57a9fe198101947a9620895886</value>
         <variable display_value="Record">501c8f535320220002c6435723dc34da</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_17a72288df60220062fe6c7a4df26397^id=710ada27dba2130070c5771c8c96193d"/>
 </record_update>

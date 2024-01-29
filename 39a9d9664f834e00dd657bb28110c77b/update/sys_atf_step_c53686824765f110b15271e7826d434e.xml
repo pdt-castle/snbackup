@@ -28,12 +28,11 @@ See the documentation for Test Design Considerations</description>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2023-09-29 13:49:08</sys_updated_on>
         <table>sys_user_group</table>
-        <test display_value="PD - Webhooks Healthcheck - webhook_missing ">01368a8647e1f110b15271e7826d4314</test>
+        <test display_value="PD - Webhooks Healthcheck - webhook_missing  and webhook_invalid_multiple">01368a8647e1f110b15271e7826d4314</test>
         <timeout/>
         <warning_message>Warning: Using a system table may cause unexpected behavior for other tests running in parallel&#13;
 See the documentation for Test Design Considerations</warning_message>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_14872288df60220062fe6c7a4df26319^id=c53686824765f110b15271e7826d434e"/>
     <sys_variable_value action="delete_multiple" query="document_key=c53686824765f110b15271e7826d434e"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -91,4 +90,5 @@ See the documentation for Test Design Considerations</warning_message>
         <value>1</value>
         <variable display_value="Enforce security">e6e3c7535320220002c6435723dc3496</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_14872288df60220062fe6c7a4df26319^id=c53686824765f110b15271e7826d434e"/>
 </record_update>

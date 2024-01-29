@@ -30,7 +30,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>(function executeRule (current, previous /* null when async*/) {
+        <script><![CDATA[(function executeRule (current, previous /* null when async*/) {
   var eventName = 'x_pd_integration.pd_synchronize_options';
   // Extract the data from the current GlideRecord and pass it to the event, since for delete operations the event will not have access to the GlideRecord
   var eventData = {
@@ -43,7 +43,7 @@
   if (eventData.operation === 'insert') {
     var support = new x_pd_integration.PagerDutyCustomFieldsSupport();
     var existingMapping = support.getMappingByFieldNameAndTableName(eventData.snFieldName, eventData.snFieldTable);
-    if (existingMapping &amp;&amp; support.isMappingAtMaximumChoiceSize(existingMapping)) {
+    if (existingMapping && support.isMappingAtMaximumChoiceSize(existingMapping)) {
       gs.addInfoMessage('The current PagerDuty field mapping is at the maximum number of choices. New choices will not be synchronized to PagerDuty.');
       return;
     }
@@ -52,7 +52,7 @@
   gs.debug('Firing event {0} for: {1}', eventName, jsonEventData);
   gs.eventQueue(eventName, null, jsonEventData);
 })(current, previous);
-</script>
+]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-10-10 16:35:13</sys_created_on>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="856ab97247143110607b7258946d4387" label="PagerDuty Webhooks Jobs" max_length="40" name="x_pd_integration_pagerduty_webhooks_jobs" type="collection">
+        <element label="Data" max_length="4096" name="data" type="string"/>
+        <element label="Execution errors" max_length="4096" name="execution_errors" type="string"/>
+        <element label="Status" max_length="40" name="status" type="string"/>
+        <element label="Step" max_length="40" name="step" type="string"/>
+        <element label="Type" max_length="40" name="type" type="string"/>
+    </element>
+</database>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="027d30e42fbb1010aaa1f7ecf699b6da" label="PagerDuty Business Services" max_length="40" name="x_pd_integration_business_services" type="collection">
+        <element attributes="edge_encryption_enabled=true" default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="ID" max_length="40" name="id" type="string"/>
+        <element label="Name" max_length="255" name="name" type="string_full_utf8"/>
+        <element label="Subdomain" max_length="255" name="subdomain" type="string_full_utf8"/>
+        <index name="index">
+            <element name="id"/>
+        </index>
+    </element>
+</database>

@@ -31,7 +31,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>// Condition: gs.isLoggedIn()
+        <script><![CDATA[// Condition: gs.isLoggedIn()
 (function executeRule(current, previous /*null when async*/) {
 
   var eventName = "x_pd_integration.fetch_status_updates";
@@ -40,7 +40,7 @@
   gs.eventQueue(eventName, current, currentUserSysid);
 
 })(current, previous);
-</script>
+]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2020-03-17 14:40:27</sys_created_on>

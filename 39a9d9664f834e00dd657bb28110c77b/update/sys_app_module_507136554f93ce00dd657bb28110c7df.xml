@@ -3,7 +3,6 @@
         <active>true</active>
         <application display_value="PagerDuty">eeda99a64f834e00dd657bb28110c748</application>
         <assessment/>
-        <content_page/>
         <device_type/>
         <filter table="incident">x_pd_integration_incidentISNOTEMPTY^active=true^EQ<item endquery="false" field="x_pd_integration_incident" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
             <item endquery="false" field="active" goto="false" newquery="false" operator="=" or="false" value="true"/>

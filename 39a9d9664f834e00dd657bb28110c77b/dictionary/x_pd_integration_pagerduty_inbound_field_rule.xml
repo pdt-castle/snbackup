@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="c17bfc29dbb2130070c5771c8c9619ab" label="PagerDuty Inbound Field Rule" max_length="40" name="x_pd_integration_pagerduty_inbound_field_rule" type="collection">
+        <element attributes="edge_encryption_enabled=true" default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element choice="3" default="string" label="Data type for default value" mandatory="true" max_length="40" name="data_type" type="string">
+            <choice>
+                <element inactive_on_update="false" label="String" sequence="0" value="string"/>
+                <element inactive_on_update="false" label="Integer" sequence="1" value="integer"/>
+                <element inactive_on_update="false" label="Decimal" sequence="2" value="decimal"/>
+            </choice>
+        </element>
+        <element label="Default value" max_length="1000" name="default_value" type="string"/>
+        <element display="true" label="Description" mandatory="true" max_length="160" name="description" type="string"/>
+        <element choice="3" default="trigger" label="PagerDuty webhook type" mandatory="true" max_length="40" name="event" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Trigger" sequence="0" value="trigger"/>
+                <element inactive_on_update="false" label="Acknowledge" sequence="1" value="acknowledge"/>
+                <element inactive_on_update="false" label="Unacknowledge" sequence="2" value="unacknowledge"/>
+                <element inactive_on_update="false" label="Resolve" sequence="3" value="resolve"/>
+                <element inactive_on_update="false" label="Escalate" sequence="4" value="escalate"/>
+                <element inactive_on_update="false" label="Delegate" sequence="5" value="delegate"/>
+                <element inactive_on_update="false" label="Annotate" sequence="6" value="annotate"/>
+                <element inactive_on_update="false" label="Custom" sequence="7" value="custom"/>
+            </choice>
+        </element>
+        <element choice="3" default="incident" label="Incident table name" max_length="20" name="incident_table_name" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Incident" sequence="1" value="incident"/>
+                <element inactive_on_update="false" label="Security incident" sequence="2" value="sn_si_incident"/>
+                <element inactive_on_update="false" label="Change request" sequence="3" value="change_request"/>
+            </choice>
+        </element>
+        <element attributes="ignore_filter_on_new=true" default="javascript:global.getNextObjNumberPadded();" label="Number" max_length="40" name="number" type="string"/>
+        <element attributes="edge_encryption_enabled=true" default="100" label="Order" mandatory="true" max_length="40" name="order" type="integer"/>
+        <element label="PagerDuty webhook payload field" max_length="160" name="payload_field" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Run lookup script" max_length="40" name="run_lookup_script" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true" label="Script" max_length="8000" name="script" type="script"/>
+        <element attributes="edge_encryption_enabled=true" dependent="incident_table_name" dependent_on_field="incident_table_name" label="ServiceNow incident field" mandatory="true" max_length="80" name="target_field" type="field_name" use_dependent_field="true"/>
+        <element choice="3" default="set_default_value" label="Type" mandatory="true" max_length="40" name="type" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Set Default Value" sequence="0" value="set_default_value"/>
+                <element inactive_on_update="false" label="Set From PagerDuty Webhook Payload" sequence="1" value="set_from_payload"/>
+            </choice>
+        </element>
+    </element>
+</database>

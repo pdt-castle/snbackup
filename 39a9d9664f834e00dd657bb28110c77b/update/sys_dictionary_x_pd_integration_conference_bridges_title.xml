@@ -2,15 +2,14 @@
     <sys_dictionary action="INSERT_OR_UPDATE" element="title" table="x_pd_integration_conference_bridges">
         <active>true</active>
         <array>false</array>
-        <array_denormalized>false</array_denormalized>
         <attributes/>
         <audit>false</audit>
-        <calculation>(function calculatedFieldValue(current) {
+        <calculation><![CDATA[(function calculatedFieldValue(current) {
 
 	// Add your code here
 	return '';  // return the calculated value
 
-})(current);</calculation>
+})(current);]]></calculation>
         <choice/>
         <choice_field/>
         <choice_table/>
@@ -30,6 +29,7 @@
         <element>title</element>
         <element_reference>false</element_reference>
         <foreign_database/>
+        <formula/>
         <function_definition/>
         <function_field>false</function_field>
         <internal_type display_value="String">string</internal_type>
@@ -47,14 +47,11 @@
         <reference_qual/>
         <reference_qual_condition/>
         <reference_type/>
-        <sizeclass/>
         <spell_check>false</spell_check>
         <staged>false</staged>
         <sys_class_name>sys_dictionary</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2019-04-08 11:15:44</sys_created_on>
-        <sys_id>eb91b13bdb603300eb140181ca9619a9</sys_id>
-        <sys_mod_count>2</sys_mod_count>
         <sys_name>Title</sys_name>
         <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
         <sys_policy/>
@@ -69,6 +66,7 @@
         <use_dynamic_default>false</use_dynamic_default>
         <use_reference_qualifier>simple</use_reference_qualifier>
         <virtual>false</virtual>
+        <virtual_type/>
         <widget/>
         <write_roles/>
         <xml_view>false</xml_view>

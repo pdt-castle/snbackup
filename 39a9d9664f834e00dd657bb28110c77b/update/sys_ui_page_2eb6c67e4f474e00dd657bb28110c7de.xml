@@ -5,75 +5,75 @@
         <description>Display list of application configuration files</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_app_config_files.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:g2="null" xmlns:g="glide" xmlns:j2="null" xmlns:j="jelly:core"&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:g2="null" xmlns:g="glide" xmlns:j2="null" xmlns:j="jelly:core">
 
-  &lt;!-- get the scope of the current record and list of tables to display--&gt;
-  &lt;g:evaluate var="jvar_my_scope"&gt;
+  <!-- get the scope of the current record and list of tables to display-->
+  <g:evaluate var="jvar_my_scope">
     var scope = new GlideRecordSecure("sys_scope");
     if (scope.get("scope", gs.getCurrentScopeName())) scope;
-  &lt;/g:evaluate&gt;
-  &lt;g:evaluate expression="scope.getDisplayValue()" var="jvar_my_scope_name"/&gt;
-  &lt;g:evaluate expression="scope.getUniqueValue()" var="jvar_my_scope_id"/&gt;
-  &lt;g:evaluate expression="gs.getProperty(scope.scope + '.config_file_tables','')" var="jvar_config_tables"/&gt;
+  </g:evaluate>
+  <g:evaluate expression="scope.getDisplayValue()" var="jvar_my_scope_name"/>
+  <g:evaluate expression="scope.getUniqueValue()" var="jvar_my_scope_id"/>
+  <g:evaluate expression="gs.getProperty(scope.scope + '.config_file_tables','')" var="jvar_config_tables"/>
 
-  &lt;!-- notify user if we don't have tables property --&gt;
-  &lt;j:if test="${HTML:jvar_config_tables == ''}"&gt;
+  <!-- notify user if we don't have tables property -->
+  <j:if test="${HTML:jvar_config_tables == ''}">
     The required property 'config_file_tables' in scope ''${HTML:scope.scope}'' is missing
-  &lt;/j:if&gt;
-  &lt;j:if test="${HTML:jvar_config_tables != ''}"&gt;
-    &lt;nav class="navbar navbar-default" role="navigation" style="min-width:935px;"&gt;
-      &lt;div class="container-fluid"&gt;
-        &lt;div class="navbar-header"&gt;
-          &lt;h1 class="navbar-title" style="display:inline-block;"&gt;Configuration files for ${HTML:jvar_my_scope_name}&lt;/h1&gt;
-        &lt;/div&gt;
-        &lt;div class="nav navbar-right"&gt;&lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/nav&gt;
-    &lt;g:inline template="tabs2.xml"/&gt;
+  </j:if>
+  <j:if test="${HTML:jvar_config_tables != ''}">
+    <nav class="navbar navbar-default" role="navigation" style="min-width:935px;">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <h1 class="navbar-title" style="display:inline-block;">Configuration files for ${HTML:jvar_my_scope_name}</h1>
+        </div>
+        <div class="nav navbar-right"></div>
+      </div>
+    </nav>
+    <g:inline template="tabs2.xml"/>
 
-    &lt;TABLE border="0" cellPadding="0" cellSpacing="0" id="testtable" width="100%"&gt;
-      &lt;TR&gt;
-        &lt;TD valign="top"&gt;
-          &lt;j:set value="cardboard" var="jvar_list_type"/&gt;
-          &lt;br/&gt;
-          &lt;!-- tabstrip for related lists --&gt;
-          &lt;div class="tabs2_strip" id="tabs2_list"&gt;
-            &lt;!-- hack for IE bug when tab strip causes a horizontal scroll bar to appear --&gt;
-            &lt;img alt="" height="1px" src="images/s.gifx" style="margin-right: 0px;" width="1px"/&gt;
-          &lt;/div&gt;
-          &lt;!--
+    <TABLE border="0" cellPadding="0" cellSpacing="0" id="testtable" width="100%">
+      <TR>
+        <TD valign="top">
+          <j:set value="cardboard" var="jvar_list_type"/>
+          <br/>
+          <!-- tabstrip for related lists -->
+          <div class="tabs2_strip" id="tabs2_list">
+            <!-- hack for IE bug when tab strip causes a horizontal scroll bar to appear -->
+            <img alt="" height="1px" src="images/s.gifx" style="margin-right: 0px;" width="1px"/>
+          </div>
+          <!--
                   Start with the lists not displayed so that we do not impact the page scroll position - gets shown in
                   the onLoad event below
-               --&gt;
-          &lt;span id="list_span" style="display:none;border-top: 1px solid black; padding-top: 5px; margin-top: -7px;"&gt;
-            &lt;j:set value="true" var="jvar_use_name_for_list_id"/&gt;
+               -->
+          <span id="list_span" style="display:none;border-top: 1px solid black; padding-top: 5px; margin-top: -7px;">
+            <j:set value="true" var="jvar_use_name_for_list_id"/>
 
-            &lt;j:forEach items="${HTML:jvar_config_tables.split(',')}" var="jvar_config_table"&gt;
-              &lt;!-- make sure we have a valid table --&gt;
-              &lt;g:evaluate jelly="true" var="jvar_valid_table"&gt;
+            <j:forEach items="${HTML:jvar_config_tables.split(',')}" var="jvar_config_table">
+              <!-- make sure we have a valid table -->
+              <g:evaluate jelly="true" var="jvar_valid_table">
                 var isValid = false; var tableName = jelly.jvar_config_table.trim(); var configTable = new GlideRecordSecure(tableName); if (configTable.isValid()) isValid = true; isValid;
-              &lt;/g:evaluate&gt;
-              &lt;j:if test="${HTML:jvar_valid_table == true}"&gt;
-                &lt;!-- display the table list of filtered records --&gt;
-                &lt;g:inline source="${HTML:jvar_my_scope_id}" table="${HTML:jvar_config_table.trim()}" table_field="sys_scope" template="personalize_all_list.xml"/&gt;
-              &lt;/j:if&gt;
-            &lt;/j:forEach&gt;
-          &lt;/span&gt;
+              </g:evaluate>
+              <j:if test="${HTML:jvar_valid_table == true}">
+                <!-- display the table list of filtered records -->
+                <g:inline source="${HTML:jvar_my_scope_id}" table="${HTML:jvar_config_table.trim()}" table_field="sys_scope" template="personalize_all_list.xml"/>
+              </j:if>
+            </j:forEach>
+          </span>
 
-        &lt;/TD&gt;
-      &lt;/TR&gt;
-    &lt;/TABLE&gt;
-    &lt;script&gt;
+        </TD>
+      </TR>
+    </TABLE>
+    <script>
       addLoadEvent(function () {
         var tabs = new GlideTabs2("tabs2_list", gel("list_span"), 0, '');
         tabs.activate();
         show("list_span");
       });
-    &lt;/script&gt;
-  &lt;/j:if&gt;
-&lt;/j:jelly&gt;
-</html>
+    </script>
+  </j:if>
+</j:jelly>
+]]></html>
         <name>app_config_files</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

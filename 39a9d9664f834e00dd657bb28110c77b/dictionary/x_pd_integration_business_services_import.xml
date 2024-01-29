@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="32ddb4e42fbb1010aaa1f7ecf699b679" extends="sys_import_set_row" label="PagerDuty Business Services Import" max_length="40" name="x_pd_integration_business_services_import" type="collection">
+        <element attributes="edge_encryption_enabled=true" default="true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element label="ID" max_length="40" name="id" type="string"/>
+        <element label="Name" max_length="255" name="name" type="string_full_utf8"/>
+        <element label="Subdomain" max_length="255" name="subdomain" type="string_full_utf8"/>
+    </element>
+</database>

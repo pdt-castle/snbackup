@@ -7,7 +7,7 @@
         <client_callable>false</client_callable>
         <description>Inbound processor handler for PagerDuty webhook v3 callback</description>
         <name>PagerDutyInboundV3</name>
-        <script>/*** Changes made to this script are not supported by PagerDuty ***/
+        <script><![CDATA[/*** Changes made to this script are not supported by PagerDuty ***/
 var PagerDutyInboundV3 = Class.create();
 PagerDutyInboundV3.prototype = {
   type: 'PagerDutyInboundV3',
@@ -62,10 +62,10 @@ PagerDutyInboundV3.prototype = {
     var dest = {};
 
     dest.timestamp = payload.occurred_at;
-    if (payload.agent &amp;&amp; payload.agent.type === 'user_reference') {
+    if (payload.agent && payload.agent.type === 'user_reference') {
       dest.username = payload.agent.summary;
     }
-    if (payload.data &amp;&amp; payload.data.type === 'incident_note') {
+    if (payload.data && payload.data.type === 'incident_note') {
       dest.note = payload.data.content;
     }
 
@@ -89,7 +89,7 @@ PagerDutyInboundV3.prototype = {
       dest.incident_key = data.incident_key;
     }
 
-    if (queryParams.task_type &amp;&amp; queryParams.task_type.length) {
+    if (queryParams.task_type && queryParams.task_type.length) {
       dest.target_table = queryParams.task_type[0];
     } else {
       dest.target_table = 'incident';
@@ -111,7 +111,7 @@ PagerDutyInboundV3.prototype = {
       dest.service_id = data.service.id;
     }
 
-    if (data.assignees &amp;&amp; data.assignees[0]) {
+    if (data.assignees && data.assignees[0]) {
       dest.assigned_to_name = data.assignees[0].summary;
       dest.assigned_to_pd_id = data.assignees[0].id;
     }
@@ -133,7 +133,7 @@ PagerDutyInboundV3.prototype = {
   _extractPriorityUpdated: function (payload) {
     var dest = {};
 
-    if (payload.data &amp;&amp; payload.data.priority) {
+    if (payload.data && payload.data.priority) {
       dest.priority_id = payload.data.priority.id;
     }
 
@@ -143,12 +143,12 @@ PagerDutyInboundV3.prototype = {
   _extractResolved: function (payload) {
     var dest = {};
 
-    if (payload.agent &amp;&amp; payload.agent.type === 'user_reference') {
+    if (payload.agent && payload.agent.type === 'user_reference') {
       dest.resolved_by_pd_id = payload.agent.id;
       dest.resolved_by_name = payload.agent.summary;
     }
 
-    if (payload.data.resolve_reason &amp;&amp; payload.data.resolve_reason.type === 'merge_resolve_reason') {
+    if (payload.data.resolve_reason && payload.data.resolve_reason.type === 'merge_resolve_reason') {
       dest.resolve_reason = payload.data.resolve_reason.type;
       dest.parent_pd_id = payload.data.resolve_reason.incident.id;
     }
@@ -181,13 +181,13 @@ PagerDutyInboundV3.prototype = {
   _extractTriggered: function (payload, queryParams) {
     var dest = {};
 
-    if (queryParams.ci &amp;&amp; queryParams.ci.length) {
+    if (queryParams.ci && queryParams.ci.length) {
       dest.ci_sys_id = queryParams.ci[0];
     }
 
-    if (queryParams.group &amp;&amp; queryParams.group.length) {
+    if (queryParams.group && queryParams.group.length) {
       var ep = getGroupEscalationPolicy(queryParams.group[0], payload.data);
-      if (ep.name &amp;&amp; ep.id) {
+      if (ep.name && ep.id) {
         dest.escalation_policy = ep.name;
         dest.escalation_policy_id = ep.id;
       }
@@ -210,7 +210,7 @@ PagerDutyInboundV3.prototype = {
    */
   attachFirstTriggerLogEntry: function (payload) {
     var pdIncidentId;
-    if (payload.data &amp;&amp; payload.data.id) {
+    if (payload.data && payload.data.id) {
       pdIncidentId = payload.data.id;
     }
 
@@ -271,7 +271,7 @@ function mergeRows (dest, rows) {
   });
   return dest;
 }
-</script>
+]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2022-07-05 13:51:19</sys_created_on>

@@ -3,9 +3,9 @@
         <action_name/>
         <active>false</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>DEPRECATED.&#13;
 In order to create a webhook subscription with the task_type set to a Security Incident [sn_si_incident], set this parameter on the PagerDuty Settings page, Webhook Configuration section.</comments>
         <condition>x_pd_integration.ConditionsHelper.provisionGroupSiUiAction(current)</condition>
@@ -16,9 +16,10 @@ In order to create a webhook subscription with the task_type set to a Security I
         <form_link>true</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint>Create a service and escalation policy in PagerDuty</hint>
         <isolate_script>false</isolate_script>
-        <list_action>true</list_action>
+        <list_action>false</list_action>
         <list_banner_button>false</list_banner_button>
         <list_button>false</list_button>
         <list_choice>false</list_choice>
@@ -30,7 +31,7 @@ In order to create a webhook subscription with the task_type set to a Security I
         <name>Provision Group into PagerDuty (SI)</name>
         <onclick>provisionGroup()</onclick>
         <order>901</order>
-        <script>function provisionGroup() {
+        <script><![CDATA[function provisionGroup() {
   var manager = g_form.getValue('manager');
   if (!manager) {
     var decision = confirm('The assignment group contains no manager user, the current user will be set as a manager. Do you want to provision the group?');
@@ -52,7 +53,7 @@ function provision(opts) {
   ga.addParam('sysparm_use_current_user', opts.use_current_user);
   ga.getXMLAnswer(function(answer) {});
 }
-</script>
+]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

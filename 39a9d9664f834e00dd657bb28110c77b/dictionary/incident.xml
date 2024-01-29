@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="all_tables.query_hints=true,email_client=true,hasWorkflow=true,live_feed=true,query_hints=true" audit="true" db_object_id="8ef778397db1311076daf29f52070d0e" extends="task" label="Incident" max_length="40" name="incident" text_index="true" type="collection">
+        <element attributes="field_decorations=x_pd_integration_pagerduty_link" hint="PagerDuty incident id" label="PagerDuty incident" max_length="40" name="x_pd_integration_incident" read_only="true" type="string"/>
+        <element hint="PagerDuty incident key" label="PagerDuty incident key" max_length="40" name="x_pd_integration_incident_key" read_only="true" type="string"/>
+        <element active="false" hint="PagerDuty list of note ids that are in sync with ServiceNow worknotes" label="PagerDuty notes IDs (DEPRECATED)" max_length="4000" name="x_pd_integration_notes_ids" read_only="true" type="string"/>
+    </element>
+</database>

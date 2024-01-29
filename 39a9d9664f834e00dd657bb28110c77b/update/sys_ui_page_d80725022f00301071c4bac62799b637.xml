@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>var res = confirm('Are you sure to refresh PagerDuty services?');
+        <client_script><![CDATA[var res = confirm('Are you sure to refresh PagerDuty services?');
 
 if (res)
 	jQuery('form')[0].submit();
 else
 	window.history.back();
-</client_script>
+]]></client_script>
         <description/>
         <direct>false</direct>
         <endpoint>x_pd_integration_refresh_pd_services.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-	&lt;g:ui_form&gt;
-	&lt;/g:ui_form&gt;
-&lt;/j:jelly&gt;</html>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:ui_form>
+	</g:ui_form>
+</j:jelly>]]></html>
         <name>refresh_pd_services</name>
-        <processing_script>gs.info('Updating PagerDuty services');
+        <processing_script><![CDATA[gs.info('Updating PagerDuty services');
 var message = '';
 var pd = new x_pd_integration.Services();
 var result = pd.refreshServices();
@@ -33,7 +33,7 @@ else {
   gs.addInfoMessage(message);
 }
 
-response.sendRedirect('x_pd_integration_services_list.do');</processing_script>
+response.sendRedirect('x_pd_integration_services_list.do');]]></processing_script>
         <sys_class_name>sys_ui_page</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2021-05-12 12:09:49</sys_created_on>

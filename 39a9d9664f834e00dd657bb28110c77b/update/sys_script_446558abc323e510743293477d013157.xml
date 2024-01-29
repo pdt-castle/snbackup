@@ -17,7 +17,6 @@
         <execute_function>false</execute_function>
         <filter_condition table="x_pd_integration_pagerduty_webhooks">sn_entity_sys_idISNOTEMPTY^webhook_idISNOTEMPTY^task_typeVALCHANGES^ORsync_optionVALCHANGES^webhook_versionISNOTEMPTY^EQ<item endquery="false" field="sn_entity_sys_id" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
             <item endquery="false" field="webhook_id" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
-            <item endquery="false" field="extension_schema_id" goto="false" newquery="false" operator="ISNOTEMPTY" or="true" value=""/>
             <item endquery="false" field="task_type" goto="false" newquery="false" operator="VALCHANGES" or="false" value=""/>
             <item endquery="false" field="sync_option" goto="false" newquery="false" operator="VALCHANGES" or="true" value=""/>
             <item endquery="false" field="webhook_version" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
@@ -34,7 +33,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>(function executeRule (current, previous /* null when async */) {
+        <script><![CDATA[(function executeRule (current, previous /* null when async */) {
   var currentUserSysId = gs.getUserID();
   var eventName;
 
@@ -56,7 +55,7 @@
     gs.eventQueue(eventName, current, currentUserSysId, '', '');
   }
 })(current, previous);
-</script>
+]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-06-26 10:31:05</sys_created_on>

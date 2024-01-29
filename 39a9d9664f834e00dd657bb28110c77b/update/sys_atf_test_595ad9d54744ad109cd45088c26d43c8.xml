@@ -6,6 +6,7 @@
 Before the test you should put api_key and endpoint.&#13;
 Test will be success if api_key is wrong</description>
         <enable_parameterized_testing>false</enable_parameterized_testing>
+        <fail_on_server_error>false</fail_on_server_error>
         <name>PD: Settings page - Enable Status Update feature(wrong api_key)</name>
         <parameters/>
         <remember/>

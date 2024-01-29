@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>jQuery(function () {
+        <client_script><![CDATA[jQuery(function () {
   var $ = jQuery;
   var modal = GlideModal.get();
   var snIncidentId = modal.getPreference('snIncidentId');
@@ -12,16 +12,16 @@
   var trackingApi = x_pd_integration.AjaxHelper.ajaxClientFor('TrackingController');
 
   var pdIncidentId = g_form.getValue('x_pd_integration_incident');
-  var noWorkflowsMessage = '&lt;b&gt;No workflows were found in PagerDuty for the incident \'' + pdIncidentId + '\'.&lt;/b&gt;';
+  var noWorkflowsMessage = '<b>No workflows were found in PagerDuty for the incident \'' + pdIncidentId + '\'.</b>';
 
-  var learnLink = '&lt;a href="https://support.pagerduty.com/docs/incident-workflows' +
-    '?utm_source=servicenow_itsm&amp;utm_content=run_workflow_dialog_no_options" ' +
-    'target="_blank" rel="noopener noreferrer"&gt;Learn how to create a workflow in PagerDuty&lt;/a&gt;';
+  var learnLink = '<a href="https://support.pagerduty.com/docs/incident-workflows' +
+    '?utm_source=servicenow_itsm&utm_content=run_workflow_dialog_no_options" ' +
+    'target="_blank" rel="noopener noreferrer">Learn how to create a workflow in PagerDuty</a>';
 
-  var notAuthorizedMessage = '&lt;b&gt;Your user is not authorized to run workflows&lt;/b&gt;&lt;br&gt;';
-  var learnPermissionsLink = '&lt;a href="https://www.pagerduty.com/resources/learn/user-roles-permissions/' +
-    '?utm_source=servicenow_itsm&amp;utm_content=run_workflow_dialog_permission_error"' +
-    ' target="_blank" rel="noopener noreferrer"&gt;Learn more about user permissions in PagerDuty&lt;/a&gt;';
+  var notAuthorizedMessage = '<b>Your user is not authorized to run workflows</b><br>';
+  var learnPermissionsLink = '<a href="https://www.pagerduty.com/resources/learn/user-roles-permissions/' +
+    '?utm_source=servicenow_itsm&utm_content=run_workflow_dialog_permission_error"' +
+    ' target="_blank" rel="noopener noreferrer">Learn more about user permissions in PagerDuty</a>';
 
   var firstReceivedItems = {};
   api.fetchIncidentWorkflows(userId, snIncidentId, function (error, data) {
@@ -90,7 +90,7 @@
     });
 
     submitElement.attr('disabled', true);
-    submitElement.html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Running...');
+    submitElement.html('<span class="icon icon-loading"></span> Running...');
 
     var incidentWorkflowId = incidentWorkflowSelector.getSelectionData().id;
     var incidentWorkflowName = incidentWorkflowSelector.getSelectionData().name;
@@ -136,12 +136,12 @@
       if (data.errorMessage.includes('Incident \'' + pdIncidentId + '\' not found')) {
         middleMessage = 'The incident \'' + pdIncidentId + '\' doesn\'t exist in PagerDuty.';
       }
-      errorMessage = [noWorkflowsMessage, middleMessage, learnLink].join('&lt;br&gt;');
+      errorMessage = [noWorkflowsMessage, middleMessage, learnLink].join('<br>');
       return errorMessage;
     }
 
     if (data.items.length === 0) {
-      errorMessage = [noWorkflowsMessage, learnLink].join('&lt;br&gt;');
+      errorMessage = [noWorkflowsMessage, learnLink].join('<br>');
       return errorMessage;
     }
 
@@ -163,23 +163,23 @@ function showIWSelector () {
 }
 
 function hasValues (obj) {
-  return Object.keys(obj).length &gt; 0;
+  return Object.keys(obj).length > 0;
 }
-</client_script>
+]]></client_script>
         <description>Show a PagerDuty "Run a Workflow" Dialog</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_run_workflow_dialog.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
-  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
-  &lt;script language="javascript" src="x_pd_integration.PdSelect.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_stamp" expression="new Date().getTime()" />
+  <script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"></script>
+  <script language="javascript" src="x_pd_integration.PdSelect.jsdbx?v=${HTML:jvar_stamp}"></script>
 
-  &lt;g:evaluate&gt;
+  <g:evaluate>
     var pdLogo = gs.getProperty('x_pd_integration.pd_logo');
-  &lt;/g:evaluate&gt;
+  </g:evaluate>
 
-  &lt;style&gt;
+  <style>
     .form_body {
       background-color: #fff;
     }
@@ -193,39 +193,39 @@ function hasValues (obj) {
     .submit-cancel, .submit-request {
       width: 10rem;
     }
-  &lt;/style&gt;
+  </style>
 
-  &lt;form class="form_body form-horizontal pd-workflow-form"&gt;
-    &lt;div class="row"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;p class="pd-message"&gt;&lt;span class="icon icon-loading"&gt;&lt;/span&gt;&lt;/p&gt;
-        &lt;div class="form-group" style="visibility: hidden;"&gt;
-          &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label" for="pds-input" style="padding: 0.75rem 0;"&gt;
-            &lt;span class="label-text"&gt;Select a Workflow&lt;/span&gt;
-          &lt;/label&gt;
-          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field pd-workflow-selector"&gt;
-            &lt;div class="input-group ref-container"&gt;
-              &lt;input value="" class="form-control element_reference_input" /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+  <form class="form_body form-horizontal pd-workflow-form">
+    <div class="row">
+      <div class="col-sm-12">
+        <p class="pd-message"><span class="icon icon-loading"></span></p>
+        <div class="form-group" style="visibility: hidden;">
+          <label class="col-xs-12 col-md-3 col-lg-4 control-label" for="pds-input" style="padding: 0.75rem 0;">
+            <span class="label-text">Select a Workflow</span>
+          </label>
+          <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field pd-workflow-selector">
+            <div class="input-group ref-container">
+              <input value="" class="form-control element_reference_input" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    &lt;div class="row" style="margin-top: 19rem"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;div class="pull-left" style="padding: 6px 9px;"&gt;
-          &lt;img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" /&gt;
-        &lt;/div&gt;
-        &lt;div class="pull-right"&gt;
-          &lt;button class="btn btn-default submit-cancel" style="margin-right: 1rem"&gt;Cancel&lt;/button&gt;
-          &lt;button class="btn btn-primary submit-request disabled"&gt;Run&lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/form&gt;
-&lt;/j:jelly&gt;
-</html>
+    <div class="row" style="margin-top: 19rem">
+      <div class="col-sm-12">
+        <div class="pull-left" style="padding: 6px 9px;">
+          <img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" />
+        </div>
+        <div class="pull-right">
+          <button class="btn btn-default submit-cancel" style="margin-right: 1rem">Cancel</button>
+          <button class="btn btn-primary submit-request disabled">Run</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</j:jelly>
+]]></html>
         <name>run_workflow_dialog</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="8c8383ca1b3b10104ab1fcc8cc4bcb0f" label="PagerDuty Service Provisioning Configuration" max_length="40" name="x_pd_integration_pagerduty_service_provisioning_configuration" type="collection">
+        <element label="BS CI Classes" max_length="255" name="bs_ci_classes" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true" label="Enable Bulk Provisioning" max_length="40" name="enable_bulk_provisioning" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true" default="true" label="Enable CI Provisioning" max_length="40" name="enable_ci_provisioning" type="boolean"/>
+        <element label="TS CI Classes" max_length="255" name="ts_ci_classes" type="string_full_utf8"/>
+        <element attributes="edge_encryption_enabled=true" default="true" label="Use CMDB Relationships" max_length="40" name="use_cmdb_relationships" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true" label="Use Service Classification" max_length="40" name="use_service_classification" type="boolean"/>
+    </element>
+</database>

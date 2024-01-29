@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="8391f5bbdb603300eb140181ca96192b" label="PagerDuty Conference Bridges" max_length="40" name="x_pd_integration_conference_bridges" type="collection">
+        <element label="Dial-in number" max_length="255" name="dial_in_number" type="string_full_utf8"/>
+        <element label="Hyperlink" max_length="500" name="hyperlink" type="string_full_utf8"/>
+        <element display="true" label="Title" mandatory="true" max_length="255" name="title" type="string"/>
+    </element>
+</database>

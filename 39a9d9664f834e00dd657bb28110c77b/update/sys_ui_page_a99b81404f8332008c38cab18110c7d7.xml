@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>function runTest() {
+        <client_script><![CDATA[function runTest() {
 	getPayloadFieldValue();
 }
 
@@ -20,33 +20,33 @@ function processResponse(response) {
 	var results = response.responseXML.getElementsByTagName('results');
 	gel('dial_value').value = results[0].getAttribute('value');
 	gel('dial_msg').value = results[0].getAttribute('msg');
-}</client_script>
+}]]></client_script>
         <description>Custom dialog for 'Test Set From PagerDuty Webhook Payload' button.</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_test_set_from_payload.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:ui_form&gt;
-    &lt;!-- Get the values from dialog preferences --&gt;
-    &lt;g:evaluate var="jvar_payload_field"
-    expression="RP.getWindowProperties().payload_field" /&gt;
-     &lt;!-- Set up form fields and labels --&gt;
-    &lt;div class="container"&gt;
-      &lt;form&gt;
-       &lt;g:ui_input_field name="dial_payload_field" id="dial_payload_field" label="PagerDuty Webhook Payload Field"
-          value="${HTML:jvar_payload_field}" mandatory="true" style="width: 100%" /&gt;
-       &lt;g:ui_multiline_input_field name="dial_payload" id="dial_payload" label="PagerDuty Webhook Payload"
-          mandatory="true" rows="10" /&gt;
-       &lt;g:ui_input_field name="dial_value" id="dial_value" label="Return Value"
-          mandatory="false" style="width: 100%" /&gt;
-       &lt;g:ui_multiline_input_field name="dial_msg" id="dial_msg" label="Error Message"
-          mandatory="false" rows="2" /&gt;
-       &lt;g:dialog_buttons_ok_cancel ok="return runTest()" ok_type="button" ok_text="Test" cancel_type="button" /&gt;
-      &lt;/form&gt;
-    &lt;/div&gt;
-  &lt;/g:ui_form&gt;
-&lt;/j:jelly&gt;
-</html>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:ui_form>
+    <!-- Get the values from dialog preferences -->
+    <g:evaluate var="jvar_payload_field"
+    expression="RP.getWindowProperties().payload_field" />
+     <!-- Set up form fields and labels -->
+    <div class="container">
+      <form>
+       <g:ui_input_field name="dial_payload_field" id="dial_payload_field" label="PagerDuty Webhook Payload Field"
+          value="${HTML:jvar_payload_field}" mandatory="true" style="width: 100%" />
+       <g:ui_multiline_input_field name="dial_payload" id="dial_payload" label="PagerDuty Webhook Payload"
+          mandatory="true" rows="10" />
+       <g:ui_input_field name="dial_value" id="dial_value" label="Return Value"
+          mandatory="false" style="width: 100%" />
+       <g:ui_multiline_input_field name="dial_msg" id="dial_msg" label="Error Message"
+          mandatory="false" rows="2" />
+       <g:dialog_buttons_ok_cancel ok="return runTest()" ok_type="button" ok_text="Test" cancel_type="button" />
+      </form>
+    </div>
+  </g:ui_form>
+</j:jelly>
+]]></html>
         <name>test_set_from_payload</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

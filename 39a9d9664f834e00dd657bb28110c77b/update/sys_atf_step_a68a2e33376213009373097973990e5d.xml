@@ -9,7 +9,6 @@ Value = true</description>
         <mugshots_cache_json/>
         <notes/>
         <order>1</order>
-        <snapshot/>
         <step_config display_value="Record Update">17a72288df60220062fe6c7a4df26397</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -85,4 +84,5 @@ Value = true</description>
         <value>value=true^EQ</value>
         <variable display_value="Field values">bc4c43935320220002c6435723dc34a2</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_17a72288df60220062fe6c7a4df26397^id=a68a2e33376213009373097973990e5d"/>
 </record_update>

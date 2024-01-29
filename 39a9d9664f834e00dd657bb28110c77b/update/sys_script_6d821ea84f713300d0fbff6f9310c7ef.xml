@@ -35,7 +35,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>function onBefore(current, previous) {
+        <script><![CDATA[function onBefore(current, previous) {
   var epHelper = new x_pd_integration.EscalationPolicyHelper();
   var pdEpId = epHelper.getPDEscalationPolicyId(current.assignment_group.sys_id);
   if (!pdEpId)
@@ -53,7 +53,7 @@
   var params = currentUserSysid + "," + current.operation() + "," + changeValue;
   gs.eventQueue(eventName, current, current.work_notes.getJournalEntry(-1), params);
 }
-</script>
+]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2019-05-30 14:34:19</sys_created_on>

@@ -10,7 +10,6 @@
         <mugshots_cache_json>{"2ed645cbda4173c96c828afec33940a1":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Checkbox &lt;input&gt;: enable_response_mobilizer\",\"sn_atf_mugshot_long_description\":\"Checkbox &lt;input&gt;: enable_response_mobilizer with value false\",\"methods\":[\"setValue\"],\"sn_atf_mugshot_label\":\"enable_response_mobilizer\",\"index\":0,\"type\":\"checkbox\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"label\",\"input\"],\"get_value_result\":\"false\",\"sn_atf_mugshot_tag_display_name\":\"Checkbox &lt;input&gt;\",\"name\":\"enable_response_mobilizer\",\"sn_atf_mugshot_value\":\"false\",\"tag\":\"input\",\"isDisabled\":false,\"label_path\":[\"default\"],\"hash\":\"2ed645cbda4173c96c828afec33940a1\",\"html_value\":\"true\"}"}</mugshots_cache_json>
         <notes>Set "Enable Response Mobilizer feature" checbox --&gt; true</notes>
         <order>3</order>
-        <snapshot display_value="">bf14fedb47b7d5109cd45088c26d431c</snapshot>
         <step_config display_value="Set Component Values (Custom UI)">e5dd168473330300c79260bdfaf6a794</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -29,7 +28,6 @@
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=6f6a511d4744ad109cd45088c26d43ef"/>
     <sys_variable_value action="delete_multiple" query="document_key=6f6a511d4744ad109cd45088c26d43ef"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -45,4 +43,5 @@
         <value>2ed645cbda4173c96c828afec33940a1=true^EQ</value>
         <variable display_value="Component values">d12fde8473330300c79260bdfaf6a7b5</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_e5dd168473330300c79260bdfaf6a794^id=6f6a511d4744ad109cd45088c26d43ef"/>
 </record_update>

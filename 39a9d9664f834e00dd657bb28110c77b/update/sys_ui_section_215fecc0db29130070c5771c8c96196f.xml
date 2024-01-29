@@ -124,7 +124,7 @@
             <sys_domain_path>/</sys_domain_path>
             <sys_id>215fecc0db29130070c5771c8c96196f</sys_id>
             <sys_mod_count>0</sys_mod_count>
-            <sys_name>PagerDuty</sys_name>
+            <sys_name>sys_user_group</sys_name>
             <sys_overrides/>
             <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
             <sys_policy/>

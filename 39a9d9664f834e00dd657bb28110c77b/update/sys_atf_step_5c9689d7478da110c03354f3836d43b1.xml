@@ -9,7 +9,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>34</order>
-        <snapshot display_value="e28e85fb900e7d8b5cf8e746d3a27a2b">cfda312f47cde110c03354f3836d43d4</snapshot>
         <step_config display_value="Assert Text on Page (Custom UI)">475e0de3d732130089fca2285e610361</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -28,7 +27,6 @@ With a failure timeout of 5 Seconds</description>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_475e0de3d732130089fca2285e610361^id=5c9689d7478da110c03354f3836d43b1"/>
     <sys_variable_value action="delete_multiple" query="document_key=5c9689d7478da110c03354f3836d43b1"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -72,4 +70,5 @@ With a failure timeout of 5 Seconds</description>
         <value>ATF ServiceNow incident workflow has been run by</value>
         <variable display_value="Text">1c267c5cd703130089fca2285e61035b</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_475e0de3d732130089fca2285e610361^id=5c9689d7478da110c03354f3836d43b1"/>
 </record_update>

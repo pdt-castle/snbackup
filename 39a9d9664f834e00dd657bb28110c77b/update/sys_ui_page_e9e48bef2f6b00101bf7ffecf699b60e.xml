@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>jQuery(function () {
+        <client_script><![CDATA[jQuery(function () {
   var $ = jQuery;
   var modal = GlideModal.get();
 
@@ -59,7 +59,7 @@
     loading = true;
 
     $('.pd-response-play-form button.submit-request').attr('disabled', true);
-    $('.pd-response-play-form button.submit-request').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Running...');
+    $('.pd-response-play-form button.submit-request').html('<span class="icon icon-loading"></span> Running...');
 
     var payload = {
       snIncidentId: snIncidentId,
@@ -95,22 +95,22 @@ function showModalError (message) {
   document.querySelector('.pd-response-play-form .pd-message').innerHTML = message;
   document.querySelector('.pd-response-play-form .pd-message').style.visibility = 'visible';
 }
-</client_script>
+]]></client_script>
         <description>Run PagerDuty Response Play Dialog</description>
         <direct>false</direct>
         <endpoint>x_pd_integration_run_response_play_dialog_DEPRECATED.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;g:evaluate var="jvar_stamp" expression="new Date().getTime()" /&gt;
-  &lt;script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
-  &lt;script language="javascript" src="x_pd_integration.PdSelect.jsdbx?v=${HTML:jvar_stamp}"&gt;&lt;/script&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_stamp" expression="new Date().getTime()" />
+  <script language="javascript" src="x_pd_integration.AjaxHelper.jsdbx?v=${HTML:jvar_stamp}"></script>
+  <script language="javascript" src="x_pd_integration.PdSelect.jsdbx?v=${HTML:jvar_stamp}"></script>
 
-  &lt;g:evaluate&gt;
+  <g:evaluate>
     var pdLogo = gs.getProperty('x_pd_integration.pd_logo');
-  &lt;/g:evaluate&gt;
+  </g:evaluate>
 
-  &lt;form class="form_body form-horizontal pd-response-play-form"&gt;
-    &lt;style&gt;
+  <form class="form_body form-horizontal pd-response-play-form">
+    <style>
       .form_body {
           background-color: #fff;
       }
@@ -120,42 +120,42 @@ function showModalError (message) {
       .pd-response-play-form {
         margin: 1rem;
       }
-    &lt;/style&gt;
-    &lt;div class="row"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;p class="pd-message" style="visibility: hidden;"&gt;(placeholder for message)&lt;/p&gt;
-        &lt;div class="form-group"&gt;
-          &lt;label class="col-xs-12 col-md-3 col-lg-4 control-label" style="padding: 0.75rem 0;"&gt;
-            &lt;span class="label-text"&gt;Select Response Play&lt;/span&gt;
-          &lt;/label&gt;
-          &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field pd-response-play-selector"&gt;
-            &lt;div class="input-group ref-container"&gt;
-              &lt;input value="" class="form-control element_reference_input" /&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          &lt;div class="col-xs-12" style="display: flex; padding: 0"&gt;
-            &lt;div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 pd-response-play-mapping-check" style="visibility: hidden; padding-top: 2.5rem; margin: 0 auto; font-size: 1.25rem; color: grey"&gt;
+    </style>
+    <div class="row">
+      <div class="col-sm-12">
+        <p class="pd-message" style="visibility: hidden;">(placeholder for message)</p>
+        <div class="form-group">
+          <label class="col-xs-12 col-md-3 col-lg-4 control-label" style="padding: 0.75rem 0;">
+            <span class="label-text">Select Response Play</span>
+          </label>
+          <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field pd-response-play-selector">
+            <div class="input-group ref-container">
+              <input value="" class="form-control element_reference_input" />
+            </div>
+          </div>
+          <div class="col-xs-12" style="display: flex; padding: 0">
+            <div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 pd-response-play-mapping-check" style="visibility: hidden; padding-top: 2.5rem; margin: 0 auto; font-size: 1.25rem; color: grey">
               Your ServiceNow user account is not linked to your PagerDuty account. Please ensure your PagerDuty user ID and email are present on your ServiceNow user record.
-            &lt;/div&gt;
-          &lt;/div&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    &lt;div class="row" style="margin-top: 10rem"&gt;
-      &lt;div class="col-sm-12"&gt;
-        &lt;div class="pull-left" style="padding: 6px 9px;"&gt;
-          &lt;img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" /&gt;
-        &lt;/div&gt;
-        &lt;div class="pull-right"&gt;
-          &lt;button class="btn btn-default submit-cancel" style="margin-right: 1rem"&gt;Cancel&lt;/button&gt;
-          &lt;button class="btn btn-primary submit-request disabled"&gt;Continue&lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/form&gt;
-&lt;/j:jelly&gt;
-</html>
+    <div class="row" style="margin-top: 10rem">
+      <div class="col-sm-12">
+        <div class="pull-left" style="padding: 6px 9px;">
+          <img width="120" alt="PagerDuty Logo" src="${HTML:pdLogo}" />
+        </div>
+        <div class="pull-right">
+          <button class="btn btn-default submit-cancel" style="margin-right: 1rem">Cancel</button>
+          <button class="btn btn-primary submit-request disabled">Continue</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</j:jelly>
+]]></html>
         <name>run_response_play_dialog_DEPRECATED</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

@@ -14,7 +14,7 @@
         <sys_update_name>sys_atf_test_suite_test_0314a9554784ad109cd45088c26d43d0</sys_update_name>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2022-12-27 16:35:11</sys_updated_on>
-        <test display_value="PD: Settings page (Use PagerDuty teams checkbox  test 5 - rest_api_endpoint is correct) copy">6f9a551d4744ad109cd45088c26d436c</test>
-        <test_suite display_value="PD: Settings page - checkbox 2">b33229914784ad109cd45088c26d43b4</test_suite>
+        <test display_value="PD: Settings page - Enable Response Mobilizer feature (rest_api_endpoint is correct)">6f9a551d4744ad109cd45088c26d436c</test>
+        <test_suite display_value="PD: Settings page - Enable Response Mobilizer feature checkbox">b33229914784ad109cd45088c26d43b4</test_suite>
     </sys_atf_test_suite_test>
 </record_update>

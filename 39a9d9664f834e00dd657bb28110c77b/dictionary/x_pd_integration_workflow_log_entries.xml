@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="2913a5c347b06110c03354f3836d4306" label="PagerDuty Workflow Log Entries" max_length="40" name="x_pd_integration_workflow_log_entries" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Active" max_length="40" name="active" type="boolean"/>
+        <element attributes="edge_encryption_enabled=true,encode_utf8=false" label="Incident" max_length="32" name="incident" reference="incident" type="reference"/>
+        <element label="Log Entry ID" max_length="40" name="log_entry_id" type="string"/>
+        <element label="PD Incident ID" max_length="40" name="pd_incident_id" type="string"/>
+        <element label="Started At" max_length="32" name="started_at" type="string"/>
+        <element label="Status" max_length="16" name="status" type="string"/>
+        <element label="Workflow Name" max_length="255" name="workflow_name" type="string_full_utf8"/>
+        <index name="index">
+            <element name="incident"/>
+        </index>
+    </element>
+</database>

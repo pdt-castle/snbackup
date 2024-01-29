@@ -15,7 +15,6 @@ and Assignment group = {{Step 6: Record Insert.Record}}</description>
         <mugshots_cache_json/>
         <notes/>
         <order>13</order>
-        <snapshot display_value="e8e9224f3225f66476694dc15a6cc1a9">678dfa7747cd2510c03354f3836d43ee</snapshot>
         <step_config display_value="Set Field Values">fcae4a935332120028bc29cac2dc340e</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -34,19 +33,6 @@ and Assignment group = {{Step 6: Record Insert.Record}}</description>
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=fb7d4c3147816910c03354f3836d4338"/>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>field_values</field>
-        <id>fb7d4c3147816910c03354f3836d4338</id>
-        <sys_created_by>PagerDuty_v8.0</sys_created_by>
-        <sys_created_on>2023-02-16 16:45:33</sys_created_on>
-        <sys_id>e09f847147816910c03354f3836d439f</sys_id>
-        <sys_mod_count>11</sys_mod_count>
-        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
-        <sys_updated_on>2023-02-23 10:10:44</sys_updated_on>
-        <table>var__m_atf_input_variable_fcae4a935332120028bc29cac2dc340e</table>
-        <value>short_description=test-incident-workflows-1^caller_id={{step['624faa65474d2910c03354f3836d4301'].user}}^impact=1^urgency=1^cmdb_ci={{parameter['272daae1474d2910c03354f3836d43db'].u_ci}}^assignment_group={{step['5eb0d98a47052110c03354f3836d436f'].record_id}}^EQ</value>
-    </sys_element_mapping>
     <sys_variable_value action="delete_multiple" query="document_key=fb7d4c3147816910c03354f3836d4338"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -90,4 +76,17 @@ and Assignment group = {{Step 6: Record Insert.Record}}</description>
         <value>standard_ui</value>
         <variable display_value="Form UI">946f3c1a0f23330072e6452bc4767eda</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="id=fb7d4c3147816910c03354f3836d4338"/>
+    <sys_element_mapping action="INSERT_OR_UPDATE">
+        <field>field_values</field>
+        <id>fb7d4c3147816910c03354f3836d4338</id>
+        <sys_created_by>PagerDuty_v8.0</sys_created_by>
+        <sys_created_on>2023-02-16 16:45:33</sys_created_on>
+        <sys_id>e09f847147816910c03354f3836d439f</sys_id>
+        <sys_mod_count>11</sys_mod_count>
+        <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+        <sys_updated_on>2023-02-23 10:10:44</sys_updated_on>
+        <table>var__m_atf_input_variable_fcae4a935332120028bc29cac2dc340e</table>
+        <value>short_description=test-incident-workflows-1^caller_id={{step['624faa65474d2910c03354f3836d4301'].user}}^impact=1^urgency=1^cmdb_ci={{parameter['272daae1474d2910c03354f3836d43db'].u_ci}}^assignment_group={{step['5eb0d98a47052110c03354f3836d436f'].record_id}}^EQ</value>
+    </sys_element_mapping>
 </record_update>

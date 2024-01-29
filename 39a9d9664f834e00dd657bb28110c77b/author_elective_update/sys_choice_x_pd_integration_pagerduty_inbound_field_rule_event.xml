@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_choice action="INSERT_OR_UPDATE" field="event" table="x_pd_integration_pagerduty_inbound_field_rule" version="3">
+        <sys_choice_set action="INSERT_OR_UPDATE">
+            <element>event</element>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sys_class_name>sys_choice_set</sys_class_name>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:02:36</sys_created_on>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>event</sys_name>
+            <sys_package display_value="PagerDuty Incident Resolution Platform" source="x_pd_integration">39a9d9664f834e00dd657bb28110c77b</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</sys_scope>
+            <sys_update_name>sys_choice_x_pd_integration_pagerduty_inbound_field_rule_event</sys_update_name>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:02:36</sys_updated_on>
+        </sys_choice_set>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Trigger</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>0</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:02:36</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:03:00</sys_updated_on>
+            <value>trigger</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Acknowledge</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>1</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:03:17</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:03:25</sys_updated_on>
+            <value>acknowledge</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Unacknowledge</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>2</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:03:37</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:05:59</sys_updated_on>
+            <value>unacknowledge</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Resolve</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>3</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:03:50</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:06:01</sys_updated_on>
+            <value>resolve</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Escalate</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>4</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:04:05</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:06:04</sys_updated_on>
+            <value>escalate</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Delegate</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>5</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:04:18</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:06:07</sys_updated_on>
+            <value>delegate</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Annotate</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>6</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:04:32</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:06:09</sys_updated_on>
+            <value>annotate</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>event</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Custom</label>
+            <language>en</language>
+            <name>x_pd_integration_pagerduty_inbound_field_rule</name>
+            <sequence>7</sequence>
+            <synonyms/>
+            <sys_created_by>PagerDuty_v8.0</sys_created_by>
+            <sys_created_on>2018-06-19 12:05:44</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
+            <sys_updated_on>2018-06-19 12:06:15</sys_updated_on>
+            <value>custom</value>
+        </sys_choice>
+    </sys_choice>
+</record_update>

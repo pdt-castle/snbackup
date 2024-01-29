@@ -10,7 +10,6 @@
         <mugshots_cache_json>{"3904a968f51f4fdee2c655e7a3b442dd":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Text &lt;input&gt;: instance_url\",\"sn_atf_mugshot_long_description\":\"Text &lt;input&gt;: instance_url with value https://your-instance.pagerduty.com\",\"methods\":[\"setValue\"],\"sn_atf_mugshot_label\":\"instance_url\",\"type\":\"text\",\"version\":\"21.0\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"form\",\"input\"],\"get_value_result\":\"\",\"sn_atf_mugshot_tag_display_name\":\"Text &lt;input&gt;\",\"name\":\"instance_url\",\"sn_atf_mugshot_value\":\"https://your-instance.pagerduty.com\",\"tag\":\"input\",\"isDisabled\":false,\"placeholder\":\"https://your-instance.pagerduty.com\",\"label_path\":[\"default\"],\"hash\":\"3904a968f51f4fdee2c655e7a3b442dd\",\"html_value\":\"\"}"}</mugshots_cache_json>
         <notes/>
         <order>3</order>
-        <snapshot display_value="">8100683347d021109cd45088c26d4360</snapshot>
         <step_config display_value="Component Value Validation (Custom UI)">b4758c7453370300c792ddeeff7b128d</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -29,7 +28,6 @@
         <timeout/>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="id=1861c20d97bb5110a76ef327f053af1b"/>
     <sys_variable_value action="delete_multiple" query="document_key=1861c20d97bb5110a76ef327f053af1b"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -45,4 +43,5 @@
         <value>3904a968f51f4fdee2c655e7a3b442dd=https://pdt-lohika-team.pagerduty.com^EQ</value>
         <variable display_value="Component values">bc4c84b467131300b78705225685efda</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_b4758c7453370300c792ddeeff7b128d^id=1861c20d97bb5110a76ef327f053af1b"/>
 </record_update>

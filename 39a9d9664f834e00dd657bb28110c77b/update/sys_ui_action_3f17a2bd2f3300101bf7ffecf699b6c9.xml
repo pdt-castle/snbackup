@@ -3,9 +3,9 @@
         <action_name/>
         <active>true</active>
         <client>false</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments>Deprovision PagerDuty User and clean up the PagerDuty ID field.</comments>
         <condition>gs.hasRole("x_pd_integration.admin") &amp;&amp; !gs.nil(current.x_pd_integration_pagerduty_id)</condition>
         <form_action>true</form_action>
@@ -15,6 +15,7 @@
         <form_link>true</form_link>
         <form_menu_button_v2>false</form_menu_button_v2>
         <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint>Deprovision PagerDuty User</hint>
         <isolate_script>false</isolate_script>
         <list_action>true</list_action>
@@ -25,12 +26,13 @@
         <list_link>false</list_link>
         <list_save_with_form_button>false</list_save_with_form_button>
         <list_style/>
+        <messages/>
         <name>Deprovision PagerDuty User</name>
         <onclick/>
         <order>850</order>
-        <script>var pd = new x_pd_integration.PagerDutyDeprovisioning();
+        <script><![CDATA[var pd = new x_pd_integration.PagerDutyDeprovisioning();
 var response = pd.deleteUser(current);
-</script>
+]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

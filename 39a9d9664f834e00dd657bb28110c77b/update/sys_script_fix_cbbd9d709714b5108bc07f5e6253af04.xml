@@ -6,7 +6,7 @@ The objective is to make sure that the PagerDuty Integration App is properly con
 Introduced in version 8.0.0.</description>
         <name>PagerDuty Integration Fix Script: after</name>
         <record_for_rollback>true</record_for_rollback>
-        <script>try {
+        <script><![CDATA[try {
   gs.info('~~ Started running a PagerDuty Integration Fix Script');
   if (gs.nil(gs.getProperty('x_pd_integration.api_key'))) {
     gs.info('After installation');
@@ -20,7 +20,7 @@ Introduced in version 8.0.0.</description>
     global.JSON.stringify(ex, null, 2));
 } finally {
   gs.info('~~ Finished running a PagerDuty Integration Fix Script');
-}</script>
+}]]></script>
         <sys_class_name>sys_script_fix</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2023-07-25 09:17:12</sys_created_on>

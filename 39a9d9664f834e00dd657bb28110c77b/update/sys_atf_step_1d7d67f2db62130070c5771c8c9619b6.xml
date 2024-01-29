@@ -14,7 +14,6 @@ and Configuration item = CMS App FLX</description>
         <mugshots_cache_json/>
         <notes/>
         <order>9</order>
-        <snapshot/>
         <step_config display_value="Set Field Values">fcae4a935332120028bc29cac2dc340e</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -62,4 +61,5 @@ and Configuration item = CMS App FLX</description>
         <value>short_description=some desc^caller_id=02826bf03710200044e0bfc8bcbe5d3f^assignment_group=b85d44954a3623120004689b2d5dd60a^urgency=1^impact=1^cmdb_ci=829e953a0ad3370200af63483498b1ea^EQ</value>
         <variable display_value="Field values">b3dba2465320220002c6435723dc34f0</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_fcae4a935332120028bc29cac2dc340e^id=1d7d67f2db62130070c5771c8c9619b6"/>
 </record_update>

@@ -2,33 +2,33 @@
     <sys_metadata_link action="INSERT_OR_UPDATE">
         <directory>update</directory>
         <documentkey>c4dafa84db6a630087f0d5f0cf961933</documentkey>
-        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;record_update table="sys_update_set"&gt;
-    &lt;sys_update_set action="INSERT_OR_UPDATE"&gt;
-        &lt;application display_value="PagerDuty Incident Resolution Platform"&gt;39a9d9664f834e00dd657bb28110c77b&lt;/application&gt;
-        &lt;base_update_set/&gt;
-        &lt;completed_by/&gt;
-        &lt;completed_on&gt;2018-12-18 14:49:19&lt;/completed_on&gt;
-        &lt;description&gt;Automatically created by the system&lt;/description&gt;
-        &lt;install_date/&gt;
-        &lt;installed_from/&gt;
-        &lt;is_default&gt;true&lt;/is_default&gt;
-        &lt;merged_to/&gt;
-        &lt;name&gt;Default&lt;/name&gt;
-        &lt;origin_sys_id/&gt;
-        &lt;parent/&gt;
-        &lt;release_date/&gt;
-        &lt;remote_sys_id/&gt;
-        &lt;state&gt;in progress&lt;/state&gt;
-        &lt;sys_created_by&gt;PagerDuty&lt;/sys_created_by&gt;
-        &lt;sys_created_on&gt;2018-12-18 14:49:19&lt;/sys_created_on&gt;
-        &lt;sys_id&gt;c4dafa84db6a630087f0d5f0cf961933&lt;/sys_id&gt;
-        &lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;
-        &lt;sys_updated_by&gt;PagerDuty&lt;/sys_updated_by&gt;
-        &lt;sys_updated_on&gt;2018-12-18 14:49:19&lt;/sys_updated_on&gt;
-    &lt;/sys_update_set&gt;
-&lt;/record_update&gt;
-</payload>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_update_set">
+    <sys_update_set action="INSERT_OR_UPDATE">
+        <application display_value="PagerDuty Incident Resolution Platform">39a9d9664f834e00dd657bb28110c77b</application>
+        <base_update_set/>
+        <completed_by/>
+        <completed_on>2018-12-18 14:49:19</completed_on>
+        <description>Automatically created by the system</description>
+        <install_date/>
+        <installed_from/>
+        <is_default>true</is_default>
+        <merged_to/>
+        <name>Default</name>
+        <origin_sys_id/>
+        <parent/>
+        <release_date/>
+        <remote_sys_id/>
+        <state>in progress</state>
+        <sys_created_by>PagerDuty</sys_created_by>
+        <sys_created_on>2018-12-18 14:49:19</sys_created_on>
+        <sys_id>c4dafa84db6a630087f0d5f0cf961933</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>PagerDuty</sys_updated_by>
+        <sys_updated_on>2018-12-18 14:49:19</sys_updated_on>
+    </sys_update_set>
+</record_update>
+]]></payload>
         <sys_class_name>sys_metadata_link</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2019-01-10 11:25:10</sys_created_on>

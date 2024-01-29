@@ -31,7 +31,7 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions/>
-        <script>function onBefore(current, previous) {
+        <script><![CDATA[function onBefore(current, previous) {
 
   var epHelper = new x_pd_integration.EscalationPolicyHelper();
   var pdEpId = epHelper.getPDEscalationPolicyId(current.getValue('assignment_group'));
@@ -40,7 +40,7 @@
 
   gs.debug("Incident assigned to a non-PagerDuty group and property set to unlink incident, this will also resolve the related PagerDuty incident ({0})", current.x_pd_integration_incident);
   current.x_pd_integration_incident = "---unlinked---";
-}</script>
+}]]></script>
         <sys_class_name>sys_script</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
         <sys_created_on>2016-04-26 21:20:00</sys_created_on>

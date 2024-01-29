@@ -3,9 +3,9 @@
         <action_name/>
         <active>true</active>
         <client>true</client>
-        <client_script_v2>function onClick(g_form) {
+        <client_script_v2><![CDATA[function onClick(g_form) {
 
-}</client_script_v2>
+}]]></client_script_v2>
         <comments/>
         <condition/>
         <form_action>false</form_action>
@@ -30,7 +30,7 @@
         <name>Activate Mapping(s)</name>
         <onclick>openActivateCustomFieldMappingsDialog()</onclick>
         <order>100</order>
-        <script>function openActivateCustomFieldMappingsDialog() {
+        <script><![CDATA[function openActivateCustomFieldMappingsDialog() {
 	if (!g_list.getChecked()) {
 		return;
 	} else {
@@ -42,7 +42,7 @@
 		gm.setWidth(700);
 		gm.render();
 	}
-}</script>
+}]]></script>
         <show_insert>true</show_insert>
         <show_multiple_update>false</show_multiple_update>
         <show_query>false</show_query>

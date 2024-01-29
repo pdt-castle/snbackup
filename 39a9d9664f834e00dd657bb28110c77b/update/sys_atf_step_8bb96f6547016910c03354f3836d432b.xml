@@ -8,7 +8,6 @@
         <mugshots_cache_json>{"f6fbb37ba22c60c0bfd07eadde53053a":"{\"area\":\"default\",\"sn_atf_mugshot_short_description\":\"Button &lt;button&gt;: Save\",\"inner_text\":\"Save\",\"sn_atf_mugshot_long_description\":\"Button &lt;button&gt; [saveBtn]: Save\",\"methods\":[\"click\"],\"sn_atf_mugshot_label\":\"Save\",\"type\":\"submit\",\"version\":\"20.2\",\"sn_atf_mugshot_label_for_label_path\":\"\",\"interesting_element_path\":[\"body\",\"button\"],\"get_value_result\":\"Save\",\"sn_atf_mugshot_tag_display_name\":\"Button &lt;button&gt;\",\"sn_atf_mugshot_value\":\"Save\",\"tag\":\"button\",\"isDisabled\":false,\"id\":\"saveBtn\",\"label_path\":[\"default\"],\"hash\":\"f6fbb37ba22c60c0bfd07eadde53053a\"}"}</mugshots_cache_json>
         <notes/>
         <order>4</order>
-        <snapshot/>
         <step_config display_value="Click Component (Custom UI)">def25c4b73730300c79260bdfaf6a700</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>

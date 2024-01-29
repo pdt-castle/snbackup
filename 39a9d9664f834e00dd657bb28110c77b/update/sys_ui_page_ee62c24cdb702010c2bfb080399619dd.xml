@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script>var $J = jQuery;
+        <client_script><![CDATA[var $J = jQuery;
 var loading = false;
 
 function cancelProvisioning() {
@@ -12,7 +12,7 @@ function provisionServices() {
   if (loading) return;
   loading = true;
   $J('#confirm-provisioning').attr('disabled', 'disabled');
-  $J('#confirm-provisioning').html('&lt;span class="icon icon-loading"&gt;&lt;/span&gt; Provisioning...');
+  $J('#confirm-provisioning').html('<span class="icon icon-loading"></span> Provisioning...');
   provision();
 }
 
@@ -140,7 +140,7 @@ function getTimeleft(value, max) {
   var startProcessingDelay = 3; // seconds, varies from 3s to 10s depending on unknown factor
   var requestTimeMs = 200;
   var seconds = itemsLeft * (requestTimeMs / 1000) + startProcessingDelay * (Math.pow(itemsLeft / max, 2));
-  if (seconds &lt; 10) {
+  if (seconds < 10) {
     return '[ few seconds left ]';
   }
   var mins = Math.floor(seconds / 60);
@@ -173,13 +173,13 @@ function uiDone(opts) {
   setTimeleft('');
   $J('#sticky-banner-progress .services-text').html('done.');
 }
-</client_script>
+]]></client_script>
         <description/>
         <direct>false</direct>
         <endpoint>x_pd_integration_services_provisioning_confirmation.do</endpoint>
-        <html>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
-  &lt;style&gt;
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <style>
     .confirmation-message {
       margin: 10px;
     }
@@ -191,20 +191,20 @@ function uiDone(opts) {
       padding: 6px 30px;
       margin-left: 2rem;
     }
-  &lt;/style&gt;
+  </style>
 
-  &lt;div class="confirmation-message"&gt;
-    &lt;p&gt;
+  <div class="confirmation-message">
+    <p>
        The services will be provisioned along with their dependencies. The services and escalation policies will be created with you as the initial contact for those services which don't have escalation policies mapped.
-    &lt;/p&gt;
-    &lt;p&gt;Are you sure you want to proceed?&lt;/p&gt;
-  &lt;/div&gt;
-  &lt;div class="buttons"&gt;
-    &lt;button id="cancel-provisioning" class="btn btn-confirm" onclick="cancelProvisioning()"&gt;No&lt;/button&gt;
-    &lt;button id="confirm-provisioning" class="btn btn-primary btn-cancel" onclick="provisionServices()"&gt;Yes&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/j:jelly&gt;
-</html>
+    </p>
+    <p>Are you sure you want to proceed?</p>
+  </div>
+  <div class="buttons">
+    <button id="cancel-provisioning" class="btn btn-confirm" onclick="cancelProvisioning()">No</button>
+    <button id="confirm-provisioning" class="btn btn-primary btn-cancel" onclick="provisionServices()">Yes</button>
+  </div>
+</j:jelly>
+]]></html>
         <name>services_provisioning_confirmation</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>

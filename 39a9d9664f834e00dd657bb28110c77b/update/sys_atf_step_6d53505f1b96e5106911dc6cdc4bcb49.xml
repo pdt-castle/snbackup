@@ -10,7 +10,6 @@ With a failure timeout of 5 Seconds</description>
         <mugshots_cache_json/>
         <notes/>
         <order>2</order>
-        <snapshot/>
         <step_config display_value="Record Query">2d82e3c7531400109e02ddeeff7b12a7</step_config>
         <sys_class_name>sys_atf_step</sys_class_name>
         <sys_created_by>PagerDuty_v8.0</sys_created_by>
@@ -25,11 +24,10 @@ With a failure timeout of 5 Seconds</description>
         <sys_updated_by>PagerDuty_v8.0</sys_updated_by>
         <sys_updated_on>2023-04-24 12:11:58</sys_updated_on>
         <table>incident</table>
-        <test display_value="A.1">0be0ee661b5265106911dc6cdc4bcb3f</test>
+        <test display_value="PD: Workflow Action: Incident Create: ok">0be0ee661b5265106911dc6cdc4bcb3f</test>
         <timeout>1970-01-01 00:00:05</timeout>
         <warning_message/>
     </sys_atf_step>
-    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_2d82e3c7531400109e02ddeeff7b12a7^id=6d53505f1b96e5106911dc6cdc4bcb49"/>
     <sys_variable_value action="delete_multiple" query="document_key=6d53505f1b96e5106911dc6cdc4bcb49"/>
     <sys_variable_value action="INSERT_OR_UPDATE">
         <document>sys_atf_step</document>
@@ -87,4 +85,5 @@ With a failure timeout of 5 Seconds</description>
         <value>x_pd_integration_incident=PT4KHLP^EQ</value>
         <variable display_value="Conditions">915990ab531000109e02ddeeff7b12f8</variable>
     </sys_variable_value>
+    <sys_element_mapping action="delete_multiple" query="table=var__m_atf_input_variable_2d82e3c7531400109e02ddeeff7b12a7^id=6d53505f1b96e5106911dc6cdc4bcb49"/>
 </record_update>
