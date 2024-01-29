@@ -1,0 +1,1686 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2024-01-29 15:43:24">
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Application</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date>2024-01-17 18:55:30</install_date>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>App-Adessa</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 18:55:48</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>abd9b529973731105856f84de053af2e</sys_id>
+<sys_mod_count>4</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:34:22</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token>39c97484657e4002d0c1116fa7cf1128</x_pd_integration_pagerduty_change_event_token>
+<x_pd_integration_pagerduty_service>PKC6Z6Q</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>POUVJ75</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>App-Borgata</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:09:36</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>be1df16d973731105856f84de053af4f</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:34:36</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PZH9X2N</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>P0YT7N9</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>App-Felix</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:11:03</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>bc7d396d973731105856f84de053afa1</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:34:51</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P1FKYJ6</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PMSV27E</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date>2024-01-17 19:07:02</install_date>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>AWS-EKS-Farms</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:07:07</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>a08c352d973731105856f84de053afc8</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:35:06</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PWRQZB2</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>P9AFXT2</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>Cloud Security</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:10:49</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>c96db96d973731105856f84de053af65</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:35:26</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P2WDQ3W</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>P75X2ZK</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>CommandCtr</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:11:43</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>e69d3d6d973731105856f84de053af53</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:35:55</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P005TZE</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PBXY03B</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>CoreProcessing</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:10:15</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>414df56d973731105856f84de053af51</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:36:10</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PM4UWSF</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PRR641A</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>ENT-API</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:08:21</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>dfcc3d2d973731105856f84de053af58</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:36:31</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version>5.6</version>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P3V1RT1</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PXDUFM8</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>ENT-ContentMgmt</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:09:19</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>fe0d792d973731105856f84de053afcf</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:36:46</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PJBXO89</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PVBMNG2</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date>2024-01-17 19:06:09</install_date>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>Ent-DataAccess</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:06:25</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>2b2c3d69973731105856f84de053af2c</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:37:12</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version>18.999</version>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PS1TZZ6</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PTJRYHF</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>GEM Portal</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:07:31</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>6a9c352d973731105856f84de053afab</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:37:25</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version>7.983</version>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PHZMMFU</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PPYYS3Q</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>SharedInfra-networking</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:09:59</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>832d356d973731105856f84de053afd0</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:37:50</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PP3TOAD</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PV0U4E0</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>SharedInfra-WebAuth</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:10:33</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>205df56d973731105856f84de053afa7</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:38:05</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P63Q03H</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PNEI3PN</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>Umbrella-Storage</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:08:43</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>f1ecbd2d973731105856f84de053af8c</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:38:19</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>P5SL1WQ</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PX1MZK6</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>WebApp-Ithaca-K8s</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:09:01</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>02fc792d973731105856f84de053afcc</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:38:35</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PH9NBF5</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PWQUTI4</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>Z0RHG7-App-Y</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:11:26</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>2f7db96d973731105856f84de053af6f</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:38:53</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PINW0BE</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PF6J0G1</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+<cmdb_ci_appl action="INSERT_OR_UPDATE">
+<asset display_value=""/>
+<asset_tag/>
+<assigned/>
+<assigned_to display_value=""/>
+<assignment_group display_value=""/>
+<attestation_score/>
+<attestation_status>Not Yet Reviewed</attestation_status>
+<attested>false</attested>
+<attested_by display_value=""/>
+<attested_date/>
+<attributes/>
+<business_unit display_value=""/>
+<can_print>false</can_print>
+<category>Resource</category>
+<change_control display_value=""/>
+<checked_in/>
+<checked_out/>
+<cl_port/>
+<comments/>
+<company display_value=""/>
+<config_directory/>
+<config_file/>
+<correlation_id/>
+<cost/>
+<cost_cc>USD</cost_cc>
+<cost_center display_value=""/>
+<delivery_date/>
+<department display_value=""/>
+<discovery_source/>
+<dns_domain/>
+<due/>
+<due_in/>
+<duplicate_of display_value=""/>
+<edition/>
+<environment/>
+<fault_count>0</fault_count>
+<first_discovered/>
+<fqdn/>
+<gl_account/>
+<install_date/>
+<install_directory/>
+<install_status>1</install_status>
+<invoice_number/>
+<ip_address/>
+<is_clustered>false</is_clustered>
+<justification/>
+<last_discovered/>
+<lease_id/>
+<life_cycle_stage display_value=""/>
+<life_cycle_stage_status display_value=""/>
+<location display_value=""/>
+<mac_address/>
+<maintenance_schedule display_value=""/>
+<managed_by display_value=""/>
+<managed_by_group display_value=""/>
+<manufacturer display_value=""/>
+<model_id display_value=""/>
+<model_number/>
+<monitor>false</monitor>
+<name>[NICE]-Retail-PaaS</name>
+<operational_status>1</operational_status>
+<order_date/>
+<owned_by display_value=""/>
+<pid/>
+<po_number/>
+<purchase_date/>
+<rp_command_hash/>
+<rp_key_parameters_hash/>
+<running_process_command/>
+<running_process_key_parameters/>
+<schedule display_value=""/>
+<serial_number/>
+<short_description/>
+<skip_sync>false</skip_sync>
+<start_date/>
+<subcategory>Application</subcategory>
+<support_group display_value=""/>
+<supported_by display_value=""/>
+<sys_class_name>cmdb_ci_appl</sys_class_name>
+<sys_class_path>/!!/!(</sys_class_path>
+<sys_created_by>admin</sys_created_by>
+<sys_created_on>2024-01-17 19:07:53</sys_created_on>
+<sys_domain>global</sys_domain>
+<sys_domain_path>/</sys_domain_path>
+<sys_id>40bc392d973731105856f84de053af7b</sys_id>
+<sys_mod_count>2</sys_mod_count>
+<sys_updated_by>admin</sys_updated_by>
+<sys_updated_on>2024-01-17 19:39:07</sys_updated_on>
+<tcp_port/>
+<unverified>false</unverified>
+<used_for>Production</used_for>
+<vendor display_value=""/>
+<version/>
+<warranty_expiration/>
+<x_pd_integration_pagerduty_change_event_token/>
+<x_pd_integration_pagerduty_service>PWF2KBR</x_pd_integration_pagerduty_service>
+<x_pd_integration_pagerduty_webhook>PJ9K15Q</x_pd_integration_pagerduty_webhook>
+</cmdb_ci_appl>
+</unload>
